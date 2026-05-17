@@ -1,0 +1,10 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Submissions
+  body
+    h1 Submissions
+    ul
+      each submission in submissions
+        li= `${submission.id} ${submission.verdict}`

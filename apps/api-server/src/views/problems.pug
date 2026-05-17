@@ -1,0 +1,11 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title Problems
+  body
+    h1 Problems
+    ul
+      each problem in problems
+        li
+          a(href=`/problem/${problem.pid}`)= `${problem.pid} - ${problem.title}`

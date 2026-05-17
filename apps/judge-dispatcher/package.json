@@ -1,0 +1,14 @@
+{
+  "name": "@roj/judge-dispatcher",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@roj/db": "0.1.0",
+    "@roj/judge-driver": "0.1.0",
+    "@roj/shared": "0.1.0"
+  }
+}

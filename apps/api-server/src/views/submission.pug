@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title= `Submission ${submission.id}`
+  body
+    h1= `Submission ${submission.id}`
+    p= `Status: ${submission.status}`
+    p= `Verdict: ${submission.verdict}`
+    if submission.judgeStatus
+      p= `Judge Status: ${submission.judgeStatus}`
+    if submission.message
+      pre= submission.message
+    script.
+      const terminal = ['FINISHED', 'FAILED'];
+      if (!terminal.includes('#{submission.status}')) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }

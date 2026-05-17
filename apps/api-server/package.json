@@ -1,0 +1,13 @@
+{
+  "name": "@roj/api-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/app.ts"
+  },
+  "dependencies": {
+    "@roj/db": "0.1.0",
+    "@roj/shared": "0.1.0"
+  }
+}

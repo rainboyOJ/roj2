@@ -1,0 +1,17 @@
+doctype html
+html
+  head
+    meta(charset="utf-8")
+    title= problem.title
+  body
+    h1= `${problem.pid} - ${problem.title}`
+    pre= problem.statementMarkdown
+    form(method="post" action="/submissions")
+      input(type="hidden" name="pid" value=problem.pid)
+      label(for="language") Language
+      select(name="language" id="language")
+        each language in problem.allowLanguages
+          option(value=language)= language
+      label(for="sourceCode") Source Code
+      textarea(name="sourceCode" id="sourceCode" rows="20" cols="100")
+      button(type="submit") Submit

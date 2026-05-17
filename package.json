@@ -1,0 +1,29 @@
+{
+  "name": "move-to-new-oj",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.base.json",
+    "dev:api": "node --experimental-strip-types ./apps/api-server/src/index.ts",
+    "dev:dispatcher": "node --experimental-strip-types ./apps/judge-dispatcher/src/index.ts",
+    "seed": "node --experimental-strip-types ./apps/api-server/src/seed.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "@types/pug": "^2.0.10",
+    "@fastify/formbody": "^8.0.2",
+    "@fastify/view": "^11.1.0",
+    "fastify": "^5.6.1",
+    "mongodb": "^6.21.0",
+    "pug": "^3.0.3",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6",
+    "zod": "^4.1.12"
+  }
+}
