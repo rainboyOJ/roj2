@@ -1,29 +1,28 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Admin
-      h1.page-title Submission overview
-      p.page-description
-        | Scan recent judging results across all visible submissions.
+  section.list-panel
+    header
+      hgroup
+        h1 Admin submissions
+        p.page-lead Track judging activity across all submissions in a standard list view.
     if submissions.length
-      .table-list
-        each submission in submissions
-          article.table-row
-            div
-              h2.card-title= submission.id
-              ul.meta-list
-                li Status: #{submission.status}
-                if submission.judgeStatus
-                  li Judge: #{submission.judgeStatus}
-            div
+      each submission in submissions
+        article
+          header
+            h2
+              a(href=`/submissions/${submission.id}`)= submission.id
+          ul.compact-meta
+            li Status: #{submission.status}
+            if submission.judgeStatus
+              li Judge: #{submission.judgeStatus}
+            li
               if submission.verdict === 'AC'
-                span.badge.badge--success= submission.verdict
+                span.status-chip.ac= submission.verdict
               else if submission.verdict === 'PENDING'
-                span.badge.badge--warning= submission.verdict
+                span.status-chip.pending= submission.verdict
               else
-                span.badge.badge--danger= submission.verdict
-            a.button.button--secondary(href=`/submissions/${submission.id}`) View
+                span.status-chip.failed= submission.verdict
     else
-      .empty-state No submissions yet.
+      article
+        p No submissions yet.

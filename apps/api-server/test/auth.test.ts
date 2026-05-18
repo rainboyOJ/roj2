@@ -2,56 +2,65 @@ import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
 
-describe('auth routes', () => {
-  it('registers a student account', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
+function createServices(overrides: Record<string, unknown> = {}) {
+  return {
+    createSubmission: async () => ({
+      id: 'sub-1',
+      status: 'PENDING_DISPATCH',
+      verdict: 'PENDING',
+    }),
+    listProblems: async () => [],
+    getProblemByPid: async () => null,
+    getSubmissionById: async () => null,
+    listSubmissions: async () => [],
+    registerUser: async () => ({
+      id: 'user-1',
+      username: 'alice',
+      approvalStatus: 'pending' as const,
+    }),
+    loginUser: async () => ({
+      token: 'token-1',
+      user: {
         id: 'user-1',
         username: 'alice',
-        approvalStatus: 'pending',
-      }),
-      loginUser: async () => ({
-        token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-        },
-      }),
-      logoutUser: async () => undefined,
-      getCurrentUser: async () => null,
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+        role: 'student' as const,
+        approvalStatus: 'pending' as const,
+      },
+    }),
+    logoutUser: async () => undefined,
+    getCurrentUser: async () => null,
+    listAdminUsers: async () => [],
+    approveUser: async () => undefined,
+    rejectUser: async () => undefined,
+    listAdminSubmissions: async () => [],
+    listRanklist: async () => [],
+    listContests: async () => [],
+    getContestById: async () => null,
+    listGrades: async () => [],
+    createGrade: async () => ({
+      id: 'grade-1',
+      name: '2027',
+      isActive: true,
+      order: 4,
+    }),
+    updateGrade: async () => undefined,
+    listAdminProblems: async () => [],
+    getAdminProblemById: async () => null,
+    createProblem: async () => ({
+      id: 'problem-1',
+      pid: '1001',
+    }),
+    updateProblem: async () => undefined,
+    publishProblem: async () => undefined,
+    updateProfileClassName: async () => undefined,
+    resetUserPassword: async () => undefined,
+    ...overrides,
+  };
+}
+
+describe('auth routes', () => {
+  it('registers a student account', async () => {
+    const app = buildApp(createServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -74,54 +83,7 @@ describe('auth routes', () => {
   });
 
   it('logs in and sets a session cookie', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
-      loginUser: async () => ({
-        token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-        },
-      }),
-      logoutUser: async () => undefined,
-      getCurrentUser: async () => null,
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    const app = buildApp(createServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -137,48 +99,11 @@ describe('auth routes', () => {
   });
 
   it('returns 401 for invalid login credentials', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
+    const app = buildApp(createServices({
       loginUser: async () => {
         throw new Error('invalid username or password');
       },
-      logoutUser: async () => undefined,
-      getCurrentUser: async () => null,
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    }));
 
     const response = await app.inject({
       method: 'POST',
@@ -193,54 +118,7 @@ describe('auth routes', () => {
   });
 
   it('rejects submission creation for anonymous users', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
-      loginUser: async () => ({
-        token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-        },
-      }),
-      logoutUser: async () => undefined,
-      getCurrentUser: async () => null,
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    const app = buildApp(createServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -256,58 +134,13 @@ describe('auth routes', () => {
   });
 
   it('rejects submission detail for anonymous users', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
+    const app = buildApp(createServices({
       getSubmissionById: async () => ({
         id: 'sub-1',
         status: 'FINISHED',
         verdict: 'AC',
       }),
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
-      loginUser: async () => ({
-        token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-        },
-      }),
-      logoutUser: async () => undefined,
-      getCurrentUser: async () => null,
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    }));
 
     const response = await app.inject({
       method: 'GET',
@@ -318,59 +151,14 @@ describe('auth routes', () => {
   });
 
   it('rejects submission creation for pending students', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
-      loginUser: async () => ({
-        token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-        },
-      }),
-      logoutUser: async () => undefined,
+    const app = buildApp(createServices({
       getCurrentUser: async () => ({
         id: 'user-1',
         username: 'alice',
-        role: 'student',
-        approvalStatus: 'pending',
+        role: 'student' as const,
+        approvalStatus: 'pending' as const,
       }),
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    }));
 
     const response = await app.inject({
       method: 'POST',
@@ -386,59 +174,14 @@ describe('auth routes', () => {
   });
 
   it('rejects admin approval for non-admin users', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
-      loginUser: async () => ({
-        token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-        },
-      }),
-      logoutUser: async () => undefined,
+    const app = buildApp(createServices({
       getCurrentUser: async () => ({
         id: 'user-1',
         username: 'alice',
-        role: 'student',
-        approvalStatus: 'approved',
+        role: 'student' as const,
+        approvalStatus: 'approved' as const,
       }),
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    }));
 
     const response = await app.inject({
       method: 'POST',
@@ -449,59 +192,23 @@ describe('auth routes', () => {
   });
 
   it('allows admin users to reset a student password', async () => {
-    const app = buildApp({
-      createSubmission: async () => ({
-        id: 'sub-1',
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
-      listProblems: async () => [],
-      getProblemByPid: async () => null,
-      getSubmissionById: async () => null,
-      listSubmissions: async () => [],
-      registerUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        approvalStatus: 'pending',
-      }),
+    const app = buildApp(createServices({
       loginUser: async () => ({
         token: 'token-1',
         user: {
           id: 'admin-1',
           username: 'admin',
-          role: 'admin',
-          approvalStatus: 'approved',
+          role: 'admin' as const,
+          approvalStatus: 'approved' as const,
         },
       }),
-      logoutUser: async () => undefined,
       getCurrentUser: async () => ({
         id: 'admin-1',
         username: 'admin',
-        role: 'admin',
-        approvalStatus: 'approved',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
       }),
-      listAdminUsers: async () => [],
-      approveUser: async () => undefined,
-      rejectUser: async () => undefined,
-      listAdminSubmissions: async () => [],
-      listGrades: async () => [],
-      createGrade: async () => ({
-        id: 'grade-1',
-        name: '2027',
-        isActive: true,
-        order: 4,
-      }),
-      updateGrade: async () => undefined,
-      listAdminProblems: async () => [],
-      createProblem: async () => ({
-        id: 'problem-1',
-        pid: '1001',
-      }),
-      updateProblem: async () => undefined,
-      publishProblem: async () => undefined,
-      updateProfileClassName: async () => undefined,
-      resetUserPassword: async () => undefined,
-    });
+    }));
 
     const response = await app.inject({
       method: 'POST',

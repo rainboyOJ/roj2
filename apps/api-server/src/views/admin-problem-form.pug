@@ -1,0 +1,47 @@
+extends layout.pug
+
+block content
+  - const isCreate = mode === 'create';
+  - const actionPath = isCreate ? '/admin/problems' : `/admin/problems/${problem.id}`;
+  section.auth-panel
+    header
+      if isCreate
+        hgroup
+          h1 Create problem
+          p.page-lead Add a new problem metadata record for the OJ.
+      else
+        hgroup
+          h1 Edit problem
+          p.page-lead Update title, statement, languages, and visibility for an existing problem.
+    article
+      form(method="post" action=actionPath)
+        if !isCreate
+          input(type="hidden" name="id" value=problem.id)
+        .grid
+          div
+            label(for="pid") PID
+            input#pid(type="text" name="pid" value=problem.pid)
+          div
+            label(for="title") Title
+            input#title(type="text" name="title" value=problem.title)
+        label(for="statementMarkdown") Statement
+        textarea#statementMarkdown(name="statementMarkdown")= problem.statementMarkdown
+        fieldset
+          legend Languages
+          label
+            input(type="checkbox" name="allowLanguages" value="cpp" checked=problem.allowLanguages.includes('cpp'))
+            | C++
+          label
+            input(type="checkbox" name="allowLanguages" value="python" checked=problem.allowLanguages.includes('python'))
+            | Python
+        label(for="isVisible") Visible
+        select#isVisible(name="isVisible")
+          option(value="false" selected=!problem.isVisible) Hidden
+          option(value="true" selected=problem.isVisible) Visible
+        .grid
+          button(type="submit") Save problem
+          a(href="/admin/problems" role="button" class="secondary") Back
+      if !isCreate
+        hr
+        form(method="post" action=`/admin/problems/${problem.id}/publish`)
+          button(type="submit" class="contrast") Publish problem

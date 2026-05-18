@@ -4,18 +4,191 @@ html(lang="zh-CN")
     meta(charset="utf-8")
     meta(name="viewport" content="width=device-width, initial-scale=1")
     title= pageTitle ? `${pageTitle} | ROJ` : 'ROJ'
-    include styles.pug
+    meta(name="color-scheme" content="light")
+    link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css")
+    style.
+      :root {
+        --pico-font-family-sans-serif: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+        --pico-font-size: 95%;
+        --pico-line-height: 1.65;
+        --pico-border-radius: 0.85rem;
+        --pico-nav-element-spacing-horizontal: 0.75rem;
+        --pico-nav-element-spacing-vertical: 0.4rem;
+      }
+
+      body {
+        background: #f7f8fb;
+      }
+
+      main.container {
+        padding-top: 1.5rem;
+        padding-bottom: 3rem;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(10px);
+        background: rgba(247, 248, 251, 0.92);
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .site-header nav {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0.8rem 1rem;
+      }
+
+      .brand-block {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 0.1rem;
+      }
+
+      .brand-block small {
+        color: #526077;
+      }
+
+      .page-lead {
+        max-width: 68ch;
+      }
+
+      .page-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        margin: 1rem 0 0;
+      }
+
+      .hero-panel {
+        padding: 1rem 0 0.5rem;
+      }
+
+      .hero-panel article,
+      .list-panel article,
+      .detail-panel article,
+      .auth-panel article {
+        height: 100%;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .metric-card {
+        padding: 1rem;
+        border: 1px solid #dbe2ea;
+        border-radius: 0.85rem;
+        background: #fff;
+      }
+
+      .metric-card strong {
+        display: block;
+        font-size: 1.4rem;
+      }
+
+      .list-panel header,
+      .detail-panel header,
+      .auth-panel header {
+        margin-bottom: 1rem;
+      }
+
+      .soft-note {
+        color: #5f6d81;
+      }
+
+      .compact-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        color: #5f6d81;
+      }
+
+      .status-chip {
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid #d5dce5;
+        background: #f9fafb;
+        font-size: 0.88rem;
+      }
+
+      .status-chip.ac {
+        color: #17603a;
+        background: #edf8f1;
+        border-color: #cae9d4;
+      }
+
+      .status-chip.pending {
+        color: #8b5a00;
+        background: #fff7e8;
+        border-color: #f2ddb3;
+      }
+
+      .status-chip.failed {
+        color: #9a2332;
+        background: #fdeef0;
+        border-color: #efcbd1;
+      }
+
+      .mono-block {
+        font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      textarea[name="sourceCode"] {
+        min-height: 22rem;
+        font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
+      }
+
+      @media (max-width: 768px) {
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+      }
   body
-    .app-shell
-      header.app-header
-        .app-header__inner
-          a.app-brand(href="/problems") ROJ
-          nav.app-nav
-            a(href="/problems") Problems
-            a(href="/submissions") Submissions
+    header.site-header
+      nav
+        ul
+          li
+            a(href="/")
+              span.brand-block
+                strong ROJ
+                small Simple school OJ
+        ul
+          li
+            a(href="/") Home
+          li
+            a(href="/problems") Problem list
+          li
+            a(href="/submissions") Submission list
+          li
+            a(href="/ranklist") Ranklist
+          li
+            a(href="/contests") Contests
+          li
             a(href="/profile") Profile
+          li
             a(href="/login") Login
+          li
             a(href="/register") Register
-            a(href="/admin/users") Admin
-      main.app-main
-        block content
+          li
+            details.dropdown
+              summary Admin
+              ul(dir="rtl")
+                li
+                  a(href="/admin/users") Users
+                li
+                  a(href="/admin/problems") Problems
+                li
+                  a(href="/admin/submissions") Submissions
+    main.container
+      block content

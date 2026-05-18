@@ -1,29 +1,26 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Admin
-      h1.page-title User review
-      p.page-description
-        | Review student accounts and their current approval state.
+  section.list-panel
+    header
+      hgroup
+        h1 Admin users
+        p.page-lead Review current user accounts and their approval status.
     if users.length
-      .table-list
-        each user in users
-          article.table-row
-            div
-              h2.card-title= user.username
-              ul.meta-list
-                if user.name
-                  li Name: #{user.name}
-                li Role: #{user.role}
-            div
+      each user in users
+        article
+          header
+            h2= user.username
+            p.soft-note= user.name || 'No display name'
+          ul.compact-meta
+            li Role: #{user.role}
+            li
               if user.approvalStatus === 'approved'
-                span.badge.badge--success= user.approvalStatus
+                span.status-chip.ac= user.approvalStatus
               else if user.approvalStatus === 'rejected'
-                span.badge.badge--danger= user.approvalStatus
+                span.status-chip.failed= user.approvalStatus
               else
-                span.badge.badge--warning= user.approvalStatus
-            span.helper-text Review in API/admin workflow
+                span.status-chip.pending= user.approvalStatus
     else
-      .empty-state No users to review.
+      article
+        p No users to review.

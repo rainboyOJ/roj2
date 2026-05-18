@@ -1,34 +1,31 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Account
-      h1.page-title Create a learning account
-      p.page-description
-        | Fill in the basic profile fields. New student accounts can then be reviewed by an administrator.
-    .form-card
-      form.form-grid(method="post" action="/api/register")
-        .field-inline
-          .field
+  section.auth-panel
+    header
+      hgroup
+        h1 Student registration
+        p.page-lead Create a basic account for class use and wait for administrator approval when needed.
+    article
+      form(method="post" action="/api/register")
+        .grid
+          div
             label(for="username") Username
             input#username(type="text" name="username" placeholder="student_01")
-          .field
+          div
             label(for="name") Name
             input#name(type="text" name="name" placeholder="Your name")
-        .field-inline
-          .field
+        .grid
+          div
             label(for="gender") Gender
             input#gender(type="text" name="gender" placeholder="male / female / other")
-          .field
+          div
             label(for="grade") Grade
             input#grade(type="text" name="grade" placeholder="2025")
-        .field
-          label(for="className") Class
-          input#className(type="text" name="className" placeholder="Class 1")
-        .field
-          label(for="password") Password
-          input#password(type="password" name="password" placeholder="At least 8 characters")
-        .button-row
+        label(for="className") Class
+        input#className(type="text" name="className" placeholder="Class 1")
+        label(for="password") Password
+        input#password(type="password" name="password" placeholder="At least 8 characters")
+        .grid
           button(type="submit") Register
-          a.button.button--secondary(href="/login") Back to login
+          a(href="/login" role="button" class="secondary") Back to login

@@ -38,6 +38,9 @@ function createServices(overrides: Record<string, unknown> = {}) {
     rejectUser: async () => undefined,
     listSubmissions: async () => [],
     listAdminSubmissions: async () => [],
+    listRanklist: async () => [],
+    listContests: async () => [],
+    getContestById: async () => null,
     listGrades: async () => [],
     createGrade: async () => ({
       id: 'grade-1',
@@ -47,6 +50,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
     }),
     updateGrade: async () => undefined,
     listAdminProblems: async () => [],
+    getAdminProblemById: async () => null,
     createProblem: async () => ({
       id: 'problem-1',
       pid: '1001',

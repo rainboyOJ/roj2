@@ -1,20 +1,31 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Admin
-      h1.page-title Problem management
-      p.page-description
-        | View the current problem set in a compact, readable format.
+  section.list-panel
+    header
+      hgroup
+        h1 Admin problems
+        p.page-lead Browse problems in the same way an OJ manager would scan the catalog.
+      .page-actions
+        a(href="/admin/problems/new" role="button") Create problem
     if problems.length
-      .card-grid
-        each problem in problems
-          article.card
-            h2.card-title= `${problem.pid} - ${problem.title}`
-            if problem.allowLanguages && problem.allowLanguages.length
-              .button-row
-                each language in problem.allowLanguages
-                  span.badge= language
+      each problem in problems
+        article
+          header
+            h2= `${problem.pid} - ${problem.title}`
+          ul.compact-meta
+            li Languages: #{problem.allowLanguages.join(', ')}
+            li
+              if problem.isVisible
+                span.status-chip.ac Visible
+              else
+                span.status-chip.pending Hidden
+          footer
+            .page-actions
+              a(href=`/admin/problems/${problem.id}/edit`) Edit
+              if !problem.isVisible
+                form(method="post" action=`/admin/problems/${problem.id}/publish`)
+                  button(type="submit" class="secondary") Publish
     else
-      .empty-state No problems available.
+      article
+        p No problems available.

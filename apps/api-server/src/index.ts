@@ -2,8 +2,11 @@ import { RojDb } from '@roj/db';
 
 import {
   buildApp,
+  type AdminProblemViewModel,
   type ApiServerServices,
+  type ContestViewModel,
   type ProblemViewModel,
+  type RanklistEntryViewModel,
   type SessionUser,
   type SubmissionViewModel,
 } from './app.ts';
@@ -20,6 +23,24 @@ function mapProblem(problem: {
     title: problem.title,
     statementMarkdown: problem.statementMarkdown,
     allowLanguages: problem.allowLanguages,
+  };
+}
+
+function mapAdminProblem(problem: {
+  _id: string;
+  pid: string;
+  title: string;
+  statementMarkdown: string;
+  allowLanguages: string[];
+  isVisible: boolean;
+}): AdminProblemViewModel {
+  return {
+    id: problem._id,
+    pid: problem.pid,
+    title: problem.title,
+    statementMarkdown: problem.statementMarkdown,
+    allowLanguages: problem.allowLanguages,
+    isVisible: problem.isVisible,
   };
 }
 
@@ -55,6 +76,35 @@ function mapSessionUser(user: {
     role: user.role,
     approvalStatus: user.approvalStatus,
   };
+}
+
+function formatDateTime(value: Date | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return value.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+function buildPlaceholderContests(): ContestViewModel[] {
+  return [
+    {
+      id: 'practice-may',
+      title: 'May Practice Contest',
+      status: 'Upcoming',
+      startAtText: '2026-05-20 19:00',
+      endAtText: '2026-05-20 21:00',
+      description: 'A simple training contest for class practice.',
+    },
+    {
+      id: 'weekly-ladder',
+      title: 'Weekly Ladder',
+      status: 'Open Practice',
+      startAtText: 'Every Monday 18:00',
+      endAtText: 'Every Sunday 22:00',
+      description: 'A rolling ladder page used as a placeholder for future contest support.',
+    },
+  ];
 }
 
 export async function buildProductionServices(db: RojDb): Promise<ApiServerServices> {
@@ -133,6 +183,21 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const submissions = await db.listAllSubmissions();
       return submissions.map(mapSubmission);
     },
+    listRanklist: async () => {
+      const rows = await db.buildSimpleRanklist();
+      return rows.map((row, index): RanklistEntryViewModel => ({
+        rank: index + 1,
+        username: row.username,
+        acceptedCount: row.acceptedCount,
+        submissionCount: row.submissionCount,
+        lastAcceptedAt: formatDateTime(row.lastAcceptedAt),
+      }));
+    },
+    listContests: async () => buildPlaceholderContests(),
+    getContestById: async (id) => {
+      const contests = buildPlaceholderContests();
+      return contests.find((contest) => contest.id === id) ?? null;
+    },
     listGrades: async () => {
       const grades = await db.listGrades();
       return grades.map((grade) => ({
@@ -156,7 +221,11 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     },
     listAdminProblems: async () => {
       const problems = await db.listAdminProblems();
-      return problems.map(mapProblem);
+      return problems.map(mapAdminProblem);
+    },
+    getAdminProblemById: async (id) => {
+      const problem = await db.getAdminProblemById(id);
+      return problem ? mapAdminProblem(problem) : null;
     },
     createProblem: async (input) => {
       const problem = await db.createProblem(input);

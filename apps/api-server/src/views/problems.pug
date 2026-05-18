@@ -1,23 +1,26 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Practice
-      h1.page-title Browse problems
-      p.page-description
-        | Choose a problem, read the statement, and submit code through a simple learning-oriented interface.
+  section.list-panel
+    header
+      hgroup
+        h1 Problem list
+        p.page-lead Browse public problems, open a statement, and submit code from the detail page.
+      .page-actions
+        a(href="/submissions" role="button" class="secondary") Submission list
+        a(href="/login" role="button" class="contrast") Login
     if problems.length
-      .card-grid
-        each problem in problems
-          article.card
-            .card-row
-              div
-                h2.card-title
-                  a(href=`/problem/${problem.pid}`)= `${problem.pid} - ${problem.title}`
-                ul.meta-list
-                  li Problem ID: #{problem.pid}
-                  li Practice ready
-              a.button.button--secondary(href=`/problem/${problem.pid}`) Open
+      each problem in problems
+        article
+          header
+            h2
+              a(href=`/problem/${problem.pid}`)= `${problem.pid} - ${problem.title}`
+            p.soft-note Submit code, check verdicts, and revisit this problem anytime.
+          ul.compact-meta
+            li PID: #{problem.pid}
+            li Languages: #{problem.allowLanguages.join(', ')}
+          footer
+            a(href=`/problem/${problem.pid}`) Submit code
     else
-      .empty-state No visible problems yet.
+      article
+        p No visible problems yet.

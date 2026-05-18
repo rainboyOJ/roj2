@@ -1,30 +1,33 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow History
-      h1.page-title Recent submissions
-      p.page-description
-        | Review your latest judging results and reopen any submission details page for more context.
+  section.list-panel
+    header
+      hgroup
+        h1 Submission list
+        p.page-lead Review recent judging activity and reopen any submission for details.
+      .page-actions
+        a(href="/problems" role="button" class="secondary") Problem list
     if submissions.length
-      .table-list
-        each submission in submissions
-          article.table-row
-            div
-              h2.card-title
-                a(href=`/submissions/${submission.id}`)= submission.id
-              ul.meta-list
-                li Status: #{submission.status}
-                if submission.judgeStatus
-                  li Judge: #{submission.judgeStatus}
-            div
+      each submission in submissions
+        article
+          header
+            h2
+              a(href=`/submissions/${submission.id}`)= submission.id
+            p.soft-note Track the result of this submission from queued to final verdict.
+          ul.compact-meta
+            li Status: #{submission.status}
+            if submission.judgeStatus
+              li Judge: #{submission.judgeStatus}
+            li
               if submission.verdict === 'AC'
-                span.badge.badge--success= submission.verdict
+                span.status-chip.ac= submission.verdict
               else if submission.verdict === 'PENDING'
-                span.badge.badge--warning= submission.verdict
+                span.status-chip.pending= submission.verdict
               else
-                span.badge.badge--danger= submission.verdict
-            a.button.button--secondary(href=`/submissions/${submission.id}`) Details
+                span.status-chip.failed= submission.verdict
+          footer
+            a(href=`/submissions/${submission.id}`) Details
     else
-      .empty-state No submissions yet.
+      article
+        p No submissions yet.

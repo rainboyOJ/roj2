@@ -87,6 +87,28 @@ export interface GradeViewModel {
   order: number;
 }
 
+export interface RanklistEntryViewModel {
+  rank: number;
+  username: string;
+  acceptedCount: number;
+  submissionCount: number;
+  lastAcceptedAt: string | null;
+}
+
+export interface ContestViewModel {
+  id: string;
+  title: string;
+  status: string;
+  startAtText: string;
+  endAtText: string;
+  description: string;
+}
+
+export interface AdminProblemViewModel extends ProblemViewModel {
+  id: string;
+  isVisible: boolean;
+}
+
 export interface ApiServerServices {
   createSubmission(input: {
     userId: string;
@@ -123,6 +145,9 @@ export interface ApiServerServices {
   approveUser(userId: string, adminUserId: string): Promise<void>;
   rejectUser(userId: string, adminUserId: string, reason?: string): Promise<void>;
   listAdminSubmissions(): Promise<SubmissionViewModel[]>;
+  listRanklist(): Promise<RanklistEntryViewModel[]>;
+  listContests(): Promise<ContestViewModel[]>;
+  getContestById(id: string): Promise<ContestViewModel | null>;
   listGrades(): Promise<GradeViewModel[]>;
   createGrade(input: {
     name: string;
@@ -134,7 +159,8 @@ export interface ApiServerServices {
     isActive: boolean;
     order: number;
   }): Promise<void>;
-  listAdminProblems(): Promise<ProblemViewModel[]>;
+  listAdminProblems(): Promise<AdminProblemViewModel[]>;
+  getAdminProblemById(id: string): Promise<AdminProblemViewModel | null>;
   createProblem(input: {
     pid: string;
     title: string;
@@ -199,7 +225,7 @@ export function buildApp(services: ApiServerServices) {
     root: path.join(__dirname, 'views'),
   });
 
-  app.get('/', async (_request, reply) => reply.redirect('/problems'));
+  app.get('/', async (_request, reply) => reply.view('home.pug'));
 
   app.get('/register', async (_request, reply) => reply.view('register.pug'));
 
@@ -243,6 +269,51 @@ export function buildApp(services: ApiServerServices) {
     return reply.view('admin-problems.pug', { problems });
   });
 
+  app.get('/admin/problems/new', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.redirect('/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    return reply.view('admin-problem-form.pug', {
+      mode: 'create',
+      problem: {
+        id: '',
+        pid: '',
+        title: '',
+        statementMarkdown: '',
+        allowLanguages: ['cpp', 'python'],
+        isVisible: false,
+      },
+    });
+  });
+
+  app.get('/admin/problems/:id/edit', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.redirect('/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const params = request.params as { id: string };
+    const problem = await services.getAdminProblemById(params.id);
+    if (!problem) {
+      return reply.code(404).send('Problem not found');
+    }
+
+    return reply.view('admin-problem-form.pug', {
+      mode: 'edit',
+      problem,
+    });
+  });
+
   app.get('/admin/submissions', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -260,6 +331,26 @@ export function buildApp(services: ApiServerServices) {
   app.get('/problems', async (_request, reply) => {
     const problems = await services.listProblems();
     return reply.view('problems.pug', { problems });
+  });
+
+  app.get('/ranklist', async (_request, reply) => {
+    const entries = await services.listRanklist();
+    return reply.view('ranklist.pug', { entries });
+  });
+
+  app.get('/contests', async (_request, reply) => {
+    const contests = await services.listContests();
+    return reply.view('contests.pug', { contests });
+  });
+
+  app.get('/contests/:id', async (request, reply) => {
+    const params = request.params as { id: string };
+    const contest = await services.getContestById(params.id);
+    if (!contest) {
+      return reply.code(404).send('Contest not found');
+    }
+
+    return reply.view('contest-detail.pug', { contest });
   });
 
   app.get('/problem/:pid', async (request, reply) => {
@@ -627,6 +718,38 @@ export function buildApp(services: ApiServerServices) {
     });
   });
 
+  app.post('/admin/problems', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.redirect('/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const raw = request.body as Record<string, string | string[] | undefined>;
+    const languages = Array.isArray(raw.allowLanguages)
+      ? raw.allowLanguages
+      : raw.allowLanguages
+        ? [raw.allowLanguages]
+        : [];
+
+    const parsed = createProblemSchema.safeParse({
+      pid: raw.pid,
+      title: raw.title,
+      statementMarkdown: raw.statementMarkdown,
+      allowLanguages: languages,
+      isVisible: raw.isVisible === 'true',
+    });
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid problem payload');
+    }
+
+    await services.createProblem(parsed.data);
+    return reply.redirect('/admin/problems');
+  });
+
   app.put('/api/admin/problems/:id', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -650,6 +773,39 @@ export function buildApp(services: ApiServerServices) {
     return reply.send({ ok: true });
   });
 
+  app.post('/admin/problems/:id', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.redirect('/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const params = request.params as { id: string };
+    const raw = request.body as Record<string, string | string[] | undefined>;
+    const languages = Array.isArray(raw.allowLanguages)
+      ? raw.allowLanguages
+      : raw.allowLanguages
+        ? [raw.allowLanguages]
+        : [];
+
+    const parsed = createProblemSchema.safeParse({
+      pid: raw.pid,
+      title: raw.title,
+      statementMarkdown: raw.statementMarkdown,
+      allowLanguages: languages,
+      isVisible: raw.isVisible === 'true',
+    });
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid problem payload');
+    }
+
+    await services.updateProblem(params.id, parsed.data);
+    return reply.redirect('/admin/problems');
+  });
+
   app.post('/api/admin/problems/:id/publish', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -663,6 +819,21 @@ export function buildApp(services: ApiServerServices) {
     const params = request.params as { id: string };
     await services.publishProblem(params.id);
     return reply.send({ ok: true });
+  });
+
+  app.post('/admin/problems/:id/publish', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.redirect('/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const params = request.params as { id: string };
+    await services.publishProblem(params.id);
+    return reply.redirect('/admin/problems');
   });
 
   app.post('/submissions', async (request, reply) => {

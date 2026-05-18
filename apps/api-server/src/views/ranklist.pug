@@ -1,0 +1,28 @@
+extends layout.pug
+
+block content
+  section.list-panel
+    header
+      hgroup
+        h1 Ranklist
+        p.page-lead A simplified school OJ ranklist based on accepted count and recent accepted submissions.
+    if entries.length
+      table
+        thead
+          tr
+            th Rank
+            th User
+            th Accepted
+            th Total submissions
+            th Last AC
+        tbody
+          each entry in entries
+            tr
+              td= entry.rank
+              td= entry.username
+              td= entry.acceptedCount
+              td= entry.submissionCount
+              td= entry.lastAcceptedAt || 'N/A'
+    else
+      article
+        p No ranking data yet.

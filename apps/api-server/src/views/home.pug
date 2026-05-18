@@ -1,0 +1,46 @@
+extends layout.pug
+
+block content
+  .grid
+    section
+      hgroup
+        h1 Practice for school OJ
+        p A compact online judge workspace for reading problems, submitting code, and checking results.
+      p
+        | This site is tuned for learning use: simple navigation, clear pages, and direct access to the most common OJ workflows.
+      .grid
+        article
+          h3 Start solving
+          p Open the problem list, choose a task, and submit Python or C++ code.
+          a(href="/problems" role="button") Go to problems
+        article
+          h3 Check results
+          p Revisit your submissions and follow each judging result until it reaches a final verdict.
+          a(href="/submissions" role="button" class="secondary") View submissions
+        article
+          h3 Read rankings
+          p Open a simple ranklist page with a classic OJ layout.
+          a(href="/ranklist" role="button" class="contrast") Open ranklist
+    aside
+      article
+        h4 Quick links
+        ul
+          li
+            a(href="/problems") Problem list
+          li
+            a(href="/submissions") Submission list
+          li
+            a(href="/ranklist") Ranklist
+          li
+            a(href="/contests") Contest list
+          li
+            a(href="/login") Account login
+          li
+            a(href="/register") Student registration
+      article
+        h4 Learning flow
+        ol
+          li Read the statement.
+          li Write a small correct program first.
+          li Submit and inspect the verdict.
+          li Retry based on the result.

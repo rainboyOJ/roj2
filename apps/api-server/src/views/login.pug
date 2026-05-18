@@ -1,20 +1,17 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Account
-      h1.page-title Sign in
-      p.page-description
-        | Use your account to submit code, view results, and access the learning workflow.
-    .form-card
-      form.form-grid(method="post" action="/api/login")
-        .field
-          label(for="username") Username
-          input#username(type="text" name="username" placeholder="demo")
-        .field
-          label(for="password") Password
-          input#password(type="password" name="password" placeholder="Enter your password")
-        .button-row
+  section.auth-panel
+    header
+      hgroup
+        h1 Account login
+        p.page-lead Sign in to submit code, review your history, and access the common OJ pages.
+    article
+      form(method="post" action="/api/login")
+        label(for="username") Username
+        input#username(type="text" name="username" placeholder="demo")
+        label(for="password") Password
+        input#password(type="password" name="password" placeholder="Enter your password")
+        .grid
           button(type="submit") Sign in
-          a.button.button--secondary(href="/register") Create account
+          a(href="/register" role="button" class="secondary") Create account

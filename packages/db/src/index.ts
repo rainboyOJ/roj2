@@ -346,6 +346,55 @@ export class RojDb {
     return this.submissions().find({}).sort({ createdAt: -1 }).toArray();
   }
 
+  async buildSimpleRanklist() {
+    const submissions = await this.submissions().find({}).toArray();
+    const rows = new Map<string, {
+      username: string;
+      acceptedCount: number;
+      submissionCount: number;
+      wrongAttempts: number;
+      lastAcceptedAt: Date | null;
+    }>();
+
+    for (const submission of submissions) {
+      const key = submission.username;
+      const current = rows.get(key) ?? {
+        username: submission.username,
+        acceptedCount: 0,
+        submissionCount: 0,
+        wrongAttempts: 0,
+        lastAcceptedAt: null,
+      };
+
+      current.submissionCount += 1;
+      if (submission.verdict === SubmissionVerdicts.AC) {
+        current.acceptedCount += 1;
+        if (!current.lastAcceptedAt || submission.updatedAt < current.lastAcceptedAt) {
+          current.lastAcceptedAt = submission.updatedAt;
+        }
+      } else if (submission.verdict !== SubmissionVerdicts.PENDING) {
+        current.wrongAttempts += 1;
+      }
+
+      rows.set(key, current);
+    }
+
+    return Array.from(rows.values()).sort((a, b) => {
+      if (b.acceptedCount !== a.acceptedCount) {
+        return b.acceptedCount - a.acceptedCount;
+      }
+      if (a.wrongAttempts !== b.wrongAttempts) {
+        return a.wrongAttempts - b.wrongAttempts;
+      }
+      const aTime = a.lastAcceptedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      const bTime = b.lastAcceptedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      if (aTime !== bTime) {
+        return aTime - bTime;
+      }
+      return a.username.localeCompare(b.username);
+    });
+  }
+
   async claimPendingSubmission(leaseOwner: string, leaseMs: number) {
     const now = new Date();
     const result = await this.submissions().findOneAndUpdate(
@@ -589,6 +638,10 @@ export class RojDb {
 
   async listAdminProblems() {
     return this.problems().find({}).sort({ pid: 1 }).toArray();
+  }
+
+  async getAdminProblemById(id: string) {
+    return this.problems().findOne({ _id: id });
   }
 
   async createProblem(input: {

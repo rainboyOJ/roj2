@@ -1,0 +1,25 @@
+extends layout.pug
+
+block content
+  section.list-panel
+    header
+      hgroup
+        h1 Contest list
+        p.page-lead Common OJ navigation usually includes contests, so this page provides the first structured version.
+    if contests.length
+      each contest in contests
+        article
+          header
+            h2
+              a(href=`/contests/${contest.id}`)= contest.title
+            p.soft-note= contest.description
+          ul.compact-meta
+            li
+              span.status-chip.pending= contest.status
+            li Start: #{contest.startAtText}
+            li End: #{contest.endAtText}
+          footer
+            a(href=`/contests/${contest.id}`) Open contest page
+    else
+      article
+        p No contests yet.

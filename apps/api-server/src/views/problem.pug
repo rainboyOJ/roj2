@@ -1,30 +1,33 @@
 extends layout.pug
 
 block content
-  .page-stack
-    .page-header
-      .page-eyebrow Problem
-      h1.page-title= `${problem.pid} - ${problem.title}`
-      p.page-description
-        | Read the statement carefully, choose a language, then submit code for online judging.
-    .hero-card
-      .button-row
-        span.badge Available languages
-        each language in problem.allowLanguages
-          span.badge.badge--success= language
-      pre.code-block= problem.statementMarkdown
-    .form-card
-      form.form-grid(method="post" action="/submissions")
-        input(type="hidden" name="pid" value=problem.pid)
-        .field
+  section.detail-panel
+    header
+      hgroup
+        h1= `${problem.pid} - ${problem.title}`
+        p.page-lead Read the statement, pick a supported language, and submit a solution below.
+      p
+        each language, index in problem.allowLanguages
+          span.status-chip(class=index === 0 ? 'ac' : '')= language
+          if index !== problem.allowLanguages.length - 1
+            |  
+    .grid
+      article
+        header
+          h2 Statement
+        pre.mono-block= problem.statementMarkdown
+      article
+        header
+          h2 Submit code
+          p.soft-note Use the same workflow you would expect on a standard OJ page.
+        form(method="post" action="/submissions")
+          input(type="hidden" name="pid" value=problem.pid)
           label(for="language") Language
           select(name="language" id="language")
             each language in problem.allowLanguages
               option(value=language)= language
-        .field
           label(for="sourceCode") Source code
-          p.helper-text Paste a full solution. Python and C++ are supported for this practice problem.
-          textarea(name="sourceCode" id="sourceCode")
-        .button-row
-          button(type="submit") Submit solution
-          a.button.button--secondary(href="/problems") Back to problems
+          textarea(name="sourceCode" id="sourceCode" placeholder="Write your solution here")
+          .grid
+            button(type="submit") Submit code
+            a(href="/problems" role="button" class="secondary") Back to problem list

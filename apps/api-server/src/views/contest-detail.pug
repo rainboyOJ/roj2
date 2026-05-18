@@ -1,0 +1,23 @@
+extends layout.pug
+
+block content
+  section.detail-panel
+    header
+      hgroup
+        h1= contest.title
+        p.page-lead= contest.description
+    .grid
+      article
+        h3 Status
+        p
+          span.status-chip.pending= contest.status
+      article
+        h3 Start
+        p= contest.startAtText
+      article
+        h3 End
+        p= contest.endAtText
+    article
+      h2 About this page
+      p
+        | This is a first-stage contest page shell. It gives the OJ a standard contest navigation flow now, while real contest rules and scoreboard behavior can be added later without redesigning the page system.
