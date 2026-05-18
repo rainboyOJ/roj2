@@ -1,5 +1,5 @@
 doctype html
-html(lang="zh-CN")
+html(lang=lang === 'zh' ? 'zh-CN' : 'en')
   head
     meta(charset="utf-8")
     meta(name="viewport" content="width=device-width, initial-scale=1")
@@ -48,6 +48,19 @@ html(lang="zh-CN")
 
       .brand-block small {
         color: #526077;
+      }
+
+      .lang-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.92rem;
+        color: #526077;
+      }
+
+      .lang-switch a[aria-current="true"] {
+        font-weight: 700;
+        text-decoration: underline;
       }
 
       .page-lead {
@@ -159,36 +172,47 @@ html(lang="zh-CN")
       nav
         ul
           li
-            a(href="/")
+            a(href=urlWithLang('/'))
               span.brand-block
                 strong ROJ
-                small Simple school OJ
+                small= t('site.tagline')
         ul
           li
-            a(href="/") Home
+            a(href=urlWithLang('/'))= t('nav.home')
           li
-            a(href="/problems") Problem list
+            a(href=urlWithLang('/problems'))= t('nav.problems')
           li
-            a(href="/submissions") Submission list
+            a(href=urlWithLang('/submissions'))= t('nav.submissions')
           li
-            a(href="/ranklist") Ranklist
+            a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
           li
-            a(href="/contests") Contests
+            a(href=urlWithLang('/contests'))= t('nav.contests')
           li
-            a(href="/profile") Profile
+            a(href=urlWithLang('/profile'))= t('nav.profile')
           li
-            a(href="/login") Login
+            a(href=urlWithLang('/login'))= t('nav.login')
           li
-            a(href="/register") Register
+            a(href=urlWithLang('/register'))= t('nav.register')
           li
             details.dropdown
-              summary Admin
+              summary= t('nav.admin')
               ul(dir="rtl")
                 li
-                  a(href="/admin/users") Users
+                  a(href=urlWithLang('/admin/users'))= t('nav.admin.users')
                 li
-                  a(href="/admin/problems") Problems
+                  a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
                 li
-                  a(href="/admin/submissions") Submissions
+                  a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
+          li
+            span.lang-switch
+              a(
+                href=currentUrlForLang('zh')
+                aria-current=lang === 'zh'
+              )= t('lang.zh')
+              span /
+              a(
+                href=currentUrlForLang('en')
+                aria-current=lang === 'en'
+              )= t('lang.en')
     main.container
       block content

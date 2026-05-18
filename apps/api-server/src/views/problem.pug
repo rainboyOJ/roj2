@@ -5,7 +5,7 @@ block content
     header
       hgroup
         h1= `${problem.pid} - ${problem.title}`
-        p.page-lead Read the statement, pick a supported language, and submit a solution below.
+        p.page-lead= t('problem.lead')
       p
         each language, index in problem.allowLanguages
           span.status-chip(class=index === 0 ? 'ac' : '')= language
@@ -14,20 +14,20 @@ block content
     .grid
       article
         header
-          h2 Statement
+          h2= t('problem.statement')
         pre.mono-block= problem.statementMarkdown
       article
         header
-          h2 Submit code
-          p.soft-note Use the same workflow you would expect on a standard OJ page.
-        form(method="post" action="/submissions")
+          h2= t('problem.submit')
+          p.soft-note= t('problem.workflow')
+        form(method="post" action=urlWithLang('/submissions'))
           input(type="hidden" name="pid" value=problem.pid)
-          label(for="language") Language
+          label(for="language")= t('problem.language')
           select(name="language" id="language")
             each language in problem.allowLanguages
               option(value=language)= language
-          label(for="sourceCode") Source code
-          textarea(name="sourceCode" id="sourceCode" placeholder="Write your solution here")
+          label(for="sourceCode")= t('problem.sourceCode')
+          textarea(name="sourceCode" id="sourceCode" placeholder=t('problem.placeholder'))
           .grid
-            button(type="submit") Submit code
-            a(href="/problems" role="button" class="secondary") Back to problem list
+            button(type="submit")= t('problem.submit')
+            a(href=urlWithLang('/problems') role="button" class="secondary")= t('problem.backToProblems')

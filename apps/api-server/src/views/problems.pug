@@ -4,23 +4,23 @@ block content
   section.list-panel
     header
       hgroup
-        h1 Problem list
-        p.page-lead Browse public problems, open a statement, and submit code from the detail page.
+        h1= t('problems.title')
+        p.page-lead= t('problems.lead')
       .page-actions
-        a(href="/submissions" role="button" class="secondary") Submission list
-        a(href="/login" role="button" class="contrast") Login
+        a(href=urlWithLang('/submissions') role="button" class="secondary")= t('problems.openSubmissionList')
+        a(href=urlWithLang('/login') role="button" class="contrast")= t('problems.login')
     if problems.length
       each problem in problems
         article
           header
             h2
-              a(href=`/problem/${problem.pid}`)= `${problem.pid} - ${problem.title}`
-            p.soft-note Submit code, check verdicts, and revisit this problem anytime.
+              a(href=urlWithLang(`/problem/${problem.pid}`))= `${problem.pid} - ${problem.title}`
+            p.soft-note= t('problems.itemLead')
           ul.compact-meta
-            li PID: #{problem.pid}
-            li Languages: #{problem.allowLanguages.join(', ')}
+            li #{t('problems.pid')}: #{problem.pid}
+            li #{t('problems.languages')}: #{problem.allowLanguages.join(', ')}
           footer
-            a(href=`/problem/${problem.pid}`) Submit code
+            a(href=urlWithLang(`/problem/${problem.pid}`))= t('problems.submit')
     else
       article
-        p No visible problems yet.
+        p= t('problems.empty')

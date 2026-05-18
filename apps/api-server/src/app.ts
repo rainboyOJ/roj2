@@ -8,6 +8,8 @@ import pug from 'pug';
 import { OJSubmissionStatuses } from '@roj/shared';
 import { z } from 'zod';
 
+import { createViewContext, resolveUiLang, type UiLang } from './view-i18n.ts';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const createSubmissionSchema = z.object({
@@ -214,6 +216,22 @@ function clearSessionCookie(reply: {
   );
 }
 
+function getRequestLang(request: {
+  query?: unknown;
+}): UiLang {
+  const query = request.query;
+  if (query && typeof query === 'object' && 'lang' in query) {
+    return resolveUiLang((query as { lang?: unknown }).lang);
+  }
+
+  return 'zh';
+}
+
+function buildLangPath(pathname: string, lang: UiLang): string {
+  const separator = pathname.includes('?') ? '&' : '?';
+  return `${pathname}${separator}lang=${lang}`;
+}
+
 export function buildApp(services: ApiServerServices) {
   const app = Fastify();
 
@@ -225,61 +243,85 @@ export function buildApp(services: ApiServerServices) {
     root: path.join(__dirname, 'views'),
   });
 
-  app.get('/', async (_request, reply) => reply.view('home.pug'));
+  function renderPage(
+    request: { query?: unknown; url: string },
+    reply: { view(template: string, data?: Record<string, unknown>): unknown },
+    template: string,
+    data: Record<string, unknown> = {},
+  ) {
+    const lang = getRequestLang(request);
+    const currentPath = request.url || '/';
+    return reply.view(template, {
+      ...createViewContext(lang, currentPath),
+      ...data,
+    });
+  }
 
-  app.get('/register', async (_request, reply) => reply.view('register.pug'));
+  function redirectWithLang(
+    request: { query?: unknown },
+    reply: { redirect(location: string): unknown },
+    pathname: string,
+  ) {
+    const lang = getRequestLang(request);
+    return reply.redirect(buildLangPath(pathname, lang));
+  }
 
-  app.get('/login', async (_request, reply) => reply.view('login.pug'));
+  app.get('/', async (request, reply) => renderPage(request, reply, 'home.pug'));
+
+  app.get('/register', async (request, reply) =>
+    renderPage(request, reply, 'register.pug'));
+
+  app.get('/login', async (request, reply) => renderPage(request, reply, 'login.pug'));
 
   app.get('/profile', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
 
-    return reply.view('profile.pug', { user });
+    return renderPage(request, reply, 'profile.pug', { user });
   });
 
   app.get('/admin/users', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
     }
 
     const users = await services.listAdminUsers();
-    return reply.view('admin-users.pug', { currentUser: user, users });
+    return renderPage(request, reply, 'admin-users.pug', { currentUser: user, users });
   });
 
   app.get('/admin/problems', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
     }
 
     const problems = await services.listAdminProblems();
-    return reply.view('admin-problems.pug', { problems });
+    return renderPage(request, reply, 'admin-problems.pug', { problems });
   });
 
   app.get('/admin/problems/new', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
     }
 
-    return reply.view('admin-problem-form.pug', {
+    return renderPage(request, reply, 'admin-problem-form.pug', {
       mode: 'create',
       problem: {
         id: '',
@@ -296,7 +338,7 @@ export function buildApp(services: ApiServerServices) {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
@@ -308,7 +350,7 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(404).send('Problem not found');
     }
 
-    return reply.view('admin-problem-form.pug', {
+    return renderPage(request, reply, 'admin-problem-form.pug', {
       mode: 'edit',
       problem,
     });
@@ -318,29 +360,29 @@ export function buildApp(services: ApiServerServices) {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
     }
 
     const submissions = await services.listAdminSubmissions();
-    return reply.view('admin-submissions.pug', { submissions });
+    return renderPage(request, reply, 'admin-submissions.pug', { submissions });
   });
 
-  app.get('/problems', async (_request, reply) => {
+  app.get('/problems', async (request, reply) => {
     const problems = await services.listProblems();
-    return reply.view('problems.pug', { problems });
+    return renderPage(request, reply, 'problems.pug', { problems });
   });
 
-  app.get('/ranklist', async (_request, reply) => {
+  app.get('/ranklist', async (request, reply) => {
     const entries = await services.listRanklist();
-    return reply.view('ranklist.pug', { entries });
+    return renderPage(request, reply, 'ranklist.pug', { entries });
   });
 
-  app.get('/contests', async (_request, reply) => {
+  app.get('/contests', async (request, reply) => {
     const contests = await services.listContests();
-    return reply.view('contests.pug', { contests });
+    return renderPage(request, reply, 'contests.pug', { contests });
   });
 
   app.get('/contests/:id', async (request, reply) => {
@@ -350,7 +392,7 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(404).send('Contest not found');
     }
 
-    return reply.view('contest-detail.pug', { contest });
+    return renderPage(request, reply, 'contest-detail.pug', { contest });
   });
 
   app.get('/problem/:pid', async (request, reply) => {
@@ -360,14 +402,14 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(404).send('Problem not found');
     }
 
-    return reply.view('problem.pug', { problem });
+    return renderPage(request, reply, 'problem.pug', { problem });
   });
 
   app.get('/submissions/:id', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
 
     const params = request.params as { id: string };
@@ -376,18 +418,18 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(404).send('Submission not found');
     }
 
-    return reply.view('submission.pug', { submission });
+    return renderPage(request, reply, 'submission.pug', { submission });
   });
 
   app.get('/submissions', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
 
     const submissions = await services.listSubmissions(user);
-    return reply.view('submissions.pug', { submissions });
+    return renderPage(request, reply, 'submissions.pug', { submissions });
   });
 
   app.get('/api/problems', async () => services.listProblems());
@@ -722,7 +764,7 @@ export function buildApp(services: ApiServerServices) {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
@@ -747,7 +789,7 @@ export function buildApp(services: ApiServerServices) {
     }
 
     await services.createProblem(parsed.data);
-    return reply.redirect('/admin/problems');
+    return redirectWithLang(request, reply, '/admin/problems');
   });
 
   app.put('/api/admin/problems/:id', async (request, reply) => {
@@ -777,7 +819,7 @@ export function buildApp(services: ApiServerServices) {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
@@ -803,7 +845,7 @@ export function buildApp(services: ApiServerServices) {
     }
 
     await services.updateProblem(params.id, parsed.data);
-    return reply.redirect('/admin/problems');
+    return redirectWithLang(request, reply, '/admin/problems');
   });
 
   app.post('/api/admin/problems/:id/publish', async (request, reply) => {
@@ -825,7 +867,7 @@ export function buildApp(services: ApiServerServices) {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role !== 'admin') {
       return reply.code(403).send('Forbidden');
@@ -833,14 +875,14 @@ export function buildApp(services: ApiServerServices) {
 
     const params = request.params as { id: string };
     await services.publishProblem(params.id);
-    return reply.redirect('/admin/problems');
+    return redirectWithLang(request, reply, '/admin/problems');
   });
 
   app.post('/submissions', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
-      return reply.redirect('/login');
+      return redirectWithLang(request, reply, '/login');
     }
     if (user.role === 'student' && user.approvalStatus !== 'approved') {
       return reply.code(403).send('Approval required');
@@ -855,7 +897,7 @@ export function buildApp(services: ApiServerServices) {
       userId: user.id,
       ...parsed.data,
     });
-    return reply.redirect(`/submissions/${created.id}`);
+    return redirectWithLang(request, reply, `/submissions/${created.id}`);
   });
 
   return app;

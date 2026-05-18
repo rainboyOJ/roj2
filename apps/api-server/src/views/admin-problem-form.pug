@@ -2,46 +2,46 @@ extends layout.pug
 
 block content
   - const isCreate = mode === 'create';
-  - const actionPath = isCreate ? '/admin/problems' : `/admin/problems/${problem.id}`;
+  - const actionPath = isCreate ? urlWithLang('/admin/problems') : urlWithLang(`/admin/problems/${problem.id}`);
   section.auth-panel
     header
       if isCreate
         hgroup
-          h1 Create problem
-          p.page-lead Add a new problem metadata record for the OJ.
+          h1= t('admin.problemForm.createTitle')
+          p.page-lead= t('admin.problemForm.createLead')
       else
         hgroup
-          h1 Edit problem
-          p.page-lead Update title, statement, languages, and visibility for an existing problem.
+          h1= t('admin.problemForm.editTitle')
+          p.page-lead= t('admin.problemForm.editLead')
     article
       form(method="post" action=actionPath)
         if !isCreate
           input(type="hidden" name="id" value=problem.id)
         .grid
           div
-            label(for="pid") PID
+            label(for="pid")= t('admin.problemForm.pid')
             input#pid(type="text" name="pid" value=problem.pid)
           div
-            label(for="title") Title
+            label(for="title")= t('admin.problemForm.title')
             input#title(type="text" name="title" value=problem.title)
-        label(for="statementMarkdown") Statement
+        label(for="statementMarkdown")= t('admin.problemForm.statement')
         textarea#statementMarkdown(name="statementMarkdown")= problem.statementMarkdown
         fieldset
-          legend Languages
+          legend= t('admin.problemForm.languages')
           label
             input(type="checkbox" name="allowLanguages" value="cpp" checked=problem.allowLanguages.includes('cpp'))
             | C++
           label
             input(type="checkbox" name="allowLanguages" value="python" checked=problem.allowLanguages.includes('python'))
             | Python
-        label(for="isVisible") Visible
+        label(for="isVisible")= t('admin.problemForm.visible')
         select#isVisible(name="isVisible")
-          option(value="false" selected=!problem.isVisible) Hidden
-          option(value="true" selected=problem.isVisible) Visible
+          option(value="false" selected=!problem.isVisible)= t('admin.problemForm.hidden')
+          option(value="true" selected=problem.isVisible)= t('admin.problemForm.visibleOption')
         .grid
-          button(type="submit") Save problem
-          a(href="/admin/problems" role="button" class="secondary") Back
+          button(type="submit")= t('admin.problemForm.save')
+          a(href=urlWithLang('/admin/problems') role="button" class="secondary")= t('admin.problemForm.back')
       if !isCreate
         hr
-        form(method="post" action=`/admin/problems/${problem.id}/publish`)
-          button(type="submit" class="contrast") Publish problem
+        form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
+          button(type="submit" class="contrast")= t('admin.problemForm.publish')

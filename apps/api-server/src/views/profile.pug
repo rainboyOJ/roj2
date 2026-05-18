@@ -4,21 +4,21 @@ block content
   section.detail-panel
     header
       hgroup
-        h1 Profile
-        p.page-lead Basic account information for the current user.
+        h1= t('profile.title')
+        p.page-lead= t('profile.lead')
     .grid
       article
-        h3 Username
+        h3= t('profile.username')
         p= user.username
       article
-        h3 Role
-        p= user.role
+        h3= t('profile.role')
+        p= localizeRole(user.role)
       article
-        h3 Approval
+        h3= t('profile.approval')
         p
           if user.approvalStatus === 'approved'
-            span.status-chip.ac= user.approvalStatus
+            span.status-chip.ac= localizeApprovalStatus(user.approvalStatus)
           else if user.approvalStatus === 'rejected'
-            span.status-chip.failed= user.approvalStatus
+            span.status-chip.failed= localizeApprovalStatus(user.approvalStatus)
           else
-            span.status-chip.pending= user.approvalStatus
+            span.status-chip.pending= localizeApprovalStatus(user.approvalStatus)

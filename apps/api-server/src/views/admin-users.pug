@@ -4,23 +4,23 @@ block content
   section.list-panel
     header
       hgroup
-        h1 Admin users
-        p.page-lead Review current user accounts and their approval status.
+        h1= t('admin.users.title')
+        p.page-lead= t('admin.users.lead')
     if users.length
       each user in users
         article
           header
             h2= user.username
-            p.soft-note= user.name || 'No display name'
+            p.soft-note= user.name || t('admin.users.noDisplayName')
           ul.compact-meta
-            li Role: #{user.role}
+            li #{t('admin.users.role')}: #{localizeRole(user.role)}
             li
               if user.approvalStatus === 'approved'
-                span.status-chip.ac= user.approvalStatus
+                span.status-chip.ac= localizeApprovalStatus(user.approvalStatus)
               else if user.approvalStatus === 'rejected'
-                span.status-chip.failed= user.approvalStatus
+                span.status-chip.failed= localizeApprovalStatus(user.approvalStatus)
               else
-                span.status-chip.pending= user.approvalStatus
+                span.status-chip.pending= localizeApprovalStatus(user.approvalStatus)
     else
       article
-        p No users to review.
+        p= t('admin.users.empty')

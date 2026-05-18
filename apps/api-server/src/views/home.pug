@@ -4,43 +4,43 @@ block content
   .grid
     section
       hgroup
-        h1 Practice for school OJ
-        p A compact online judge workspace for reading problems, submitting code, and checking results.
+        h1= t('home.title')
+        p= t('home.lead')
       p
-        | This site is tuned for learning use: simple navigation, clear pages, and direct access to the most common OJ workflows.
+        = t('home.description')
       .grid
         article
-          h3 Start solving
-          p Open the problem list, choose a task, and submit Python or C++ code.
-          a(href="/problems" role="button") Go to problems
+          h3= t('home.start.title')
+          p= t('home.start.body')
+          a(href=urlWithLang('/problems') role="button")= t('home.start.cta')
         article
-          h3 Check results
-          p Revisit your submissions and follow each judging result until it reaches a final verdict.
-          a(href="/submissions" role="button" class="secondary") View submissions
+          h3= t('home.results.title')
+          p= t('home.results.body')
+          a(href=urlWithLang('/submissions') role="button" class="secondary")= t('home.results.cta')
         article
-          h3 Read rankings
-          p Open a simple ranklist page with a classic OJ layout.
-          a(href="/ranklist" role="button" class="contrast") Open ranklist
+          h3= t('home.rankings.title')
+          p= t('home.rankings.body')
+          a(href=urlWithLang('/ranklist') role="button" class="contrast")= t('home.rankings.cta')
     aside
       article
-        h4 Quick links
+        h4= t('home.quickLinks')
         ul
           li
-            a(href="/problems") Problem list
+            a(href=urlWithLang('/problems'))= t('problems.title')
           li
-            a(href="/submissions") Submission list
+            a(href=urlWithLang('/submissions'))= t('submissions.title')
           li
-            a(href="/ranklist") Ranklist
+            a(href=urlWithLang('/ranklist'))= t('ranklist.title')
           li
-            a(href="/contests") Contest list
+            a(href=urlWithLang('/contests'))= t('contests.title')
           li
-            a(href="/login") Account login
+            a(href=urlWithLang('/login'))= t('login.title')
           li
-            a(href="/register") Student registration
+            a(href=urlWithLang('/register'))= t('register.title')
       article
-        h4 Learning flow
+        h4= t('home.learningFlow')
         ol
-          li Read the statement.
-          li Write a small correct program first.
-          li Submit and inspect the verdict.
-          li Retry based on the result.
+          li= t('home.flow.step1')
+          li= t('home.flow.step2')
+          li= t('home.flow.step3')
+          li= t('home.flow.step4')

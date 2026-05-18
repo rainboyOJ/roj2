@@ -4,28 +4,28 @@ block content
   section.list-panel
     header
       hgroup
-        h1 Admin problems
-        p.page-lead Browse problems in the same way an OJ manager would scan the catalog.
+        h1= t('admin.problems.title')
+        p.page-lead= t('admin.problems.lead')
       .page-actions
-        a(href="/admin/problems/new" role="button") Create problem
+        a(href=urlWithLang('/admin/problems/new') role="button")= t('admin.problems.create')
     if problems.length
       each problem in problems
         article
           header
             h2= `${problem.pid} - ${problem.title}`
           ul.compact-meta
-            li Languages: #{problem.allowLanguages.join(', ')}
+            li #{t('admin.problems.languages')}: #{problem.allowLanguages.join(', ')}
             li
               if problem.isVisible
-                span.status-chip.ac Visible
+                span.status-chip.ac= t('status.visible')
               else
-                span.status-chip.pending Hidden
+                span.status-chip.pending= t('status.hidden')
           footer
             .page-actions
-              a(href=`/admin/problems/${problem.id}/edit`) Edit
+              a(href=urlWithLang(`/admin/problems/${problem.id}/edit`))= t('admin.problems.edit')
               if !problem.isVisible
-                form(method="post" action=`/admin/problems/${problem.id}/publish`)
-                  button(type="submit" class="secondary") Publish
+                form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
+                  button(type="submit" class="secondary")= t('admin.problems.publish')
     else
       article
-        p No problems available.
+        p= t('admin.problems.empty')

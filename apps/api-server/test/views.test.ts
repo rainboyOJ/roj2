@@ -113,7 +113,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
 }
 
 describe('rendered views', () => {
-  it('renders a home page with Pico CSS and shared navigation', async () => {
+  it('renders a home page with Pico CSS and shared navigation in Chinese by default', async () => {
     const app = buildApp(createServices());
 
     const response = await app.inject({
@@ -124,8 +124,22 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('https://cdn.jsdelivr.net/npm/@picocss/pico');
     expect(response.body).toContain('<nav');
+    expect(response.body).toContain('首页');
+    expect(response.body).toContain('学校 OJ 练习平台');
+  });
+
+  it('renders a home page in English when lang=en is provided', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/?lang=en',
+    });
+
+    expect(response.statusCode).toBe(200);
     expect(response.body).toContain('Home');
     expect(response.body).toContain('Practice for school OJ');
+    expect(response.body).toContain('href="/?lang=zh"');
   });
 
   it('renders problems page with shared navigation links', async () => {
@@ -138,8 +152,8 @@ describe('rendered views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('<nav');
-    expect(response.body).toContain('Problem list');
-    expect(response.body).toContain('Submit code');
+    expect(response.body).toContain('题目列表');
+    expect(response.body).toContain('提交代码');
   });
 
   it('renders login form with Pico-style page content', async () => {
@@ -153,9 +167,9 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('Account login');
-    expect(response.body).toContain('username');
-    expect(response.body).toContain('Sign in');
+    expect(response.body).toContain('账号登录');
+    expect(response.body).toContain('用户名');
+    expect(response.body).toContain('登录');
   });
 
   it('renders the ranklist page', async () => {
@@ -167,8 +181,8 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('Ranklist');
-    expect(response.body).toContain('Accepted');
+    expect(response.body).toContain('排行榜');
+    expect(response.body).toContain('通过题数');
     expect(response.body).toContain('demo');
   });
 
@@ -181,9 +195,9 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('Contest list');
+    expect(response.body).toContain('比赛列表');
     expect(response.body).toContain('May Practice Contest');
-    expect(response.body).toContain('Upcoming');
+    expect(response.body).toContain('即将开始');
   });
 
   it('renders the admin problem creation page for admins', async () => {
@@ -205,8 +219,8 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('Create problem');
-    expect(response.body).toContain('Statement');
+    expect(response.body).toContain('创建题目');
+    expect(response.body).toContain('题面');
   });
 
   it('renders the admin problem edit page for admins', async () => {
@@ -228,7 +242,7 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('Edit problem');
+    expect(response.body).toContain('编辑题目');
     expect(response.body).toContain('A + B Problem');
   });
 });

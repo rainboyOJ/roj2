@@ -4,25 +4,25 @@ block content
   section.list-panel
     header
       hgroup
-        h1 Admin submissions
-        p.page-lead Track judging activity across all submissions in a standard list view.
+        h1= t('admin.submissions.title')
+        p.page-lead= t('admin.submissions.lead')
     if submissions.length
       each submission in submissions
         article
           header
             h2
-              a(href=`/submissions/${submission.id}`)= submission.id
+              a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
           ul.compact-meta
-            li Status: #{submission.status}
+            li #{t('admin.submissions.status')}: #{localizeStatus(submission.status)}
             if submission.judgeStatus
-              li Judge: #{submission.judgeStatus}
+              li #{t('admin.submissions.judge')}: #{localizeJudgeStatus(submission.judgeStatus)}
             li
               if submission.verdict === 'AC'
-                span.status-chip.ac= submission.verdict
+                span.status-chip.ac= localizeVerdict(submission.verdict)
               else if submission.verdict === 'PENDING'
-                span.status-chip.pending= submission.verdict
+                span.status-chip.pending= localizeVerdict(submission.verdict)
               else
-                span.status-chip.failed= submission.verdict
+                span.status-chip.failed= localizeVerdict(submission.verdict)
     else
       article
-        p No submissions yet.
+        p= t('admin.submissions.empty')

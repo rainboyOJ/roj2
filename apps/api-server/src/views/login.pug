@@ -4,14 +4,14 @@ block content
   section.auth-panel
     header
       hgroup
-        h1 Account login
-        p.page-lead Sign in to submit code, review your history, and access the common OJ pages.
+        h1= t('login.title')
+        p.page-lead= t('login.lead')
     article
-      form(method="post" action="/api/login")
-        label(for="username") Username
-        input#username(type="text" name="username" placeholder="demo")
-        label(for="password") Password
-        input#password(type="password" name="password" placeholder="Enter your password")
+      form(method="post" action=urlWithLang('/api/login'))
+        label(for="username")= t('login.username')
+        input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder'))
+        label(for="password")= t('login.password')
+        input#password(type="password" name="password" placeholder=t('login.passwordPlaceholder'))
         .grid
-          button(type="submit") Sign in
-          a(href="/register" role="button" class="secondary") Create account
+          button(type="submit")= t('login.submit')
+          a(href=urlWithLang('/register') role="button" class="secondary")= t('login.createAccount')

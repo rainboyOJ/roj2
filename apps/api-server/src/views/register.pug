@@ -4,28 +4,28 @@ block content
   section.auth-panel
     header
       hgroup
-        h1 Student registration
-        p.page-lead Create a basic account for class use and wait for administrator approval when needed.
+        h1= t('register.title')
+        p.page-lead= t('register.lead')
     article
-      form(method="post" action="/api/register")
+      form(method="post" action=urlWithLang('/api/register'))
         .grid
           div
-            label(for="username") Username
-            input#username(type="text" name="username" placeholder="student_01")
+            label(for="username")= t('register.username')
+            input#username(type="text" name="username" placeholder=t('register.usernamePlaceholder'))
           div
-            label(for="name") Name
-            input#name(type="text" name="name" placeholder="Your name")
+            label(for="name")= t('register.name')
+            input#name(type="text" name="name" placeholder=t('register.namePlaceholder'))
         .grid
           div
-            label(for="gender") Gender
-            input#gender(type="text" name="gender" placeholder="male / female / other")
+            label(for="gender")= t('register.gender')
+            input#gender(type="text" name="gender" placeholder=t('register.genderPlaceholder'))
           div
-            label(for="grade") Grade
-            input#grade(type="text" name="grade" placeholder="2025")
-        label(for="className") Class
-        input#className(type="text" name="className" placeholder="Class 1")
-        label(for="password") Password
-        input#password(type="password" name="password" placeholder="At least 8 characters")
+            label(for="grade")= t('register.grade')
+            input#grade(type="text" name="grade" placeholder=t('register.gradePlaceholder'))
+        label(for="className")= t('register.className')
+        input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder'))
+        label(for="password")= t('register.password')
+        input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))
         .grid
-          button(type="submit") Register
-          a(href="/login" role="button" class="secondary") Back to login
+          button(type="submit")= t('register.submit')
+          a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')

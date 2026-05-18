@@ -4,17 +4,17 @@ block content
   section.list-panel
     header
       hgroup
-        h1 Ranklist
-        p.page-lead A simplified school OJ ranklist based on accepted count and recent accepted submissions.
+        h1= t('ranklist.title')
+        p.page-lead= t('ranklist.lead')
     if entries.length
       table
         thead
           tr
-            th Rank
-            th User
-            th Accepted
-            th Total submissions
-            th Last AC
+            th= t('ranklist.rank')
+            th= t('ranklist.user')
+            th= t('ranklist.accepted')
+            th= t('ranklist.totalSubmissions')
+            th= t('ranklist.lastAc')
         tbody
           each entry in entries
             tr
@@ -22,7 +22,7 @@ block content
               td= entry.username
               td= entry.acceptedCount
               td= entry.submissionCount
-              td= entry.lastAcceptedAt || 'N/A'
+              td= entry.lastAcceptedAt || t('ranklist.na')
     else
       article
-        p No ranking data yet.
+        p= t('ranklist.noData')

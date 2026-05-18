@@ -4,30 +4,30 @@ block content
   section.list-panel
     header
       hgroup
-        h1 Submission list
-        p.page-lead Review recent judging activity and reopen any submission for details.
+        h1= t('submissions.title')
+        p.page-lead= t('submissions.lead')
       .page-actions
-        a(href="/problems" role="button" class="secondary") Problem list
+        a(href=urlWithLang('/problems') role="button" class="secondary")= t('submissions.problemList')
     if submissions.length
       each submission in submissions
         article
           header
             h2
-              a(href=`/submissions/${submission.id}`)= submission.id
-            p.soft-note Track the result of this submission from queued to final verdict.
+              a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
+            p.soft-note= t('submissions.itemLead')
           ul.compact-meta
-            li Status: #{submission.status}
+            li #{t('submissions.status')}: #{localizeStatus(submission.status)}
             if submission.judgeStatus
-              li Judge: #{submission.judgeStatus}
+              li #{t('submissions.judge')}: #{localizeJudgeStatus(submission.judgeStatus)}
             li
               if submission.verdict === 'AC'
-                span.status-chip.ac= submission.verdict
+                span.status-chip.ac= localizeVerdict(submission.verdict)
               else if submission.verdict === 'PENDING'
-                span.status-chip.pending= submission.verdict
+                span.status-chip.pending= localizeVerdict(submission.verdict)
               else
-                span.status-chip.failed= submission.verdict
+                span.status-chip.failed= localizeVerdict(submission.verdict)
           footer
-            a(href=`/submissions/${submission.id}`) Details
+            a(href=urlWithLang(`/submissions/${submission.id}`))= t('submissions.details')
     else
       article
-        p No submissions yet.
+        p= t('submissions.empty')
