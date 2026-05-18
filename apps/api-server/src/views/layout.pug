@@ -583,37 +583,39 @@ html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
       nav
         ul
           li
-            a(href=urlWithLang('/'))
+            a(href=isAdminArea ? urlWithLang('/admin') : urlWithLang('/'))
               span.brand-block
                 strong ROJ
-                small= t('site.tagline')
+                small= isAdminArea ? t('nav.admin') : t('site.tagline')
         ul
-          li
-            a(href=urlWithLang('/'))= t('nav.home')
-          li
-            a(href=urlWithLang('/problems'))= t('nav.problems')
-          li
-            a(href=urlWithLang('/submissions'))= t('nav.submissions')
-          li
-            a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
-          li
-            a(href=urlWithLang('/contests'))= t('nav.contests')
-          li
-            a(href=urlWithLang('/profile'))= t('nav.profile')
-          li
-            a(href=urlWithLang('/login'))= t('nav.login')
-          li
-            a(href=urlWithLang('/register'))= t('nav.register')
-          li
-            details.dropdown
-              summary= t('nav.admin')
-              ul(dir="rtl")
-                li
-                  a(href=urlWithLang('/admin/users'))= t('nav.admin.users')
-                li
-                  a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
-                li
-                  a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
+          if isAdminArea
+            li
+              a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
+            li
+              a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
+            li
+              a(href=urlWithLang('/admin/users'))= t('nav.admin.users')
+            li
+              a(href=urlWithLang('/'))= t('nav.home')
+          else
+            li
+              a(href=urlWithLang('/'))= t('nav.home')
+            li
+              a(href=urlWithLang('/problems'))= t('nav.problems')
+            li
+              a(href=urlWithLang('/submissions'))= t('nav.submissions')
+            li
+              a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
+            li
+              a(href=urlWithLang('/contests'))= t('nav.contests')
+            if currentUser
+              li
+                a(href=urlWithLang('/profile'))= t('nav.profile')
+            else
+              li
+                a(href=urlWithLang('/login'))= t('nav.login')
+              li
+                a(href=urlWithLang('/register'))= t('nav.register')
           li
             span.lang-switch
               a(

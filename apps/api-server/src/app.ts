@@ -243,16 +243,21 @@ export function buildApp(services: ApiServerServices) {
     root: path.join(__dirname, 'views'),
   });
 
-  function renderPage(
-    request: { query?: unknown; url: string },
+  async function renderPage(
+    request: { query?: unknown; url: string; headers?: { cookie?: string | undefined } },
     reply: { view(template: string, data?: Record<string, unknown>): unknown },
     template: string,
     data: Record<string, unknown> = {},
   ) {
     const lang = getRequestLang(request);
     const currentPath = request.url || '/';
+    const sessionToken = parseSessionToken(request.headers?.cookie);
+    const currentUser = sessionToken ? await services.getCurrentUser(sessionToken) : null;
+    const pathname = currentPath.split('?')[0] || '/';
     return reply.view(template, {
       ...createViewContext(lang, currentPath),
+      currentUser,
+      isAdminArea: pathname === '/admin' || pathname.startsWith('/admin/'),
       ...data,
     });
   }
@@ -281,6 +286,19 @@ export function buildApp(services: ApiServerServices) {
     }
 
     return renderPage(request, reply, 'profile.pug', { user });
+  });
+
+  app.get('/admin', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    return redirectWithLang(request, reply, '/admin/problems');
   });
 
   app.get('/admin/users', async (request, reply) => {

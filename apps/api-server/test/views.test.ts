@@ -135,6 +135,9 @@ describe('rendered views', () => {
     expect(response.body).toContain('<html lang="zh-CN" data-theme="light">');
     expect(response.body).toContain('首页');
     expect(response.body).toContain('学校 OJ 练习平台');
+    expect(response.body).toContain('登录');
+    expect(response.body).toContain('注册');
+    expect(response.body).not.toContain('题目管理');
   });
 
   it('renders a home page in English when lang=en is provided', async () => {
@@ -193,6 +196,9 @@ describe('rendered views', () => {
     expect(response.body).toContain('<table');
     expect(response.body).toContain('sub-1');
     expect(response.body).toContain('已完成');
+    expect(response.body).toContain('个人中心');
+    expect(response.body).not.toContain('登录');
+    expect(response.body).not.toContain('注册');
   });
 
   it('renders login form with Pico-style page content', async () => {
@@ -265,6 +271,11 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('创建题目');
     expect(response.body).toContain('题面');
+    expect(response.body).toContain('题目管理');
+    expect(response.body).toContain('提交管理');
+    expect(response.body).toContain('用户');
+    expect(response.body).not.toContain('登录');
+    expect(response.body).not.toContain('注册');
   });
 
   it('renders the admin problem edit page for admins', async () => {
