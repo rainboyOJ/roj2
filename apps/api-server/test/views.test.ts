@@ -74,6 +74,14 @@ function createServices(overrides: Record<string, unknown> = {}) {
         endAtText: '2026-05-20 21:00',
         description: 'A simple training contest for class practice.',
       },
+      {
+        id: 'weekly-ladder',
+        title: 'Weekly Ladder',
+        status: 'Open Practice',
+        startAtText: 'Every Monday 18:00',
+        endAtText: 'Every Sunday 22:00',
+        description: 'A rolling ladder page used as a placeholder for future contest support.',
+      },
     ],
     getContestById: async () => ({
       id: 'practice-may',
@@ -124,6 +132,7 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('https://cdn.jsdelivr.net/npm/@picocss/pico');
     expect(response.body).toContain('<nav');
+    expect(response.body).toContain('<html lang="zh-CN" data-theme="light">');
     expect(response.body).toContain('首页');
     expect(response.body).toContain('学校 OJ 练习平台');
   });
@@ -142,7 +151,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('href="/?lang=zh"');
   });
 
-  it('renders problems page with shared navigation links', async () => {
+  it('renders problems page as a table view', async () => {
     const app = buildApp(createServices());
 
     const response = await app.inject({
@@ -153,7 +162,37 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('<nav');
     expect(response.body).toContain('题目列表');
+    expect(response.body).toContain('<table');
+    expect(response.body).toContain('A + B Problem');
     expect(response.body).toContain('提交代码');
+  });
+
+  it('renders submissions page as a table view for logged-in users', async () => {
+    const app = buildApp(createServices({
+      listSubmissions: async () => [
+        {
+          id: 'sub-1',
+          status: 'FINISHED',
+          verdict: 'AC',
+          judgeStatus: 'FINISHED',
+          message: 'ok',
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/submissions',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('提交列表');
+    expect(response.body).toContain('<table');
+    expect(response.body).toContain('sub-1');
+    expect(response.body).toContain('已完成');
   });
 
   it('renders login form with Pico-style page content', async () => {
@@ -182,6 +221,7 @@ describe('rendered views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('排行榜');
+    expect(response.body).toContain('<table');
     expect(response.body).toContain('通过题数');
     expect(response.body).toContain('demo');
   });
@@ -196,8 +236,12 @@ describe('rendered views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('比赛列表');
+    expect(response.body).toContain('<table');
+    expect(response.body).toContain('比赛名称');
+    expect(response.body).toContain('操作');
     expect(response.body).toContain('May Practice Contest');
     expect(response.body).toContain('即将开始');
+    expect(response.body).toContain('开放练习');
   });
 
   it('renders the admin problem creation page for admins', async () => {

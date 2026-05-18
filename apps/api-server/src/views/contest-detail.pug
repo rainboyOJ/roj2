@@ -6,17 +6,26 @@ block content
       hgroup
         h1= contest.title
         p.page-lead= contest.description
-    .grid
-      article
-        h3= t('contest.status')
-        p
-          span.status-chip.pending= localizeContestStatus(contest.status)
-      article
-        h3= t('contest.start')
-        p= contest.startAtText
-      article
-        h3= t('contest.end')
-        p= contest.endAtText
-    article
-      h2= t('contest.aboutTitle')
-      p= t('contest.aboutBody')
+    .detail-grid
+      .detail-main
+        article.panel-card
+          header
+            h2= t('contest.aboutTitle')
+          .panel-body
+            p= t('contest.aboutBody')
+      .detail-sidebar
+        article.panel-card
+          header
+            h3= t('contest.status')
+          .panel-body
+            .info-stack
+              .info-item
+                strong= t('contest.status')
+                p
+                  span.status-chip.pending= localizeContestStatus(contest.status)
+              .info-item
+                strong= t('contest.start')
+                p= contest.startAtText
+              .info-item
+                strong= t('contest.end')
+                p= contest.endAtText

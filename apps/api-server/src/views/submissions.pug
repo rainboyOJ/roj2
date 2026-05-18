@@ -9,25 +9,31 @@ block content
       .page-actions
         a(href=urlWithLang('/problems') role="button" class="secondary")= t('submissions.problemList')
     if submissions.length
-      each submission in submissions
-        article
-          header
-            h2
-              a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
-            p.soft-note= t('submissions.itemLead')
-          ul.compact-meta
-            li #{t('submissions.status')}: #{localizeStatus(submission.status)}
-            if submission.judgeStatus
-              li #{t('submissions.judge')}: #{localizeJudgeStatus(submission.judgeStatus)}
-            li
-              if submission.verdict === 'AC'
-                span.status-chip.ac= localizeVerdict(submission.verdict)
-              else if submission.verdict === 'PENDING'
-                span.status-chip.pending= localizeVerdict(submission.verdict)
-              else
-                span.status-chip.failed= localizeVerdict(submission.verdict)
-          footer
-            a(href=urlWithLang(`/submissions/${submission.id}`))= t('submissions.details')
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= t('submissions.submissionId')
+              th= t('submissions.status')
+              th= t('submissions.judge')
+              th= t('submissions.verdict')
+              th= t('submissions.action')
+          tbody
+            each submission in submissions
+              tr
+                td.table-code
+                  a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
+                td= localizeStatus(submission.status)
+                td= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : '-'
+                td
+                  if submission.verdict === 'AC'
+                    span.status-chip.ac= localizeVerdict(submission.verdict)
+                  else if submission.verdict === 'PENDING'
+                    span.status-chip.pending= localizeVerdict(submission.verdict)
+                  else
+                    span.status-chip.failed= localizeVerdict(submission.verdict)
+                td
+                  a(href=urlWithLang(`/submissions/${submission.id}`))= t('submissions.details')
     else
       article
         p= t('submissions.empty')

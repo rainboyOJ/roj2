@@ -13,35 +13,39 @@ block content
         hgroup
           h1= t('admin.problemForm.editTitle')
           p.page-lead= t('admin.problemForm.editLead')
-    article
-      form(method="post" action=actionPath)
+    article.panel-card.form-card
+      .panel-body
+        form(method="post" action=actionPath)
+          if !isCreate
+            input(type="hidden" name="id" value=problem.id)
+          .form-grid
+            div
+              label(for="pid")= t('admin.problemForm.pid')
+              input#pid(type="text" name="pid" value=problem.pid)
+            div
+              label(for="title")= t('admin.problemForm.title')
+              input#title(type="text" name="title" value=problem.title)
+          div
+            label(for="statementMarkdown")= t('admin.problemForm.statement')
+            .editor-shell
+              textarea#statementMarkdown(name="statementMarkdown")= problem.statementMarkdown
+          fieldset
+            legend= t('admin.problemForm.languages')
+            label
+              input(type="checkbox" name="allowLanguages" value="cpp" checked=problem.allowLanguages.includes('cpp'))
+              | C++
+            label
+              input(type="checkbox" name="allowLanguages" value="python" checked=problem.allowLanguages.includes('python'))
+              | Python
+          div
+            label(for="isVisible")= t('admin.problemForm.visible')
+            select#isVisible(name="isVisible")
+              option(value="false" selected=!problem.isVisible)= t('admin.problemForm.hidden')
+              option(value="true" selected=problem.isVisible)= t('admin.problemForm.visibleOption')
+          .form-actions
+            button(type="submit")= t('admin.problemForm.save')
+            a(href=urlWithLang('/admin/problems') role="button" class="secondary")= t('admin.problemForm.back')
         if !isCreate
-          input(type="hidden" name="id" value=problem.id)
-        .grid
-          div
-            label(for="pid")= t('admin.problemForm.pid')
-            input#pid(type="text" name="pid" value=problem.pid)
-          div
-            label(for="title")= t('admin.problemForm.title')
-            input#title(type="text" name="title" value=problem.title)
-        label(for="statementMarkdown")= t('admin.problemForm.statement')
-        textarea#statementMarkdown(name="statementMarkdown")= problem.statementMarkdown
-        fieldset
-          legend= t('admin.problemForm.languages')
-          label
-            input(type="checkbox" name="allowLanguages" value="cpp" checked=problem.allowLanguages.includes('cpp'))
-            | C++
-          label
-            input(type="checkbox" name="allowLanguages" value="python" checked=problem.allowLanguages.includes('python'))
-            | Python
-        label(for="isVisible")= t('admin.problemForm.visible')
-        select#isVisible(name="isVisible")
-          option(value="false" selected=!problem.isVisible)= t('admin.problemForm.hidden')
-          option(value="true" selected=problem.isVisible)= t('admin.problemForm.visibleOption')
-        .grid
-          button(type="submit")= t('admin.problemForm.save')
-          a(href=urlWithLang('/admin/problems') role="button" class="secondary")= t('admin.problemForm.back')
-      if !isCreate
-        hr
-        form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
-          button(type="submit" class="contrast")= t('admin.problemForm.publish')
+          hr
+          form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
+            button(type="submit" class="contrast")= t('admin.problemForm.publish')

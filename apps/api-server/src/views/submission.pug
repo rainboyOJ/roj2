@@ -6,25 +6,32 @@ block content
       hgroup
         h1= `${t('submission.title')} ${submission.id}`
         p.page-lead= t('submission.lead')
-    .metric-grid
-      div.metric-card
-        span.soft-note= t('submission.status')
-        strong= localizeStatus(submission.status)
-      div.metric-card
-        span.soft-note= t('submission.verdict')
-        strong= localizeVerdict(submission.verdict)
-      div.metric-card
-        span.soft-note= t('submission.judgeStatus')
-        strong= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : t('submission.waiting')
-    if submission.message
-      article
-        header
-          h2= t('submission.judgeMessage')
-        pre.mono-block= submission.message
-    footer
-      .page-actions
-        a(href=urlWithLang('/submissions') role="button" class="secondary")= t('submission.backToSubmissions')
-        a(href=urlWithLang('/problems') role="button" class="contrast")= t('submission.openProblems')
+    .detail-grid
+      .detail-main
+        .metric-grid
+          div.metric-card
+            span.soft-note= t('submission.status')
+            strong= localizeStatus(submission.status)
+          div.metric-card
+            span.soft-note= t('submission.verdict')
+            strong= localizeVerdict(submission.verdict)
+          div.metric-card
+            span.soft-note= t('submission.judgeStatus')
+            strong= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : t('submission.waiting')
+        if submission.message
+          article.panel-card
+            header
+              h2= t('submission.judgeMessage')
+            .panel-body.statement-block
+              pre.mono-block= submission.message
+      .detail-sidebar
+        article.panel-card
+          header
+            h3= t('submissions.action')
+          .panel-body
+            .form-actions
+              a(href=urlWithLang('/submissions') role="button" class="secondary")= t('submission.backToSubmissions')
+              a(href=urlWithLang('/problems') role="button" class="contrast")= t('submission.openProblems')
     script.
       const terminal = ['FINISHED', 'FAILED'];
       if (!terminal.includes('#{submission.status}')) {

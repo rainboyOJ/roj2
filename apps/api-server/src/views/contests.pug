@@ -7,19 +7,29 @@ block content
         h1= t('contests.title')
         p.page-lead= t('contests.lead')
     if contests.length
-      each contest in contests
-        article
-          header
-            h2
-              a(href=urlWithLang(`/contests/${contest.id}`))= contest.title
-            p.soft-note= contest.description
-          ul.compact-meta
-            li
-              span.status-chip.pending= localizeContestStatus(contest.status)
-            li #{t('contests.start')}: #{contest.startAtText}
-            li #{t('contests.end')}: #{contest.endAtText}
-          footer
-            a(href=urlWithLang(`/contests/${contest.id}`))= t('contests.open')
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= t('contests.name')
+              th= t('contests.status')
+              th= t('contests.start')
+              th= t('contests.end')
+              th= t('contests.action')
+          tbody
+            each contest in contests
+              tr
+                td
+                  strong
+                    a(href=urlWithLang(`/contests/${contest.id}`))= contest.title
+                  br
+                  small.soft-note= contest.description
+                td
+                  span.status-chip.pending= localizeContestStatus(contest.status)
+                td= contest.startAtText
+                td= contest.endAtText
+                td
+                  a(href=urlWithLang(`/contests/${contest.id}`))= t('contests.open')
     else
       article
         p= t('contests.empty')

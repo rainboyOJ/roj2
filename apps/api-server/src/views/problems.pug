@@ -10,17 +10,24 @@ block content
         a(href=urlWithLang('/submissions') role="button" class="secondary")= t('problems.openSubmissionList')
         a(href=urlWithLang('/login') role="button" class="contrast")= t('problems.login')
     if problems.length
-      each problem in problems
-        article
-          header
-            h2
-              a(href=urlWithLang(`/problem/${problem.pid}`))= `${problem.pid} - ${problem.title}`
-            p.soft-note= t('problems.itemLead')
-          ul.compact-meta
-            li #{t('problems.pid')}: #{problem.pid}
-            li #{t('problems.languages')}: #{problem.allowLanguages.join(', ')}
-          footer
-            a(href=urlWithLang(`/problem/${problem.pid}`))= t('problems.submit')
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= t('problems.pid')
+              th= t('problems.problem')
+              th= t('problems.languages')
+              th= t('problems.action')
+          tbody
+            each problem in problems
+              tr
+                td.table-code= problem.pid
+                td
+                  strong
+                    a(href=urlWithLang(`/problem/${problem.pid}`))= problem.title
+                td= problem.allowLanguages.join(', ')
+                td
+                  a(href=urlWithLang(`/problem/${problem.pid}`))= t('problems.submit')
     else
       article
         p= t('problems.empty')

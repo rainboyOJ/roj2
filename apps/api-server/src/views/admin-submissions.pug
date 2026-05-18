@@ -7,22 +7,31 @@ block content
         h1= t('admin.submissions.title')
         p.page-lead= t('admin.submissions.lead')
     if submissions.length
-      each submission in submissions
-        article
-          header
-            h2
-              a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
-          ul.compact-meta
-            li #{t('admin.submissions.status')}: #{localizeStatus(submission.status)}
-            if submission.judgeStatus
-              li #{t('admin.submissions.judge')}: #{localizeJudgeStatus(submission.judgeStatus)}
-            li
-              if submission.verdict === 'AC'
-                span.status-chip.ac= localizeVerdict(submission.verdict)
-              else if submission.verdict === 'PENDING'
-                span.status-chip.pending= localizeVerdict(submission.verdict)
-              else
-                span.status-chip.failed= localizeVerdict(submission.verdict)
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= t('admin.submissions.submissionId')
+              th= t('admin.submissions.status')
+              th= t('admin.submissions.judge')
+              th= t('admin.submissions.verdict')
+              th= t('admin.submissions.action')
+          tbody
+            each submission in submissions
+              tr
+                td.table-code
+                  a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
+                td= localizeStatus(submission.status)
+                td= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : '-'
+                td
+                  if submission.verdict === 'AC'
+                    span.status-chip.ac= localizeVerdict(submission.verdict)
+                  else if submission.verdict === 'PENDING'
+                    span.status-chip.pending= localizeVerdict(submission.verdict)
+                  else
+                    span.status-chip.failed= localizeVerdict(submission.verdict)
+                td
+                  a(href=urlWithLang(`/submissions/${submission.id}`))= t('submissions.details')
     else
       article
         p= t('admin.submissions.empty')

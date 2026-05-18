@@ -6,26 +6,29 @@ block content
       hgroup
         h1= t('register.title')
         p.page-lead= t('register.lead')
-    article
-      form(method="post" action=urlWithLang('/api/register'))
-        .grid
+    article.panel-card.form-card
+      .panel-body
+        form(method="post" action=urlWithLang('/api/register'))
+          .form-grid
+            div
+              label(for="username")= t('register.username')
+              input#username(type="text" name="username" placeholder=t('register.usernamePlaceholder'))
+            div
+              label(for="name")= t('register.name')
+              input#name(type="text" name="name" placeholder=t('register.namePlaceholder'))
+          .form-grid
+            div
+              label(for="gender")= t('register.gender')
+              input#gender(type="text" name="gender" placeholder=t('register.genderPlaceholder'))
+            div
+              label(for="grade")= t('register.grade')
+              input#grade(type="text" name="grade" placeholder=t('register.gradePlaceholder'))
           div
-            label(for="username")= t('register.username')
-            input#username(type="text" name="username" placeholder=t('register.usernamePlaceholder'))
+            label(for="className")= t('register.className')
+            input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder'))
           div
-            label(for="name")= t('register.name')
-            input#name(type="text" name="name" placeholder=t('register.namePlaceholder'))
-        .grid
-          div
-            label(for="gender")= t('register.gender')
-            input#gender(type="text" name="gender" placeholder=t('register.genderPlaceholder'))
-          div
-            label(for="grade")= t('register.grade')
-            input#grade(type="text" name="grade" placeholder=t('register.gradePlaceholder'))
-        label(for="className")= t('register.className')
-        input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder'))
-        label(for="password")= t('register.password')
-        input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))
-        .grid
-          button(type="submit")= t('register.submit')
-          a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')
+            label(for="password")= t('register.password')
+            input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))
+          .form-actions
+            button(type="submit")= t('register.submit')
+            a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')

@@ -9,23 +9,32 @@ block content
       .page-actions
         a(href=urlWithLang('/admin/problems/new') role="button")= t('admin.problems.create')
     if problems.length
-      each problem in problems
-        article
-          header
-            h2= `${problem.pid} - ${problem.title}`
-          ul.compact-meta
-            li #{t('admin.problems.languages')}: #{problem.allowLanguages.join(', ')}
-            li
-              if problem.isVisible
-                span.status-chip.ac= t('status.visible')
-              else
-                span.status-chip.pending= t('status.hidden')
-          footer
-            .page-actions
-              a(href=urlWithLang(`/admin/problems/${problem.id}/edit`))= t('admin.problems.edit')
-              if !problem.isVisible
-                form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
-                  button(type="submit" class="secondary")= t('admin.problems.publish')
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= t('admin.problems.pid')
+              th= t('admin.problems.titleColumn')
+              th= t('admin.problems.languages')
+              th= t('admin.problems.visibility')
+              th= t('admin.problems.action')
+          tbody
+            each problem in problems
+              tr
+                td.table-code= problem.pid
+                td= problem.title
+                td= problem.allowLanguages.join(', ')
+                td
+                  if problem.isVisible
+                    span.status-chip.ac= t('status.visible')
+                  else
+                    span.status-chip.pending= t('status.hidden')
+                td
+                  .table-actions
+                    a(href=urlWithLang(`/admin/problems/${problem.id}/edit`))= t('admin.problems.edit')
+                    if !problem.isVisible
+                      form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
+                        button(type="submit" class="secondary")= t('admin.problems.publish')
     else
       article
         p= t('admin.problems.empty')

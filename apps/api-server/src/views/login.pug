@@ -6,12 +6,15 @@ block content
       hgroup
         h1= t('login.title')
         p.page-lead= t('login.lead')
-    article
-      form(method="post" action=urlWithLang('/api/login'))
-        label(for="username")= t('login.username')
-        input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder'))
-        label(for="password")= t('login.password')
-        input#password(type="password" name="password" placeholder=t('login.passwordPlaceholder'))
-        .grid
-          button(type="submit")= t('login.submit')
-          a(href=urlWithLang('/register') role="button" class="secondary")= t('login.createAccount')
+    article.panel-card.form-card
+      .panel-body
+        form(method="post" action=urlWithLang('/api/login'))
+          div
+            label(for="username")= t('login.username')
+            input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder'))
+          div
+            label(for="password")= t('login.password')
+            input#password(type="password" name="password" placeholder=t('login.passwordPlaceholder'))
+          .form-actions
+            button(type="submit")= t('login.submit')
+            a(href=urlWithLang('/register') role="button" class="secondary")= t('login.createAccount')

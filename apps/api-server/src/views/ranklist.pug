@@ -7,22 +7,23 @@ block content
         h1= t('ranklist.title')
         p.page-lead= t('ranklist.lead')
     if entries.length
-      table
-        thead
-          tr
-            th= t('ranklist.rank')
-            th= t('ranklist.user')
-            th= t('ranklist.accepted')
-            th= t('ranklist.totalSubmissions')
-            th= t('ranklist.lastAc')
-        tbody
-          each entry in entries
+      .table-shell
+        table.data-table
+          thead
             tr
-              td= entry.rank
-              td= entry.username
-              td= entry.acceptedCount
-              td= entry.submissionCount
-              td= entry.lastAcceptedAt || t('ranklist.na')
+              th= t('ranklist.rank')
+              th= t('ranklist.user')
+              th= t('ranklist.accepted')
+              th= t('ranklist.totalSubmissions')
+              th= t('ranklist.lastAc')
+          tbody
+            each entry in entries
+              tr
+                td.table-code= `#${entry.rank}`
+                td= entry.username
+                td= entry.acceptedCount
+                td= entry.submissionCount
+                td= entry.lastAcceptedAt || t('ranklist.na')
     else
       article
         p= t('ranklist.noData')

@@ -40,7 +40,9 @@ type TranslationKey =
   | 'problems.login'
   | 'problems.itemLead'
   | 'problems.pid'
+  | 'problems.problem'
   | 'problems.languages'
+  | 'problems.action'
   | 'problems.submit'
   | 'problems.empty'
   | 'problem.lead'
@@ -57,6 +59,9 @@ type TranslationKey =
   | 'submissions.itemLead'
   | 'submissions.status'
   | 'submissions.judge'
+  | 'submissions.submissionId'
+  | 'submissions.verdict'
+  | 'submissions.action'
   | 'submissions.details'
   | 'submissions.empty'
   | 'submission.title'
@@ -81,6 +86,9 @@ type TranslationKey =
   | 'contests.lead'
   | 'contests.start'
   | 'contests.end'
+  | 'contests.name'
+  | 'contests.status'
+  | 'contests.action'
   | 'contests.open'
   | 'contests.empty'
   | 'contest.status'
@@ -120,19 +128,29 @@ type TranslationKey =
   | 'admin.users.title'
   | 'admin.users.lead'
   | 'admin.users.noDisplayName'
+  | 'admin.users.username'
+  | 'admin.users.name'
   | 'admin.users.role'
+  | 'admin.users.approval'
   | 'admin.users.empty'
   | 'admin.problems.title'
   | 'admin.problems.lead'
   | 'admin.problems.create'
+  | 'admin.problems.pid'
+  | 'admin.problems.titleColumn'
   | 'admin.problems.languages'
+  | 'admin.problems.visibility'
+  | 'admin.problems.action'
   | 'admin.problems.edit'
   | 'admin.problems.publish'
   | 'admin.problems.empty'
   | 'admin.submissions.title'
   | 'admin.submissions.lead'
+  | 'admin.submissions.submissionId'
   | 'admin.submissions.status'
   | 'admin.submissions.judge'
+  | 'admin.submissions.verdict'
+  | 'admin.submissions.action'
   | 'admin.submissions.empty'
   | 'admin.problemForm.createTitle'
   | 'admin.problemForm.createLead'
@@ -154,6 +172,7 @@ type TranslationKey =
   | 'status.visible'
   | 'status.hidden'
   | 'contestStatus.Upcoming'
+  | 'contestStatus.Open Practice'
   | 'contestStatus.Running'
   | 'contestStatus.Finished'
   | 'submissionStatus.PENDING_DISPATCH'
@@ -224,7 +243,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'problems.login': '登录',
     'problems.itemLead': '你可以随时在这里提交代码、查看结果、重新练习这道题。',
     'problems.pid': '题号',
+    'problems.problem': '题目',
     'problems.languages': '支持语言',
+    'problems.action': '操作',
     'problems.submit': '提交代码',
     'problems.empty': '目前还没有可见题目。',
     'problem.lead': '阅读题面，选择支持的语言，并在下方提交解答。',
@@ -241,6 +262,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'submissions.itemLead': '从排队到最终判定，都可以在这里追踪这次提交。',
     'submissions.status': '状态',
     'submissions.judge': '评测机',
+    'submissions.submissionId': '提交号',
+    'submissions.verdict': '结果',
+    'submissions.action': '操作',
     'submissions.details': '查看详情',
     'submissions.empty': '还没有提交记录。',
     'submission.title': '提交',
@@ -265,6 +289,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'contests.lead': '常见 OJ 一般都会有比赛入口，所以这里先提供一个结构化的比赛页。',
     'contests.start': '开始',
     'contests.end': '结束',
+    'contests.name': '比赛名称',
+    'contests.status': '状态',
+    'contests.action': '操作',
     'contests.open': '打开比赛页面',
     'contests.empty': '暂时还没有比赛。',
     'contest.status': '状态',
@@ -304,19 +331,29 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.title': '用户管理',
     'admin.users.lead': '查看当前账号列表和审核状态。',
     'admin.users.noDisplayName': '没有显示姓名',
+    'admin.users.username': '用户名',
+    'admin.users.name': '姓名',
     'admin.users.role': '角色',
+    'admin.users.approval': '审核状态',
     'admin.users.empty': '没有需要查看的用户。',
     'admin.problems.title': '题目管理',
     'admin.problems.lead': '按 OJ 管理员常见的方式浏览和维护题目目录。',
     'admin.problems.create': '创建题目',
+    'admin.problems.pid': '题号',
+    'admin.problems.titleColumn': '标题',
     'admin.problems.languages': '支持语言',
+    'admin.problems.visibility': '可见性',
+    'admin.problems.action': '操作',
     'admin.problems.edit': '编辑',
     'admin.problems.publish': '发布',
     'admin.problems.empty': '当前还没有题目。',
     'admin.submissions.title': '提交管理',
     'admin.submissions.lead': '用标准列表视图查看所有提交的评测活动。',
+    'admin.submissions.submissionId': '提交号',
     'admin.submissions.status': '状态',
     'admin.submissions.judge': '评测机',
+    'admin.submissions.verdict': '结果',
+    'admin.submissions.action': '操作',
     'admin.submissions.empty': '还没有提交记录。',
     'admin.problemForm.createTitle': '创建题目',
     'admin.problemForm.createLead': '为 OJ 新增一道题目的基础信息。',
@@ -338,6 +375,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'status.visible': '可见',
     'status.hidden': '隐藏',
     'contestStatus.Upcoming': '即将开始',
+    'contestStatus.Open Practice': '开放练习',
     'contestStatus.Running': '进行中',
     'contestStatus.Finished': '已结束',
     'submissionStatus.PENDING_DISPATCH': '等待派发',
@@ -405,7 +443,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'problems.login': 'Login',
     'problems.itemLead': 'Submit code, check verdicts, and revisit this problem anytime.',
     'problems.pid': 'PID',
+    'problems.problem': 'Problem',
     'problems.languages': 'Languages',
+    'problems.action': 'Action',
     'problems.submit': 'Submit code',
     'problems.empty': 'No visible problems yet.',
     'problem.lead': 'Read the statement, pick a supported language, and submit a solution below.',
@@ -422,6 +462,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'submissions.itemLead': 'Track the result of this submission from queued to final verdict.',
     'submissions.status': 'Status',
     'submissions.judge': 'Judge',
+    'submissions.submissionId': 'Submission ID',
+    'submissions.verdict': 'Verdict',
+    'submissions.action': 'Action',
     'submissions.details': 'Details',
     'submissions.empty': 'No submissions yet.',
     'submission.title': 'Submission',
@@ -446,6 +489,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'contests.lead': 'Common OJ navigation usually includes contests, so this page provides the first structured version.',
     'contests.start': 'Start',
     'contests.end': 'End',
+    'contests.name': 'Contest',
+    'contests.status': 'Status',
+    'contests.action': 'Action',
     'contests.open': 'Open contest page',
     'contests.empty': 'No contests yet.',
     'contest.status': 'Status',
@@ -485,19 +531,29 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.title': 'Admin users',
     'admin.users.lead': 'Review current user accounts and their approval status.',
     'admin.users.noDisplayName': 'No display name',
+    'admin.users.username': 'Username',
+    'admin.users.name': 'Name',
     'admin.users.role': 'Role',
+    'admin.users.approval': 'Approval',
     'admin.users.empty': 'No users to review.',
     'admin.problems.title': 'Admin problems',
     'admin.problems.lead': 'Browse problems in the same way an OJ manager would scan the catalog.',
     'admin.problems.create': 'Create problem',
+    'admin.problems.pid': 'PID',
+    'admin.problems.titleColumn': 'Title',
     'admin.problems.languages': 'Languages',
+    'admin.problems.visibility': 'Visibility',
+    'admin.problems.action': 'Action',
     'admin.problems.edit': 'Edit',
     'admin.problems.publish': 'Publish',
     'admin.problems.empty': 'No problems available.',
     'admin.submissions.title': 'Admin submissions',
     'admin.submissions.lead': 'Track judging activity across all submissions in a standard list view.',
+    'admin.submissions.submissionId': 'Submission ID',
     'admin.submissions.status': 'Status',
     'admin.submissions.judge': 'Judge',
+    'admin.submissions.verdict': 'Verdict',
+    'admin.submissions.action': 'Action',
     'admin.submissions.empty': 'No submissions yet.',
     'admin.problemForm.createTitle': 'Create problem',
     'admin.problemForm.createLead': 'Add a new problem metadata record for the OJ.',
@@ -519,6 +575,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'status.visible': 'Visible',
     'status.hidden': 'Hidden',
     'contestStatus.Upcoming': 'Upcoming',
+    'contestStatus.Open Practice': 'Open Practice',
     'contestStatus.Running': 'Running',
     'contestStatus.Finished': 'Finished',
     'submissionStatus.PENDING_DISPATCH': 'Pending dispatch',
