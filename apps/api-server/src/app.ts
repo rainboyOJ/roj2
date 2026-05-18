@@ -276,7 +276,35 @@ export function buildApp(services: ApiServerServices) {
   app.get('/register', async (request, reply) =>
     renderPage(request, reply, 'register.pug'));
 
+  app.post('/register', async (request, reply) => {
+    const parsed = registerSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid registration payload');
+    }
+
+    await services.registerUser(parsed.data);
+    return redirectWithLang(request, reply, '/login');
+  });
+
   app.get('/login', async (request, reply) => renderPage(request, reply, 'login.pug'));
+
+  app.post('/login', async (request, reply) => {
+    const parsed = loginSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid login payload');
+    }
+
+    let result;
+    try {
+      result = await services.loginUser(parsed.data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'login failed';
+      return reply.code(401).send(message);
+    }
+
+    setSessionCookie(reply, result.token);
+    return redirectWithLang(request, reply, '/');
+  });
 
   app.get('/profile', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);

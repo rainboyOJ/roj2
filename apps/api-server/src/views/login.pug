@@ -8,7 +8,7 @@ block content
         p.page-lead= t('login.lead')
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=urlWithLang('/api/login'))
+        form(method="post" action=urlWithLang('/login'))
           div
             label(for="username")= t('login.username')
             input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder'))

@@ -8,7 +8,7 @@ block content
         p.page-lead= t('register.lead')
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=urlWithLang('/api/register'))
+        form(method="post" action=urlWithLang('/register'))
           .form-grid
             div
               label(for="username")= t('register.username')

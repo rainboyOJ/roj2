@@ -59,6 +59,53 @@ function createServices(overrides: Record<string, unknown> = {}) {
 }
 
 describe('auth routes', () => {
+  it('logs in from the HTML form flow and redirects to the home page', async () => {
+    const app = buildApp(createServices({
+      loginUser: async () => ({
+        token: 'token-1',
+        user: {
+          id: 'user-1',
+          username: 'alice',
+          role: 'student' as const,
+          approvalStatus: 'approved' as const,
+        },
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/login?lang=zh',
+      payload: {
+        username: 'alice',
+        password: 'secret123',
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/?lang=zh');
+    expect(response.headers['set-cookie']).toContain('roj_session=');
+  });
+
+  it('registers from the HTML form flow and redirects to the login page', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/register?lang=zh',
+      payload: {
+        username: 'alice',
+        name: 'Alice',
+        gender: 'female',
+        className: 'Class 1',
+        grade: '2025',
+        password: 'secret123',
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/login?lang=zh');
+  });
+
   it('registers a student account', async () => {
     const app = buildApp(createServices());
 
