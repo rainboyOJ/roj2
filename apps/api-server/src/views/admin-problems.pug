@@ -1,10 +1,20 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title Admin Problems
-  body
-    h1 Admin Problems
-    ul
-      each problem in problems
-        li= `${problem.pid} ${problem.title}`
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Admin
+      h1.page-title Problem management
+      p.page-description
+        | View the current problem set in a compact, readable format.
+    if problems.length
+      .card-grid
+        each problem in problems
+          article.card
+            h2.card-title= `${problem.pid} - ${problem.title}`
+            if problem.allowLanguages && problem.allowLanguages.length
+              .button-row
+                each language in problem.allowLanguages
+                  span.badge= language
+    else
+      .empty-state No problems available.

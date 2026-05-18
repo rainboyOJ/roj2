@@ -1,0 +1,21 @@
+doctype html
+html(lang="zh-CN")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    title= pageTitle ? `${pageTitle} | ROJ` : 'ROJ'
+    include styles.pug
+  body
+    .app-shell
+      header.app-header
+        .app-header__inner
+          a.app-brand(href="/problems") ROJ
+          nav.app-nav
+            a(href="/problems") Problems
+            a(href="/submissions") Submissions
+            a(href="/profile") Profile
+            a(href="/login") Login
+            a(href="/register") Register
+            a(href="/admin/users") Admin
+      main.app-main
+        block content

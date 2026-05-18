@@ -1,15 +1,34 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title Register
-  body
-    h1 Register
-    form(method="post" action="/api/register")
-      input(type="text" name="username" placeholder="username")
-      input(type="text" name="name" placeholder="name")
-      input(type="text" name="gender" placeholder="gender")
-      input(type="text" name="className" placeholder="class")
-      input(type="text" name="grade" placeholder="grade")
-      input(type="password" name="password" placeholder="password")
-      button(type="submit") Register
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Account
+      h1.page-title Create a learning account
+      p.page-description
+        | Fill in the basic profile fields. New student accounts can then be reviewed by an administrator.
+    .form-card
+      form.form-grid(method="post" action="/api/register")
+        .field-inline
+          .field
+            label(for="username") Username
+            input#username(type="text" name="username" placeholder="student_01")
+          .field
+            label(for="name") Name
+            input#name(type="text" name="name" placeholder="Your name")
+        .field-inline
+          .field
+            label(for="gender") Gender
+            input#gender(type="text" name="gender" placeholder="male / female / other")
+          .field
+            label(for="grade") Grade
+            input#grade(type="text" name="grade" placeholder="2025")
+        .field
+          label(for="className") Class
+          input#className(type="text" name="className" placeholder="Class 1")
+        .field
+          label(for="password") Password
+          input#password(type="password" name="password" placeholder="At least 8 characters")
+        .button-row
+          button(type="submit") Register
+          a.button.button--secondary(href="/login") Back to login

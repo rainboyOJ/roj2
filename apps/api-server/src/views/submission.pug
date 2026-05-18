@@ -1,16 +1,36 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title= `Submission ${submission.id}`
-  body
-    h1= `Submission ${submission.id}`
-    p= `Status: ${submission.status}`
-    p= `Verdict: ${submission.verdict}`
-    if submission.judgeStatus
-      p= `Judge Status: ${submission.judgeStatus}`
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Submission
+      h1.page-title= `Submission ${submission.id}`
+      p.page-description
+        | This page refreshes automatically while the result is still running.
+    .detail-grid
+      .detail-item
+        .detail-label Status
+        div
+          if submission.status === 'FINISHED'
+            span.badge.badge--success= submission.status
+          else if submission.status === 'FAILED'
+            span.badge.badge--danger= submission.status
+          else
+            span.badge.badge--warning= submission.status
+      .detail-item
+        .detail-label Verdict
+        div= submission.verdict
+      if submission.judgeStatus
+        .detail-item
+          .detail-label Judge status
+          div= submission.judgeStatus
     if submission.message
-      pre= submission.message
+      .card
+        h2.card-title Judge message
+        pre.code-block= submission.message
+    .button-row
+      a.button.button--secondary(href="/submissions") View all submissions
+      a.button.button--secondary(href="/problems") Back to problems
     script.
       const terminal = ['FINISHED', 'FAILED'];
       if (!terminal.includes('#{submission.status}')) {

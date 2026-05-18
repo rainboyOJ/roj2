@@ -1,11 +1,20 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title Login
-  body
-    h1 Login
-    form(method="post" action="/api/login")
-      input(type="text" name="username" placeholder="username")
-      input(type="password" name="password" placeholder="password")
-      button(type="submit") Login
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Account
+      h1.page-title Sign in
+      p.page-description
+        | Use your account to submit code, view results, and access the learning workflow.
+    .form-card
+      form.form-grid(method="post" action="/api/login")
+        .field
+          label(for="username") Username
+          input#username(type="text" name="username" placeholder="demo")
+        .field
+          label(for="password") Password
+          input#password(type="password" name="password" placeholder="Enter your password")
+        .button-row
+          button(type="submit") Sign in
+          a.button.button--secondary(href="/register") Create account

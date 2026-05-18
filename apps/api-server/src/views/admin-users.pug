@@ -1,10 +1,29 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title Admin Users
-  body
-    h1 Admin Users
-    ul
-      each user in users
-        li= `${user.username} ${user.approvalStatus}`
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Admin
+      h1.page-title User review
+      p.page-description
+        | Review student accounts and their current approval state.
+    if users.length
+      .table-list
+        each user in users
+          article.table-row
+            div
+              h2.card-title= user.username
+              ul.meta-list
+                if user.name
+                  li Name: #{user.name}
+                li Role: #{user.role}
+            div
+              if user.approvalStatus === 'approved'
+                span.badge.badge--success= user.approvalStatus
+              else if user.approvalStatus === 'rejected'
+                span.badge.badge--danger= user.approvalStatus
+              else
+                span.badge.badge--warning= user.approvalStatus
+            span.helper-text Review in API/admin workflow
+    else
+      .empty-state No users to review.

@@ -1,17 +1,30 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title= problem.title
-  body
-    h1= `${problem.pid} - ${problem.title}`
-    pre= problem.statementMarkdown
-    form(method="post" action="/submissions")
-      input(type="hidden" name="pid" value=problem.pid)
-      label(for="language") Language
-      select(name="language" id="language")
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Problem
+      h1.page-title= `${problem.pid} - ${problem.title}`
+      p.page-description
+        | Read the statement carefully, choose a language, then submit code for online judging.
+    .hero-card
+      .button-row
+        span.badge Available languages
         each language in problem.allowLanguages
-          option(value=language)= language
-      label(for="sourceCode") Source Code
-      textarea(name="sourceCode" id="sourceCode" rows="20" cols="100")
-      button(type="submit") Submit
+          span.badge.badge--success= language
+      pre.code-block= problem.statementMarkdown
+    .form-card
+      form.form-grid(method="post" action="/submissions")
+        input(type="hidden" name="pid" value=problem.pid)
+        .field
+          label(for="language") Language
+          select(name="language" id="language")
+            each language in problem.allowLanguages
+              option(value=language)= language
+        .field
+          label(for="sourceCode") Source code
+          p.helper-text Paste a full solution. Python and C++ are supported for this practice problem.
+          textarea(name="sourceCode" id="sourceCode")
+        .button-row
+          button(type="submit") Submit solution
+          a.button.button--secondary(href="/problems") Back to problems

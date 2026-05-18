@@ -1,10 +1,29 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title Admin Submissions
-  body
-    h1 Admin Submissions
-    ul
-      each submission in submissions
-        li= `${submission.id} ${submission.verdict}`
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Admin
+      h1.page-title Submission overview
+      p.page-description
+        | Scan recent judging results across all visible submissions.
+    if submissions.length
+      .table-list
+        each submission in submissions
+          article.table-row
+            div
+              h2.card-title= submission.id
+              ul.meta-list
+                li Status: #{submission.status}
+                if submission.judgeStatus
+                  li Judge: #{submission.judgeStatus}
+            div
+              if submission.verdict === 'AC'
+                span.badge.badge--success= submission.verdict
+              else if submission.verdict === 'PENDING'
+                span.badge.badge--warning= submission.verdict
+              else
+                span.badge.badge--danger= submission.verdict
+            a.button.button--secondary(href=`/submissions/${submission.id}`) View
+    else
+      .empty-state No submissions yet.

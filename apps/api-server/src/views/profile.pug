@@ -1,10 +1,25 @@
-doctype html
-html
-  head
-    meta(charset="utf-8")
-    title Profile
-  body
-    h1 Profile
-    p= user.username
-    p= user.role
-    p= user.approvalStatus
+extends layout.pug
+
+block content
+  .page-stack
+    .page-header
+      .page-eyebrow Account
+      h1.page-title Profile
+      p.page-description
+        | Basic account information for the currently logged-in user.
+    .detail-grid
+      .detail-item
+        .detail-label Username
+        div= user.username
+      .detail-item
+        .detail-label Role
+        div= user.role
+      .detail-item
+        .detail-label Approval status
+        div
+          if user.approvalStatus === 'approved'
+            span.badge.badge--success= user.approvalStatus
+          else if user.approvalStatus === 'rejected'
+            span.badge.badge--danger= user.approvalStatus
+          else
+            span.badge.badge--warning= user.approvalStatus
