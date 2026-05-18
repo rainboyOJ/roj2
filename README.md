@@ -47,37 +47,88 @@
 - 一个可访问的 `judge_server`
 - `judge_server` 侧已有 `testData/1000/data`
 
-### 1. 启动 MongoDB
-
-```bash
-docker run -d \
-  --name roj-demo-mongo \
-  -p 27017:27017 \
-  mongodb/mongodb-community-server:latest
-```
-
-注意：
-
-- 在这台机器当前的 Linux kernel `7.0.3-arch1-1` 上，`mongodb/mongodb-community-server:latest` 会被镜像入口脚本直接拒绝启动。
-- 容器日志会报：`MongoDB 8.0+ ... will not start by default on v6.19+`.
-- 这不是 OJ 代码的问题，而是 MongoDB 8 社区镜像对新内核的已知保护行为。
-- 如果你本机也遇到这个问题，优先换一个可启动的 MongoDB 运行方式后再执行 `npm run seed`。
-
-### 2. 安装依赖
+### 1. 安装依赖
 
 ```bash
 npm install
 ```
 
-### 3. 准备环境变量
+### 2. 一键启动整个测试栈
+
+```bash
+./scripts/dev-up.sh
+```
+
+这个脚本会自动完成这些事情：
+
+- 如果根目录没有 `.env`，从 `.env.example` 复制一份
+- `source .env` 并导出环境变量
+- 检查 `127.0.0.1:27017` 是否已有 MongoDB；没有的话尝试启动 Docker 容器
+- 执行 `npm run seed`
+- 启动 `judge_server`
+- 启动 `api-server`
+- 启动 `judge-dispatcher`
+
+启动后直接访问：
+
+```text
+http://127.0.0.1:3000/problems
+```
+
+默认账号：
+
+- `admin / admin123456`
+- `demo / demo123456`
+
+停止整套服务：
+
+```bash
+./scripts/dev-down.sh
+```
+
+或者在 `dev-up.sh` 当前终端里按 `Ctrl-C`。
+
+### 3. MongoDB 说明
+
+脚本默认尝试使用：
+
+```bash
+mongo:7.0.34-jammy
+```
+
+但需要注意：
+
+- 之所以默认固定到 `7.0.34-jammy`，是因为这台机器当前的 Linux kernel `7.0.3-arch1-1` 下，MongoDB `8.x` 镜像存在已知启动兼容问题。
+- 如果你本机已经有可用的 MongoDB 在 `127.0.0.1:27017` 上运行，脚本会直接复用它。
+- 如果你仍然想换成别的 Mongo 镜像，也可以覆盖默认值。
+- 也可以通过环境变量覆盖脚本默认镜像，例如：
+
+```bash
+MONGO_IMAGE=<your-working-mongo-image> ./scripts/dev-up.sh
+```
+
+### 4. 手动启动方式
+
+如果你要逐个进程排查，也可以继续用手动方式。
+
+先准备环境变量：
 
 ```bash
 cp .env.example .env
 ```
 
 如果你的 `judge_server` 不在 `127.0.0.1:8000`，修改对应变量。
+注意：当前代码不会自动读取 `.env`，所以手动启动前需要先执行：
 
-### 4. 初始化 demo 数据
+```bash
+set -a
+source .env
+set +a
+```
+
+然后再分别执行下面的命令。
+
+### 5. 初始化 demo 数据
 
 ```bash
 npm run seed
@@ -90,7 +141,7 @@ npm run seed
 - 密码 `demo123456`
 - 题目 `1000`
 
-### 5. 启动 API
+### 6. 启动 API
 
 ```bash
 npm run dev:api
@@ -102,13 +153,13 @@ npm run dev:api
 http://127.0.0.1:3000
 ```
 
-### 6. 启动 dispatcher
+### 7. 启动 dispatcher
 
 ```bash
 npm run dev:dispatcher
 ```
 
-### 7. 启动 judge_server
+### 8. 启动 judge_server
 
 在 `judge_server` 仓库中：
 
@@ -117,7 +168,7 @@ cd /home/rainboy/mycode/boxtest-opencode-dev
 ./build/judge_server config/config.json
 ```
 
-### 8. 打开页面提测
+### 9. 打开页面提测
 
 访问：
 
