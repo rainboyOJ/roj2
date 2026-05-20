@@ -1,3 +1,6 @@
+// 示例 1：
+// 先 submit，再显式调用 query_result 轮询直到终态。
+// 适合理解“短连接轮询”的 judge 使用方式。
 import {
   JudgeServerClient,
   Language,

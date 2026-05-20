@@ -1,3 +1,5 @@
+//- 所有页面都继承这个布局文件。
+//- 它负责提供统一的 nav、整体样式，以及普通区 / 管理区的导航切换。
 doctype html
 html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
   head
@@ -611,6 +613,9 @@ html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
             if currentUser
               li
                 a(href=urlWithLang('/profile'))= t('nav.profile')
+              li
+                form(method="post" action=urlWithLang('/logout'))
+                  button(type="submit" class="secondary")= t('nav.logout')
             else
               li
                 a(href=urlWithLang('/login'))= t('nav.login')

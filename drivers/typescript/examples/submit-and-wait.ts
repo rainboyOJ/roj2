@@ -1,3 +1,6 @@
+// 示例 2：
+// 用同一个 TCP 会话提交并等待 judge_server 主动推送终态。
+// 适合理解“长连接等待”的 judge 使用方式。
 import {
   JudgeServerClient,
   Language,

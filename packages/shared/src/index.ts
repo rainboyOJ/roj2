@@ -1,3 +1,4 @@
+// 这个文件放的是整个 OJ 共用的领域类型与状态定义。
 export const OJSubmissionStatuses = {
   PENDING_DISPATCH: 'PENDING_DISPATCH',
   SENT_TO_JUDGE: 'SENT_TO_JUDGE',
@@ -6,9 +7,12 @@ export const OJSubmissionStatuses = {
   FAILED: 'FAILED',
 } as const;
 
+// OJ 自己的提交状态。
+// 等价 : type OJSubmissionStatus = 'PENDING_DISPATCH' | 'SENT_TO_JUDGE' | 'JUDGING' | 'FINISHED' | 'FAILED';
 export type OJSubmissionStatus =
   (typeof OJSubmissionStatuses)[keyof typeof OJSubmissionStatuses];
 
+// 提交最终判定。
 export const SubmissionVerdicts = {
   PENDING: 'PENDING',
   AC: 'AC',
@@ -23,14 +27,17 @@ export const SubmissionVerdicts = {
   SYSTEM_ERROR: 'SYSTEM_ERROR',
 } as const;
 
+// 等价 : type SubmissionVerdict = 'PENDING' | 'AC' | 'WA' | 'TLE' | 'MLE' | 'RE' | 'OLE' | 'PE' | 'CE' | 'UNKNOWN' | 'SYSTEM_ERROR';
 export type SubmissionVerdict =
   (typeof SubmissionVerdicts)[keyof typeof SubmissionVerdicts];
 
+// 用于状态映射的最小 judge 快照。
 export interface JudgeSnapshotLike {
   status: string;
   verdict: string;
 }
 
+// judge_server 原始状态。
 export const JudgeStatuses = {
   QUEUED: 'QUEUED',
   PREPARING: 'PREPARING',
@@ -40,6 +47,7 @@ export const JudgeStatuses = {
   FAILED: 'FAILED',
 } as const;
 
+// 等价 : type JudgeStatus = 'QUEUED' | 'PREPARING' | 'COMPILING' | 'RUNNING' | 'FINISHED' | 'FAILED';
 export type JudgeStatus = (typeof JudgeStatuses)[keyof typeof JudgeStatuses];
 
 export const LanguageLabels = {
@@ -47,8 +55,10 @@ export const LanguageLabels = {
   python: 'python',
 } as const;
 
+// OJ 允许的编程语言。
 export type AppLanguage = keyof typeof LanguageLabels;
 
+// 单个测试点结果，字段基本对齐 judge_server 的 case_results。
 export interface SubmissionCaseResult {
   seq_id: number;
   verdict: string;
@@ -60,6 +70,7 @@ export interface SubmissionCaseResult {
   error_code: number;
 }
 
+// users 集合文档。
 export interface UserDocument {
   _id: string;
   username: string;
@@ -77,6 +88,7 @@ export interface UserDocument {
   updatedAt: Date;
 }
 
+// grades 集合文档，用作注册时可选的年级字典。
 export interface GradeDocument {
   _id: string;
   name: string;
@@ -86,6 +98,7 @@ export interface GradeDocument {
   updatedAt: Date;
 }
 
+// sessions 集合文档。
 export interface SessionDocument {
   _id: string;
   token: string;
@@ -95,6 +108,7 @@ export interface SessionDocument {
   updatedAt: Date;
 }
 
+// problems 集合文档，只存题面与元数据，不存测试数据目录。
 export interface ProblemDocument {
   _id: string;
   pid: string;
@@ -106,6 +120,7 @@ export interface ProblemDocument {
   updatedAt: Date;
 }
 
+// submission 中与 judge 交互相关的状态，主要由 dispatcher 维护。
 export interface SubmissionJudgeState {
   submissionId: number | null;
   lastStatus: string | null;
@@ -118,11 +133,14 @@ export interface SubmissionJudgeState {
   finishedAt: Date | null;
 }
 
+// submission 中最终展示给页面的结果字段。
 export interface SubmissionResultState {
   caseResults: SubmissionCaseResult[];
   message: string;
 }
 
+// submissions 集合核心文档。
+// `judge` 保存评测过程状态，`result` 保存最终展示结果。
 export interface SubmissionDocument {
   _id: string;
   userId: string;
@@ -140,6 +158,7 @@ export interface SubmissionDocument {
   updatedAt: Date;
 }
 
+// 创建 submission 时需要的最小输入，剩余字段会在 DB 层补全。
 export interface CreateSubmissionInput {
   userId: string;
   pid: string;
@@ -147,10 +166,12 @@ export interface CreateSubmissionInput {
   sourceCode: string;
 }
 
+// 判断 judge 侧状态是否已经终止。
 export function isTerminalJudgeStatus(status: string): boolean {
   return status === JudgeStatuses.FINISHED || status === JudgeStatuses.FAILED;
 }
 
+// 把 judge 快照映射成 OJ 内部状态。
 export function mapJudgeSnapshotToSubmissionState(snapshot: JudgeSnapshotLike): {
   status: OJSubmissionStatus;
   verdict: string;
@@ -175,6 +196,7 @@ export function mapJudgeSnapshotToSubmissionState(snapshot: JudgeSnapshotLike): 
   };
 }
 
+// 新 submission 的默认 judge 状态。
 export function createEmptyJudgeState(): SubmissionJudgeState {
   return {
     submissionId: null,
@@ -189,6 +211,7 @@ export function createEmptyJudgeState(): SubmissionJudgeState {
   };
 }
 
+// 新 submission 的默认结果状态。
 export function createEmptyResultState(): SubmissionResultState {
   return {
     caseResults: [],

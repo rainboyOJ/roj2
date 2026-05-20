@@ -1,3 +1,4 @@
+// 这个测试聚焦“judge 快照 -> OJ 状态”的映射规则。
 import { describe, expect, it } from 'vitest';
 
 import { mapJudgeSnapshotToSubmissionState } from '../src/index.ts';

@@ -1,3 +1,6 @@
+//- 管理员用户审核页：
+//- - 顶部按钮做批量审核
+//- - 行内按钮做单条审核
 extends layout.pug
 
 block content
@@ -7,17 +10,26 @@ block content
         h1= t('admin.users.title')
         p.page-lead= t('admin.users.lead')
     if users.length
+      .page-actions
+        button(type="submit" form="bulk-user-review-form" formaction=urlWithLang('/admin/users/bulk-approve'))= t('admin.users.bulkApprove')
+        button(type="submit" class="secondary" form="bulk-user-review-form" formaction=urlWithLang('/admin/users/bulk-reject'))= t('admin.users.bulkReject')
+      form#bulk-user-review-form(method="post" action=urlWithLang('/admin/users/bulk-approve'))
       .table-shell
         table.data-table
           thead
             tr
+              th= t('admin.users.select')
               th= t('admin.users.username')
               th= t('admin.users.name')
               th= t('admin.users.role')
               th= t('admin.users.approval')
+              th= t('admin.users.actions')
           tbody
             each user in users
               tr
+                td
+                  if user.role !== 'admin'
+                    input(type="checkbox" name="userIds" value=user.id form="bulk-user-review-form")
                 td.table-code= user.username
                 td= user.name || t('admin.users.noDisplayName')
                 td= localizeRole(user.role)
@@ -28,6 +40,15 @@ block content
                     span.status-chip.failed= localizeApprovalStatus(user.approvalStatus)
                   else
                     span.status-chip.pending= localizeApprovalStatus(user.approvalStatus)
+                td
+                  if user.role !== 'admin'
+                    .table-actions
+                      form(method="post" action=urlWithLang('/admin/users/bulk-approve'))
+                        input(type="hidden" name="userIds" value=user.id)
+                        button(type="submit" id=`approve-user-${user.id}`)= t('admin.users.approve')
+                      form(method="post" action=urlWithLang('/admin/users/bulk-reject'))
+                        input(type="hidden" name="userIds" value=user.id)
+                        button(type="submit" class="secondary" id=`reject-user-${user.id}`)= t('admin.users.reject')
     else
       article
         p= t('admin.users.empty')

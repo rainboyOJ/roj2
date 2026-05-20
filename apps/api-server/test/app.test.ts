@@ -1,8 +1,10 @@
+// 这组测试主要覆盖“最小 JSON API 行为”。
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
 
 function createServices(overrides: Record<string, unknown> = {}) {
+  // 统一构造假的 service，避免测试直接依赖数据库或外部 judge。
   return {
     createSubmission: async () => ({
       id: 'sub-1',

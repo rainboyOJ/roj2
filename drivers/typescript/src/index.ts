@@ -1,3 +1,8 @@
+// 这是与 judge_server 通信的底层 TypeScript 客户端。
+// 核心职责：
+// - 按 judge 协议做长度前缀 + JSON 编解码
+// - 管理 TCP 会话
+// - 提供 submit / query_result / submitAndWait / submitAndPoll 的高层 API
 import net from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -276,6 +281,8 @@ class FramedJsonDecoder {
   private buffer = Buffer.alloc(0);
 
   push(chunk: Buffer): JudgeServerResponse[] {
+    // TCP 是流，不保证一次 data 事件就是一个完整消息，
+    // 所以这里需要手工做拆包 / 粘包处理。
     this.buffer = Buffer.concat([this.buffer, chunk]);
     const messages: JudgeServerResponse[] = [];
 
@@ -353,6 +360,8 @@ export class JudgeSession {
   }
 
   async connect(signal?: AbortSignal): Promise<void> {
+    // JudgeSession 表示一个和 judge_server 的 TCP 会话。
+    // connect 成功后，后续 submit / nextMessage 都在这条连接上完成。
     if (this.connected) {
       return;
     }
@@ -463,6 +472,8 @@ export class JudgeSession {
   }
 
   async nextMessage(options: WaitOptions = {}): Promise<JudgeServerResponse> {
+    // 这是读取协议消息的统一入口：
+    // 先看本地队列，再等 socket 推送，再处理超时 / abort / session error。
     const timeoutMs = options.timeoutMs ?? this.responseTimeoutMs;
     const startedAt = Date.now();
 
@@ -508,6 +519,7 @@ export class JudgeSession {
   }
 
   async waitForFinal(options: SubmitAndWaitOptions = {}): Promise<SubmissionFinishedResponse> {
+    // submitAndWait 模式下，judge_server 会在同一连接上持续推送 update/finished。
     const timeoutMs = options.timeoutMs ?? this.responseTimeoutMs;
     const startedAt = Date.now();
 
@@ -725,6 +737,8 @@ export class JudgeServerClient {
     request: SubmitRequestInput,
     options: SubmitAndPollOptions = {},
   ): Promise<SubmitAndPollResult> {
+    // 这是“短连接轮询”模式：
+    // submit 一次拿 ack，之后每轮单独 query_result，直到收到 finished。
     const timeoutMs =
       options.timeoutMs ?? this.options.responseTimeoutMs ?? 30000;
     const pollIntervalMs =

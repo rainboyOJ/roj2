@@ -1,3 +1,5 @@
+// 这个脚本只做一件事：向 MongoDB 填充一套最小演示数据。
+// 本地第一次启动项目前，通常先跑它，确保有账号和题目可用。
 import { RojDb } from '@roj/db';
 
 const db = new RojDb({

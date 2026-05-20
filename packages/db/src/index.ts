@@ -1,3 +1,4 @@
+// 这个文件是项目的数据访问层，负责所有 MongoDB 读写。
 import {
   argon2Sync,
   randomBytes,
@@ -21,6 +22,7 @@ import {
 } from '@roj/shared';
 import { MongoClient } from 'mongodb';
 
+// 抢占待评测 submission 时使用的原子更新。
 export function buildLeaseUpdate(leaseOwner: string, now: Date, leaseMs: number) {
   return {
     $set: {
@@ -32,11 +34,13 @@ export function buildLeaseUpdate(leaseOwner: string, now: Date, leaseMs: number)
   };
 }
 
+// MongoDB 连接配置。
 export interface DbConfig {
   uri: string;
   dbName: string;
 }
 
+// 持久化 judge 返回快照时使用的输入结构。
 export interface JudgeSnapshotPersistInput {
   submissionId: number;
   status: string;
@@ -54,6 +58,7 @@ export interface JudgeSnapshotPersistInput {
   }>;
 }
 
+// 注册用户时的输入结构。
 export interface RegisterUserInput {
   username: string;
   name: string;
@@ -63,6 +68,7 @@ export interface RegisterUserInput {
   password: string;
 }
 
+// 登录态里暴露给上层的最小用户信息。
 export interface SessionUserRecord {
   id: string;
   username: string;
@@ -71,6 +77,7 @@ export interface SessionUserRecord {
   name: string;
 }
 
+// 密码以 argon2id 形式存储。
 function hashPassword(password: string): string {
   const salt = randomBytes(16);
   const digest = argon2Sync('argon2id', {
@@ -84,6 +91,7 @@ function hashPassword(password: string): string {
   return `argon2id:${salt.toString('hex')}:${digest.toString('hex')}`;
 }
 
+// 登录时重新计算摘要并做 timing-safe 比较。
 function verifyPassword(password: string, passwordHash: string): boolean {
   const [algorithm, saltHex, digestHex] = passwordHash.split(':');
   if (algorithm !== 'argon2id' || !saltHex || !digestHex) {
@@ -122,6 +130,7 @@ export class RojDb {
     await this.client.close();
   }
 
+  // 各集合访问入口。
   users() {
     return this.db.collection<UserDocument>('users');
   }
@@ -142,6 +151,7 @@ export class RojDb {
     return this.db.collection<SubmissionDocument>('submissions');
   }
 
+  // 初始化项目需要的索引。
   async ensureIndexes() {
     await this.users().createIndex({ username: 1 }, { unique: true });
     await this.grades().createIndex({ name: 1 }, { unique: true });
@@ -154,6 +164,7 @@ export class RojDb {
     await this.submissions().createIndex({ 'judge.submissionId': 1 });
   }
 
+  // 初始化演示数据。
   async seedDemoData() {
     const now = new Date();
     const demoUserId = new ObjectId().toHexString();
@@ -298,6 +309,7 @@ export class RojDb {
     return this.users().findOne({ username: 'demo' });
   }
 
+  // 创建一条等待 dispatcher 派发的 submission。
   async createSubmission(input: CreateSubmissionInput) {
     const user = await this.users().findOne({ _id: input.userId });
     if (!user) {
@@ -346,6 +358,7 @@ export class RojDb {
     return this.submissions().find({}).sort({ createdAt: -1 }).toArray();
   }
 
+  // 简化版排行榜，直接基于 submissions 汇总。
   async buildSimpleRanklist() {
     const submissions = await this.submissions().find({}).toArray();
     const rows = new Map<string, {
@@ -395,6 +408,7 @@ export class RojDb {
     });
   }
 
+  // 原子抢占一条待派发 submission，供 dispatcher 使用。
   async claimPendingSubmission(leaseOwner: string, leaseMs: number) {
     const now = new Date();
     const result = await this.submissions().findOneAndUpdate(
@@ -415,6 +429,7 @@ export class RojDb {
     return result;
   }
 
+  // 保存 judge 受理任务后的 ack。
   async saveJudgeAck(localSubmissionId: string, ack: JudgeSnapshotPersistInput) {
     const now = new Date();
     await this.submissions().updateOne(
@@ -433,6 +448,7 @@ export class RojDb {
     );
   }
 
+  // 保存轮询得到的 judge 快照，并同步更新 OJ 内部状态。
   async saveJudgeSnapshot(localSubmissionId: string, snapshot: JudgeSnapshotPersistInput) {
     const now = new Date();
     const mapped = mapJudgeSnapshotToSubmissionState(snapshot);
@@ -473,6 +489,7 @@ export class RojDb {
     }
   }
 
+  // 记录系统级失败，例如 judge 通信或 dispatcher 自身异常。
   async markSubmissionFailed(localSubmissionId: string, message: string) {
     const now = new Date();
     await this.submissions().updateOne(
@@ -496,6 +513,7 @@ export class RojDb {
     );
   }
 
+  // 学生注册后默认进入待审核状态。
   async registerUser(input: RegisterUserInput) {
     const grade = await this.grades().findOne({ name: input.grade, isActive: true });
     if (!grade) {
@@ -542,6 +560,7 @@ export class RojDb {
     };
   }
 
+  // 创建服务端 session。
   async createSession(userId: string, ttlMs = 7 * 24 * 60 * 60 * 1000) {
     const now = new Date();
     const session: SessionDocument = {
@@ -564,6 +583,7 @@ export class RojDb {
     await this.sessions().deleteOne({ token });
   }
 
+  // 用 session token 反查当前登录用户，并顺便过滤过期 session。
   async getUserBySessionToken(token: string | null): Promise<SessionUserRecord | null> {
     if (!token) {
       return null;
@@ -600,6 +620,7 @@ export class RojDb {
     return this.grades().find({}).sort({ order: 1 }).toArray();
   }
 
+  // 年级是注册流程依赖的字典表。
   async createGrade(input: {
     name: string;
     isActive: boolean;
@@ -644,6 +665,7 @@ export class RojDb {
     return this.problems().findOne({ _id: id });
   }
 
+  // 创建站内题目元数据，不涉及 judge 机测试数据目录。
   async createProblem(input: {
     pid: string;
     title: string;
@@ -688,6 +710,7 @@ export class RojDb {
     );
   }
 
+  // 当前最小实现里，发布题目就是把 isVisible 设为 true。
   async publishProblem(id: string) {
     await this.problems().updateOne(
       { _id: id },
@@ -700,6 +723,7 @@ export class RojDb {
     );
   }
 
+  // 审核通过时记录审核人和审核时间。
   async approveUser(userId: string, adminUserId: string) {
     const now = new Date();
     await this.users().updateOne(
@@ -732,6 +756,7 @@ export class RojDb {
     );
   }
 
+  // 用户修改班级后重新回到待审核状态。
   async updateUserClassName(userId: string, className: string) {
     const now = new Date();
     await this.users().updateOne(
@@ -762,6 +787,7 @@ export class RojDb {
   }
 }
 
+// HTML 表单里语言先是 string，这里收窄回 AppLanguage。
 export function toAppLanguage(value: string): AppLanguage {
   if (value === 'cpp' || value === 'python') {
     return value;

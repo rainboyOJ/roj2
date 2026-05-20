@@ -1,3 +1,4 @@
+// 这个测试聚焦 lease 更新结构是否正确。
 import { describe, expect, it } from 'vitest';
 
 import { buildLeaseUpdate } from '../src/index.ts';

@@ -1,3 +1,9 @@
+// 这个文件是整个 HTTP / HTML 层的中心。
+// 它负责：
+// - 定义页面路由
+// - 定义 JSON API 路由
+// - 做登录态检查、管理员权限检查
+// - 渲染 Pug 模板
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -12,6 +18,7 @@ import { createViewContext, resolveUiLang, type UiLang } from './view-i18n.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// 用 zod 把用户提交的表单 / JSON 先做一层结构校验。
 const createSubmissionSchema = z.object({
   pid: z.string().min(1),
   language: z.enum(['cpp', 'python']),
@@ -182,6 +189,7 @@ export interface ApiServerServices {
   resetUserPassword(userId: string, password: string): Promise<void>;
 }
 
+// 从 cookie 头里解析出 session token。
 function parseSessionToken(cookieHeader: string | undefined): string | null {
   if (!cookieHeader) {
     return null;
@@ -198,6 +206,7 @@ function parseSessionToken(cookieHeader: string | undefined): string | null {
   return null;
 }
 
+// 当前项目使用简单 cookie session，不引入更复杂的认证中间件。
 function setSessionCookie(reply: {
   header(name: string, value: string): unknown;
 }, token: string) {
@@ -227,6 +236,7 @@ function getRequestLang(request: {
   return 'zh';
 }
 
+// 保证页面跳转后还能保留当前语言。
 function buildLangPath(pathname: string, lang: UiLang): string {
   const separator = pathname.includes('?') ? '&' : '?';
   return `${pathname}${separator}lang=${lang}`;
@@ -249,6 +259,8 @@ export function buildApp(services: ApiServerServices) {
     template: string,
     data: Record<string, unknown> = {},
   ) {
+    // 所有 Pug 页面都走这个统一入口，
+    // 这样模板天然就能拿到 i18n helper、当前用户和 admin 区域标记。
     const lang = getRequestLang(request);
     const currentPath = request.url || '/';
     const sessionToken = parseSessionToken(request.headers?.cookie);
@@ -271,6 +283,7 @@ export function buildApp(services: ApiServerServices) {
     return reply.redirect(buildLangPath(pathname, lang));
   }
 
+  // ===== 页面路由区 =====
   app.get('/', async (request, reply) => renderPage(request, reply, 'home.pug'));
 
   app.get('/register', async (request, reply) =>
@@ -306,6 +319,14 @@ export function buildApp(services: ApiServerServices) {
     return redirectWithLang(request, reply, '/');
   });
 
+  app.post('/logout', async (request, reply) => {
+    // HTML 流程的 logout 是表单 POST，不走 GET，避免误触发。
+    const token = parseSessionToken(request.headers.cookie);
+    await services.logoutUser(token);
+    clearSessionCookie(reply);
+    return redirectWithLang(request, reply, '/');
+  });
+
   app.get('/profile', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -330,6 +351,7 @@ export function buildApp(services: ApiServerServices) {
   });
 
   app.get('/admin/users', async (request, reply) => {
+    // 用户审核页：支持批量审核，也支持行内单个审核。
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
@@ -341,6 +363,55 @@ export function buildApp(services: ApiServerServices) {
 
     const users = await services.listAdminUsers();
     return renderPage(request, reply, 'admin-users.pug', { currentUser: user, users });
+  });
+
+  app.post('/admin/users/bulk-approve', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const raw = request.body as { userIds?: string | string[] };
+    const userIds = Array.isArray(raw.userIds)
+      ? raw.userIds
+      : raw.userIds
+        ? [raw.userIds]
+        : [];
+
+    // 批量审核目前直接串行循环，先保持实现简单清楚。
+    for (const userId of userIds) {
+      await services.approveUser(userId, user.id);
+    }
+
+    return redirectWithLang(request, reply, '/admin/users');
+  });
+
+  app.post('/admin/users/bulk-reject', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const raw = request.body as { userIds?: string | string[] };
+    const userIds = Array.isArray(raw.userIds)
+      ? raw.userIds
+      : raw.userIds
+        ? [raw.userIds]
+        : [];
+
+    for (const userId of userIds) {
+      await services.rejectUser(userId, user.id);
+    }
+
+    return redirectWithLang(request, reply, '/admin/users');
   });
 
   app.get('/admin/problems', async (request, reply) => {
@@ -517,6 +588,8 @@ export function buildApp(services: ApiServerServices) {
   });
 
   app.post('/api/submissions', async (request, reply) => {
+    // API 模式下，创建 submission 后立刻返回 submissionId；
+    // 真正评测由独立 dispatcher 异步完成。
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
@@ -619,6 +692,7 @@ export function buildApp(services: ApiServerServices) {
     return reply.send({ ok: true });
   });
 
+  // ===== 管理端 JSON API 区 =====
   app.get('/api/admin/users', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -807,6 +881,8 @@ export function buildApp(services: ApiServerServices) {
   });
 
   app.post('/admin/problems', async (request, reply) => {
+    // 页面表单提交不会自动把 checkbox 变成 zod 想要的数组格式，
+    // 所以这里先手工整理 allowLanguages。
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
@@ -925,6 +1001,8 @@ export function buildApp(services: ApiServerServices) {
   });
 
   app.post('/submissions', async (request, reply) => {
+    // 页面提交流程和 API 提交流程的核心逻辑一样，
+    // 区别只在于这里最终跳转到 submission 详情页。
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
     if (!user) {
@@ -949,6 +1027,7 @@ export function buildApp(services: ApiServerServices) {
   return app;
 }
 
+// 页面层判断 submission 是否终态时，只关心 OJ 自己的状态。
 export function isSubmissionTerminal(status: string) {
   return (
     status === OJSubmissionStatuses.FINISHED ||

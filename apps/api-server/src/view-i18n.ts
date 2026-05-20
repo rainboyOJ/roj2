@@ -1,3 +1,5 @@
+// 这个文件集中管理页面文案和视图辅助函数。
+// 目前支持中英双语，Pug 模板里看到的 t()/localize*() 都从这里来。
 export type UiLang = 'zh' | 'en';
 
 type TranslationKey =
@@ -8,6 +10,7 @@ type TranslationKey =
   | 'nav.ranklist'
   | 'nav.contests'
   | 'nav.profile'
+  | 'nav.logout'
   | 'nav.login'
   | 'nav.register'
   | 'nav.admin'
@@ -132,6 +135,12 @@ type TranslationKey =
   | 'admin.users.name'
   | 'admin.users.role'
   | 'admin.users.approval'
+  | 'admin.users.actions'
+  | 'admin.users.select'
+  | 'admin.users.approve'
+  | 'admin.users.reject'
+  | 'admin.users.bulkApprove'
+  | 'admin.users.bulkReject'
   | 'admin.users.empty'
   | 'admin.problems.title'
   | 'admin.problems.lead'
@@ -211,6 +220,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.ranklist': '排行榜',
     'nav.contests': '比赛',
     'nav.profile': '个人中心',
+    'nav.logout': '登出',
     'nav.login': '登录',
     'nav.register': '注册',
     'nav.admin': '管理',
@@ -335,6 +345,12 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.name': '姓名',
     'admin.users.role': '角色',
     'admin.users.approval': '审核状态',
+    'admin.users.actions': '审核操作',
+    'admin.users.select': '选择',
+    'admin.users.approve': '通过',
+    'admin.users.reject': '拒绝',
+    'admin.users.bulkApprove': '批量通过',
+    'admin.users.bulkReject': '批量拒绝',
     'admin.users.empty': '没有需要查看的用户。',
     'admin.problems.title': '题目管理',
     'admin.problems.lead': '按 OJ 管理员常见的方式浏览和维护题目目录。',
@@ -411,6 +427,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.ranklist': 'Ranklist',
     'nav.contests': 'Contests',
     'nav.profile': 'Profile',
+    'nav.logout': 'Logout',
     'nav.login': 'Login',
     'nav.register': 'Register',
     'nav.admin': 'Admin',
@@ -535,6 +552,12 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.name': 'Name',
     'admin.users.role': 'Role',
     'admin.users.approval': 'Approval',
+    'admin.users.actions': 'Actions',
+    'admin.users.select': 'Select',
+    'admin.users.approve': 'Approve',
+    'admin.users.reject': 'Reject',
+    'admin.users.bulkApprove': 'Bulk approve',
+    'admin.users.bulkReject': 'Bulk reject',
     'admin.users.empty': 'No users to review.',
     'admin.problems.title': 'Admin problems',
     'admin.problems.lead': 'Browse problems in the same way an OJ manager would scan the catalog.',
@@ -625,6 +648,7 @@ function hasTranslationKey(
   return key in translations[lang];
 }
 
+// 往任意路径里补上 lang 参数，同时保留 query 和 hash。
 function withLang(path: string, lang: UiLang) {
   const [pathnameWithQuery, hash = ''] = path.split('#', 2);
   const [pathname, search = ''] = pathnameWithQuery.split('?', 2);
@@ -643,6 +667,8 @@ export function createViewContext(
   lang: UiLang,
   currentPath: string,
 ): ViewContextHelpers {
+  // 这里返回的是模板运行时的 helper 集合。
+  // Pug 里不应该自己拼状态文案和语言链接，而是统一走这些 helper。
   return {
     lang,
     t(key) {

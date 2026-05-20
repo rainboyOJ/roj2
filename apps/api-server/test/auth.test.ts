@@ -1,8 +1,10 @@
+// 这组测试覆盖认证、登录态和学生审核约束。
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
 
 function createServices(overrides: Record<string, unknown> = {}) {
+  // 每个测试只改自己关心的 service，其余都走默认假实现。
   return {
     createSubmission: async () => ({
       id: 'sub-1',
@@ -143,6 +145,23 @@ describe('auth routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.headers['set-cookie']).toContain('roj_session=');
+  });
+
+  it('logs out from the HTML flow, clears the session cookie, and redirects home', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/logout?lang=zh',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/?lang=zh');
+    expect(response.headers['set-cookie']).toContain('roj_session=;');
+    expect(response.headers['set-cookie']).toContain('Max-Age=0');
   });
 
   it('returns 401 for invalid login credentials', async () => {

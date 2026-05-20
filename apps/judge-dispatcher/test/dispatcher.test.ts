@@ -1,3 +1,4 @@
+// 这组测试只验证 dispatcher 的编排行为，不连真实 judge_server。
 import { describe, expect, it } from 'vitest';
 
 import { processSubmissionWithClient } from '../src/dispatcher.ts';

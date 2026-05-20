@@ -1,3 +1,4 @@
+// 这组测试偏后台管理和内容维护流程。
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
@@ -64,6 +65,72 @@ function createServices(overrides: Record<string, unknown> = {}) {
 }
 
 describe('content management routes', () => {
+  it('approves selected users from the admin HTML page flow', async () => {
+    const approved: Array<{ userId: string; adminUserId: string }> = [];
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      approveUser: async (userId: string, adminUserId: string) => {
+        approved.push({ userId, adminUserId });
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/users/bulk-approve?lang=zh',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+      payload: {
+        userIds: ['user-2', 'user-3'],
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/users?lang=zh');
+    expect(approved).toEqual([
+      { userId: 'user-2', adminUserId: 'admin-1' },
+      { userId: 'user-3', adminUserId: 'admin-1' },
+    ]);
+  });
+
+  it('rejects selected users from the admin HTML page flow', async () => {
+    const rejected: Array<{ userId: string; adminUserId: string }> = [];
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      rejectUser: async (userId: string, adminUserId: string) => {
+        rejected.push({ userId, adminUserId });
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/users/bulk-reject?lang=zh',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+      payload: {
+        userIds: ['user-2', 'user-3'],
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/users?lang=zh');
+    expect(rejected).toEqual([
+      { userId: 'user-2', adminUserId: 'admin-1' },
+      { userId: 'user-3', adminUserId: 'admin-1' },
+    ]);
+  });
+
   it('returns a logged-in user submission list', async () => {
     const app = buildApp(createServices({
       listSubmissions: async () => [

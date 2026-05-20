@@ -1,3 +1,7 @@
+// api-server 的入口文件。
+// 这里做两件事：
+// 1. 把数据库层封装成“页面/接口需要的 services”
+// 2. 调 buildApp() 组装出真正的 Fastify 应用
 import { RojDb } from '@roj/db';
 
 import {
@@ -12,6 +16,8 @@ import {
 } from './app.ts';
 import type { CreateSubmissionInput } from '@roj/shared';
 
+// 这一组 map* 函数的作用，是把 DB 文档转换成前端视图模型。
+// 这样 app.ts 不需要直接依赖 MongoDB 文档的完整结构。
 function mapProblem(problem: {
   pid: string;
   title: string;
@@ -87,6 +93,7 @@ function formatDateTime(value: Date | null): string | null {
 }
 
 function buildPlaceholderContests(): ContestViewModel[] {
+  // 比赛页目前还是占位实现，所以这里先直接返回内存中的假数据。
   return [
     {
       id: 'practice-may',
@@ -110,6 +117,7 @@ function buildPlaceholderContests(): ContestViewModel[] {
 export async function buildProductionServices(db: RojDb): Promise<ApiServerServices> {
   return {
     createSubmission: async (input: CreateSubmissionInput) => {
+      // 注意：这里只写数据库，不直接等待评测结果。
       const created = await db.createSubmission(input);
       return {
         id: created._id,
@@ -130,6 +138,7 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       return submission ? mapSubmission(submission) : null;
     },
     listSubmissions: async (user) => {
+      // 管理员看全站提交，学生只看自己的提交。
       const submissions =
         user.role === 'admin'
           ? await db.listAllSubmissions()
@@ -250,6 +259,8 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  // 这里才是真正的生产启动逻辑：
+  // 建 DB、建 services、建 Fastify、监听端口。
   const db = new RojDb({
     uri: process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017',
     dbName: process.env.MONGODB_DB ?? 'roj_demo',

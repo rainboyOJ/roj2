@@ -1,8 +1,10 @@
+// 这组测试专门看“渲染出来的 HTML 长什么样”。
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
 
 function createServices(overrides: Record<string, unknown> = {}) {
+  // 用固定的假数据把页面渲染稳定下来，方便直接断言 HTML 内容。
   return {
     createSubmission: async () => ({
       id: 'sub-1',
@@ -197,6 +199,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('sub-1');
     expect(response.body).toContain('已完成');
     expect(response.body).toContain('个人中心');
+    expect(response.body).toContain('登出');
     expect(response.body).not.toContain('登录');
     expect(response.body).not.toContain('注册');
   });
@@ -299,5 +302,44 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('编辑题目');
     expect(response.body).toContain('A + B Problem');
+  });
+
+  it('renders approval actions on the admin users page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      listAdminUsers: async () => [
+        {
+          id: 'user-2',
+          username: 'alice',
+          role: 'student' as const,
+          approvalStatus: 'pending' as const,
+          name: 'Alice',
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/users',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('批量通过');
+    expect(response.body).toContain('批量拒绝');
+    expect(response.body).toContain('通过');
+    expect(response.body).toContain('拒绝');
+    expect(response.body).toContain('type="checkbox"');
+    expect(response.body).toContain('id="bulk-user-review-form"');
+    expect(response.body).toContain('form="bulk-user-review-form"');
+    expect(response.body).toContain('id="approve-user-user-2"');
+    expect(response.body).toContain('id="reject-user-user-2"');
   });
 });
