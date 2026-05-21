@@ -4,6 +4,11 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
 import { RojDb } from '@roj/db';
+import type {
+  QueryResultResponse,
+  SubmissionAckResponse,
+  SubmitRequestInput,
+} from '@roj/judge-driver';
 import {
   JudgeStatuses,
   isTerminalJudgeStatus,
@@ -18,17 +23,23 @@ export interface SubmissionForDispatch {
 }
 
 export interface JudgeClientLike {
-  submit(submission: SubmissionForDispatch): Promise<unknown>;
-  queryResult(submissionId: number): Promise<unknown>;
+  submit(submission: SubmissionForDispatch): Promise<MinimalJudgeAck>;
+  queryResult(submissionId: number): Promise<MinimalJudgeSnapshot>;
 }
 
+type MinimalJudgeAck = Pick<SubmissionAckResponse, 'submission_id'>;
+type MinimalJudgeSnapshot = Pick<
+  QueryResultResponse,
+  'status' | 'verdict'
+>;
+
 export interface DispatcherStoreLike {
-  saveAck(ack: unknown): Promise<void>;
-  saveSnapshot(snapshot: { status: string; verdict: string }): Promise<void>;
+  saveAck(ack: MinimalJudgeAck): Promise<void>;
+  saveSnapshot(snapshot: MinimalJudgeSnapshot): Promise<void>;
 }
 
 // 这是给测试辅助函数用的本地判断，不依赖 shared 包里的完整类型。
-function isTerminalSnapshot(snapshot: { status: string }) {
+function isTerminalSnapshot(snapshot: Pick<QueryResultResponse, 'status'>) {
   return snapshot.status === 'FINISHED' || snapshot.status === 'FAILED';
 }
 
@@ -36,15 +47,7 @@ function isTerminalSnapshot(snapshot: { status: string }) {
 // 给它一个假的 client 和假的 store，就可以只测“调度编排逻辑”。
 export async function processSubmissionWithClient(
   submission: SubmissionForDispatch,
-  client: {
-    submit(submission: SubmissionForDispatch): Promise<{
-      submission_id: number;
-    }>;
-    queryResult(submissionId: number): Promise<{
-      status: string;
-      verdict: string;
-    }>;
-  },
+  client: JudgeClientLike,
   store: DispatcherStoreLike,
 ) {
   const ack = await client.submit(submission);
@@ -65,43 +68,8 @@ export async function processSubmissionWithClient(
 export interface DispatcherRuntimeOptions {
   db: RojDb;
   client: {
-    submit(input: {
-      uuid: number;
-      pid: string;
-      lang: number;
-      code: string;
-    }): Promise<{
-      submission_id: number;
-      status: string;
-      verdict: string;
-      message: string;
-      case_results: Array<{
-        seq_id: number;
-        verdict: string;
-        cpu_time_ms: number;
-        real_time_ms: number;
-        memory_kb: number;
-        signal: number;
-        exit_code: number;
-        error_code: number;
-      }>;
-    }>;
-    queryResult(submissionId: number): Promise<{
-      submission_id: number;
-      status: string;
-      verdict: string;
-      message: string;
-      case_results: Array<{
-        seq_id: number;
-        verdict: string;
-        cpu_time_ms: number;
-        real_time_ms: number;
-        memory_kb: number;
-        signal: number;
-        exit_code: number;
-        error_code: number;
-      }>;
-    }>;
+    submit(input: SubmitRequestInput): Promise<SubmissionAckResponse>;
+    queryResult(submissionId: number): Promise<QueryResultResponse>;
   };
   leaseOwner: string;
   leaseMs: number;
@@ -109,7 +77,9 @@ export interface DispatcherRuntimeOptions {
   pollDelayMs: number;
 }
 
-export function appLanguageToJudgeLanguage(language: AppLanguage): number {
+export function appLanguageToJudgeLanguage(
+  language: AppLanguage,
+): SubmitRequestInput['lang'] {
   // 当前 judge_server 的语言编号来自既有协议：
   // cpp -> 0, python -> 2
   if (language === 'cpp') {

@@ -739,12 +739,16 @@ export class JudgeServerClient {
   ): Promise<SubmitAndPollResult> {
     // 这是“短连接轮询”模式：
     // submit 一次拿 ack，之后每轮单独 query_result，直到收到 finished。
+    // timeoutMs 是整个 submit + poll 流程的总超时时间，不是单次请求的超时时间。
     const timeoutMs =
       options.timeoutMs ?? this.options.responseTimeoutMs ?? 30000;
+    // pollIntervalMs 控制两次 query_result 之间的等待时间，避免对 judge_server 打太密。
     const pollIntervalMs =
       options.pollIntervalMs ?? this.options.pollIntervalMs ?? 500;
     const startedAt = Date.now();
 
+    // 第一步先提交代码。ack.submission_id 是 judge_server 分配的提交 ID，
+    // 后续 query_result 都要用这个 ID 查询评测进度。
     const ack = await this.submit(
       request,
       withWaitOptions(
@@ -754,6 +758,7 @@ export class JudgeServerClient {
     );
 
     while (true) {
+      // 每一轮都重新计算剩余总时间，保证整个函数不会超过 timeoutMs。
       const remaining = remainingTimeoutMs(startedAt, timeoutMs);
       if (remaining !== undefined && remaining <= 0) {
         throw new JudgeTimeoutError(
@@ -761,10 +766,14 @@ export class JudgeServerClient {
         );
       }
 
+      // 等待一个轮询间隔。如果剩余时间比轮询间隔短，就只等待剩余时间。
+      // delay 同样接收 AbortSignal，调用方可以中途取消整个等待流程。
       await delay(Math.min(pollIntervalMs, remaining ?? pollIntervalMs), undefined, {
         signal: options.signal,
       });
 
+      // 使用 judge_server 返回的 submission_id 查询当前快照。
+      // queryResult 内部会为这次查询单独建立连接，查询完后关闭连接。
       const snapshot = await this.queryResult(
         ack.submission_id,
         withWaitOptions(
@@ -772,8 +781,11 @@ export class JudgeServerClient {
           options.signal,
         ),
       );
+      // 把每次轮询到的快照交给调用方，便于打印日志或持久化中间状态。
       options.onSnapshot?.(snapshot);
 
+      // 只有收到 submission_finished 才认为评测完成。
+      // 其他 update 状态会继续进入下一轮轮询。
       if (isSubmissionFinishedResponse(snapshot)) {
         return {
           ack,

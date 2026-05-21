@@ -1,6 +1,7 @@
 // 这组测试只验证 dispatcher 的编排行为，不连真实 judge_server。
 import { describe, expect, it } from 'vitest';
 
+import type { QueryResultResponse } from '@roj/judge-driver';
 import { processSubmissionWithClient } from '../src/dispatcher.ts';
 
 describe('processSubmissionWithClient', () => {
@@ -47,7 +48,7 @@ describe('processSubmissionWithClient', () => {
 
   it('keeps polling until the judge returns a terminal snapshot', async () => {
     const calls: string[] = [];
-    const snapshots = [
+    const snapshots: QueryResultResponse[] = [
       {
         submission_id: 10,
         status: 'RUNNING',
