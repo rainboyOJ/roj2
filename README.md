@@ -10,7 +10,7 @@
 - MongoDB 持久化：`users`、`problems`、`submissions`
 - MongoDB session：`sessions`
 - 后台 `judge-dispatcher`
-- 复用现有 `drivers/typescript` 与 `judge_server` 通信
+- 复用现有 `packages/judge-driver` 与 `judge_server` 通信
 - seed 数据：`admin`、`demo`、样例届别、`1000` 题目
 
 暂未实现：
@@ -32,8 +32,6 @@
   ├── docs/
   │   ├── oj-nodejs-ts-mongodb-plan.md
   │   └── superpowers/
-  ├── drivers/
-  │   └── typescript/
   ├── package.json
   └── tsconfig.base.json
 ```
@@ -198,6 +196,6 @@ npm run dev:dispatcher
 
 1. `docs/oj-nodejs-ts-mongodb-plan.md`
 2. `docs/superpowers/specs/2026-05-17-judge-pipeline-design.md`
-3. `drivers/typescript/README.md`
+3. `packages/judge-driver/README.md`
 4. `apps/api-server/src/index.ts`
 5. `apps/judge-dispatcher/src/index.ts`

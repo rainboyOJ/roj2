@@ -53,8 +53,8 @@ move_to_new_oj/
 
 ### `packages/judge-driver`
 
-This package is a local copy-through wrapper over the existing TypeScript driver code already shipped in `drivers/typescript/`.
-The runtime judging integration will import from `packages/judge-driver` so the app layer does not depend on the handoff folder directly.
+This package owns the TypeScript driver code used to communicate with `judge_server`.
+The runtime judging integration imports from `packages/judge-driver` so the app layer depends on a normal workspace package.
 
 ### `packages/shared`
 

@@ -6,14 +6,14 @@ This repository is a small handoff package for a new OJ project. The repository 
 
 - `README.md`: migration notes and onboarding order.
 - `docs/oj-nodejs-ts-mongodb-plan.md`: architecture and product plan.
-- `drivers/typescript/src/index.ts`: TypeScript judge driver source.
-- `drivers/typescript/examples/`: runnable submit/poll examples.
+- `packages/judge-driver/src/index.ts`: TypeScript judge driver source.
+- `packages/judge-driver/examples/`: runnable submit/poll examples.
 
 Keep driver logic in `src/`, usage samples in `examples/`, and planning or migration notes in `docs/`.
 
 ## Build, Test, and Development Commands
 
-Run these from `drivers/typescript/`.
+Run these from `packages/judge-driver/`.
 
 - `npm install`: install local development dependencies.
 - `npx tsc --noEmit`: type-check the driver with strict TypeScript settings.
@@ -25,7 +25,7 @@ Examples assume a reachable `judge_server` on `127.0.0.1:8000`.
 
 ## Coding Style & Naming Conventions
 
-Match the existing TypeScript style in [src/index.ts](/home/rainboy/mycode/roj_codex/drivers/typescript/src/index.ts):
+Match the existing TypeScript style in [src/index.ts](/home/rainboy/mycode/roj_codex/packages/judge-driver/src/index.ts):
 
 - Use ES modules, `strict` typing, and explicit exported types.
 - Keep 2-space indentation, trailing commas where present, and semicolons.

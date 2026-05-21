@@ -40,7 +40,7 @@
 ## 目录
 
 ```text
-drivers/typescript/
+packages/judge-driver/
   ├── src/index.ts
   ├── examples/submit-and-wait.ts
   ├── examples/submit-and-poll.ts
@@ -144,6 +144,6 @@ try {
 Node 22 可以直接用 strip-types 运行：
 
 ```bash
-cd drivers/typescript
+cd packages/judge-driver
 node --experimental-strip-types ./examples/submit-and-poll.ts
 ```

@@ -86,10 +86,9 @@
 
 然后看：
 
-1. [drivers/typescript/src/index.ts](/home/rainboy/mycode/roj_codex/drivers/typescript/src/index.ts)
-2. [drivers/typescript/examples/submit-and-wait.ts](/home/rainboy/mycode/roj_codex/drivers/typescript/examples/submit-and-wait.ts)
-3. [drivers/typescript/examples/submit-and-poll.ts](/home/rainboy/mycode/roj_codex/drivers/typescript/examples/submit-and-poll.ts)
-4. [packages/judge-driver/src/index.ts](/home/rainboy/mycode/roj_codex/packages/judge-driver/src/index.ts)
+1. [packages/judge-driver/src/index.ts](/home/rainboy/mycode/roj_codex/packages/judge-driver/src/index.ts)
+2. [packages/judge-driver/examples/submit-and-wait.ts](/home/rainboy/mycode/roj_codex/packages/judge-driver/examples/submit-and-wait.ts)
+3. [packages/judge-driver/examples/submit-and-poll.ts](/home/rainboy/mycode/roj_codex/packages/judge-driver/examples/submit-and-poll.ts)
 
 这里不要一开始就深挖所有 socket 细节。
 
@@ -293,7 +292,7 @@
 
 1. [packages/shared/src/index.ts](/home/rainboy/mycode/roj_codex/packages/shared/src/index.ts)
 2. [packages/db/src/index.ts](/home/rainboy/mycode/roj_codex/packages/db/src/index.ts)
-3. [drivers/typescript/src/index.ts](/home/rainboy/mycode/roj_codex/drivers/typescript/src/index.ts)
+3. [packages/judge-driver/src/index.ts](/home/rainboy/mycode/roj_codex/packages/judge-driver/src/index.ts)
 4. [apps/judge-dispatcher/src/dispatcher.ts](/home/rainboy/mycode/roj_codex/apps/judge-dispatcher/src/dispatcher.ts)
 5. [apps/api-server/src/index.ts](/home/rainboy/mycode/roj_codex/apps/api-server/src/index.ts)
 6. [apps/api-server/src/app.ts](/home/rainboy/mycode/roj_codex/apps/api-server/src/app.ts)

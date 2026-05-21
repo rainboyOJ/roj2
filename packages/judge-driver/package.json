@@ -2,8 +2,22 @@
   "name": "@roj/judge-driver",
   "private": true,
   "version": "0.1.0",
+  "description": "TypeScript driver for communicating with boxtest judge_server",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "examples",
+    "README.md",
+    "tsconfig.json"
+  ],
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "example:submit-and-wait": "node --experimental-strip-types ./examples/submit-and-wait.ts",
+    "example:submit-and-poll": "node --experimental-strip-types ./examples/submit-and-poll.ts"
   }
 }

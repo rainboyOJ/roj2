@@ -197,7 +197,7 @@ browser
 
 ## 5. 为什么主集成方式应选 submit + query_result
 
-当前 `drivers/typescript` 已经支持两种思路：
+当前 `packages/judge-driver` 已经支持两种思路：
 
 1. `submitAndWait()`：同一条 TCP 连接上等待最终推送
 2. `submit()` + `queryResult()`：提交后轮询
@@ -259,9 +259,7 @@ packages/
 
 ### 6.3 `packages/judge-driver`
 
-这里直接复用你现在仓库里的 `drivers/typescript` 思路即可。
-
-建议未来把它抽成单独 package，让 `api-server` 和 `judge-dispatcher` 都能共享类型定义，但真正连 judge 的动作主要还是给 `judge-dispatcher` 用。
+这里放置和 `judge_server` 通信的 TypeScript 驱动代码，让 `api-server` 和 `judge-dispatcher` 都能共享类型定义，但真正连 judge 的动作主要还是给 `judge-dispatcher` 用。
 
 ### 6.4 `packages/shared`
 
@@ -864,7 +862,7 @@ OJ API 应该有自己的 DTO。
 
 目标：
 
-- 确认 `drivers/typescript` 可用
+- 确认 `packages/judge-driver` 可用
 - 明确题目数据部署方式
 - 明确当前只支持 C++ / Python
 
