@@ -16,6 +16,7 @@ SKIP_BUILD="${SKIP_BUILD:-0}"
 
 DOCKER_CMD=(docker)
 COMPOSE_CMD=(docker compose)
+COMMAND="${1:-install}"
 
 log() {
   printf '[install] %s\n' "$*"
@@ -28,6 +29,18 @@ warn() {
 fail() {
   printf '[install] ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+usage() {
+  cat <<EOF
+Usage:
+  ./install.sh          Install and start services.
+  ./install.sh update   Update repositories, rebuild images, and restart services.
+
+Environment:
+  UPDATE_REPOS=1        Update existing local git repositories.
+  SKIP_BUILD=1          Reuse existing ${IMAGE_NAME} instead of building.
+EOF
 }
 
 require_command() {
@@ -124,6 +137,23 @@ ensure_judge_image() {
 }
 
 main() {
+  case "$COMMAND" in
+    install)
+      ;;
+    update)
+      UPDATE_REPOS=1
+      SKIP_BUILD=0
+      ;;
+    -h|--help|help)
+      usage
+      return 0
+      ;;
+    *)
+      usage >&2
+      fail "unknown command: $COMMAND"
+      ;;
+  esac
+
   require_command git
   setup_docker_commands
 
@@ -147,6 +177,10 @@ main() {
   log "starting services with Docker Compose"
   (
     cd "$ROJ_DIR"
+    if [[ "$COMMAND" == "update" ]]; then
+      "${COMPOSE_CMD[@]}" down --remove-orphans
+    fi
+
     if [[ "$SKIP_BUILD" == "1" ]]; then
       "${COMPOSE_CMD[@]}" up -d
     else
