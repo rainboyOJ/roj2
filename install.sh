@@ -11,6 +11,8 @@ ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
 JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/boxtest-opencode-dev}"
 ROJ_DIR="${ROJ_DIR:-$ROOT_DIR}"
 IMAGE_NAME="${IMAGE_NAME:-roj-codex:local}"
+UPDATE_REPOS="${UPDATE_REPOS:-0}"
+SKIP_BUILD="${SKIP_BUILD:-0}"
 
 DOCKER_CMD=(docker)
 COMPOSE_CMD=(docker compose)
@@ -72,8 +74,18 @@ pull_or_update_repo() {
   local dir=$3
 
   if [[ -d "$dir/.git" ]]; then
+    if [[ "$UPDATE_REPOS" != "1" ]]; then
+      log "using existing $name repo at $dir"
+      return
+    fi
+
     log "updating $name at $dir"
-    git -C "$dir" pull --ff-only
+    if is_placeholder_url "$url"; then
+      git -C "$dir" pull --ff-only
+    else
+      git -C "$dir" fetch "$url"
+      git -C "$dir" merge --ff-only FETCH_HEAD
+    fi
     return
   fi
 
@@ -122,13 +134,24 @@ main() {
   ensure_files
   ensure_judge_image
 
-  log "building $IMAGE_NAME"
-  "${DOCKER_CMD[@]}" build -t "$IMAGE_NAME" "$ROJ_DIR"
+  if [[ "$SKIP_BUILD" == "1" ]]; then
+    if ! "${DOCKER_CMD[@]}" image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+      fail "SKIP_BUILD=1 was set, but image $IMAGE_NAME does not exist"
+    fi
+    log "using existing image $IMAGE_NAME"
+  else
+    log "building $IMAGE_NAME"
+    "${DOCKER_CMD[@]}" build -t "$IMAGE_NAME" "$ROJ_DIR"
+  fi
 
   log "starting services with Docker Compose"
   (
     cd "$ROJ_DIR"
-    "${COMPOSE_CMD[@]}" up -d --build
+    if [[ "$SKIP_BUILD" == "1" ]]; then
+      "${COMPOSE_CMD[@]}" up -d
+    else
+      "${COMPOSE_CMD[@]}" up -d --build
+    fi
   )
 
   cat <<EOF

@@ -24,8 +24,8 @@ services:
     image: boxtest-judge-server:dev
     container_name: roj-judge-server
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
 
   api-server:
     build:
