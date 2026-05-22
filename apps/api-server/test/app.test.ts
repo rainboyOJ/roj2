@@ -9,6 +9,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
   return {
     createSubmission: async () => ({
       id: 'sub-1',
+      publicId: '42',
+      submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
     }),
@@ -82,7 +84,8 @@ describe('POST /api/submissions', () => {
 
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
-      submissionId: 'sub-1',
+      submissionId: '42',
+      submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
     });
@@ -112,6 +115,7 @@ describe('production services', () => {
       getProblemByPid: async () => null,
       createSubmission: async () => ({
         _id: 'sub-1',
+        submissionNo: 42,
         status: 'PENDING_DISPATCH',
         verdict: 'PENDING',
       }),
@@ -120,6 +124,7 @@ describe('production services', () => {
       listSubmissionsWithProblemsByUser: async () => [
         {
           _id: 'sub-1',
+          submissionNo: 42,
           userId: 'user-1',
           problemId: 'problem-1',
           pid: '1000',
@@ -174,6 +179,8 @@ describe('production services', () => {
     })).resolves.toMatchObject([
       {
         id: 'sub-1',
+        publicId: '42',
+        submissionNo: 42,
         pid: '1000',
         problemTitle: 'A + B Problem',
         problemLabel: '1000 A + B Problem',

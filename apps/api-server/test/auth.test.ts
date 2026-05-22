@@ -8,6 +8,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
   return {
     createSubmission: async () => ({
       id: 'sub-1',
+      publicId: '42',
+      submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
     }),
@@ -203,6 +205,8 @@ describe('auth routes', () => {
     const app = buildApp(createServices({
       getSubmissionById: async () => ({
         id: 'sub-1',
+        publicId: '42',
+        submissionNo: 42,
         userId: 'user-1',
         pid: '1000',
         problemTitle: 'A + B Problem',

@@ -108,6 +108,13 @@ export interface SessionDocument {
   updatedAt: Date;
 }
 
+// counters 集合用于生成对外展示的自增编号。
+export interface CounterDocument {
+  _id: string;
+  value: number;
+  updatedAt: Date;
+}
+
 // problems 集合文档，只存题面与元数据，不存测试数据目录。
 export interface ProblemDocument {
   _id: string;
@@ -144,6 +151,7 @@ export interface SubmissionResultState {
 // `judge` 保存评测过程状态，`result` 保存最终展示结果。
 export interface SubmissionDocument {
   _id: string;
+  submissionNo?: number;
   userId: string;
   problemId: string;
   pid: string;

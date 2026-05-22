@@ -5,7 +5,7 @@ block content
   section.detail-panel
     header
       hgroup
-        h1= `${t('submission.title')} ${submission.id}`
+        h1= `${t('submission.title')} ${submission.publicId}`
         p.page-lead= t('submission.lead')
     .detail-grid
       .detail-main
@@ -90,6 +90,6 @@ block content
       const terminal = ['FINISHED', 'FAILED'];
       if (!terminal.includes('#{submission.status}')) {
         setTimeout(() => {
-          window.location.href = '#{urlWithLang(`/submissions/${submission.id}`)}';
+          window.location.href = '#{urlWithLang(`/submissions/${submission.publicId}`)}';
         }, 2000);
       }

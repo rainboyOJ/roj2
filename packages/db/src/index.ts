@@ -13,6 +13,7 @@ import {
   createEmptyResultState,
   mapJudgeSnapshotToSubmissionState,
   type AppLanguage,
+  type CounterDocument,
   type CreateSubmissionInput,
   type GradeDocument,
   type ProblemDocument,
@@ -157,6 +158,10 @@ export class RojDb {
     return this.db.collection<SessionDocument>('sessions');
   }
 
+  counters() {
+    return this.db.collection<CounterDocument>('counters');
+  }
+
   submissions() {
     return this.db.collection<SubmissionDocument>('submissions');
   }
@@ -170,6 +175,7 @@ export class RojDb {
     await this.problems().createIndex({ pid: 1 }, { unique: true });
     await this.submissions().createIndex({ userId: 1, createdAt: -1 });
     await this.submissions().createIndex({ pid: 1, createdAt: -1 });
+    await this.submissions().createIndex({ submissionNo: 1 }, { unique: true, sparse: true });
     await this.submissions().createIndex({ status: 1, 'judge.leaseExpireAt': 1 });
     await this.submissions().createIndex({ 'judge.submissionId': 1 });
   }
@@ -320,6 +326,26 @@ export class RojDb {
     return this.users().findOne({ username: 'demo' });
   }
 
+  async nextCounterValue(counterId: string) {
+    const now = new Date();
+    const result = await this.counters().findOneAndUpdate(
+      { _id: counterId },
+      {
+        $inc: { value: 1 },
+        $set: { updatedAt: now },
+      },
+      {
+        upsert: true,
+        returnDocument: 'after',
+      },
+    );
+
+    if (!result) {
+      throw new Error(`failed to allocate counter ${counterId}`);
+    }
+    return result.value;
+  }
+
   // 创建一条等待 dispatcher 派发的 submission。
   async createSubmission(input: CreateSubmissionInput) {
     const user = await this.users().findOne({ _id: input.userId });
@@ -336,8 +362,10 @@ export class RojDb {
     }
 
     const now = new Date();
+    const submissionNo = await this.nextCounterValue('submissionNo');
     const submission: SubmissionDocument = {
       _id: new ObjectId().toHexString(),
+      submissionNo,
       userId: user._id,
       problemId: problem._id,
       pid: problem.pid,
@@ -356,6 +384,7 @@ export class RojDb {
     await this.submissions().insertOne(submission);
     debugJudge('submission created', {
       localSubmissionId: submission._id,
+      submissionNo: submission.submissionNo,
       pid: submission.pid,
       userId: submission.userId,
       language: submission.language,
@@ -367,8 +396,22 @@ export class RojDb {
     return this.submissions().findOne({ _id: id });
   }
 
-  async getSubmissionWithProblemById(id: string) {
-    const submission = await this.getSubmissionById(id);
+  async getSubmissionByNo(submissionNo: number) {
+    return this.submissions().findOne({ submissionNo });
+  }
+
+  async getSubmissionByPublicId(publicId: string) {
+    if (/^\d+$/.test(publicId)) {
+      const byNo = await this.getSubmissionByNo(Number(publicId));
+      if (byNo) {
+        return byNo;
+      }
+    }
+    return this.getSubmissionById(publicId);
+  }
+
+  async getSubmissionWithProblemByPublicId(publicId: string) {
+    const submission = await this.getSubmissionByPublicId(publicId);
     if (!submission) {
       return null;
     }

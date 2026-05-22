@@ -7,6 +7,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
   return {
     createSubmission: async () => ({
       id: 'sub-1',
+      publicId: '42',
+      submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
     }),
@@ -136,6 +138,8 @@ describe('content management routes', () => {
       listSubmissions: async () => [
         {
           id: 'sub-1',
+          publicId: '42',
+          submissionNo: 42,
           userId: 'user-1',
           pid: '1000',
           problemTitle: 'A + B Problem',
@@ -166,6 +170,7 @@ describe('content management routes', () => {
       submissions: [
         {
           id: 'sub-1',
+          publicId: '42',
           verdict: 'AC',
           pid: '1000',
           username: 'alice',

@@ -24,7 +24,7 @@ block content
             each submission in submissions
               tr
                 td.table-code
-                  a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
+                  a(href=urlWithLang(`/submissions/${submission.publicId}`))= submission.publicId
                 td= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
                 td
                   a(href=urlWithLang(`/problem/${submission.pid}`))= submission.problemLabel
@@ -39,7 +39,7 @@ block content
                   else
                     span.status-chip.failed= localizeVerdict(submission.verdict)
                 td
-                  a(href=urlWithLang(`/submissions/${submission.id}`))= t('submissions.details')
+                  a(href=urlWithLang(`/submissions/${submission.publicId}`))= t('submissions.details')
     else
       article
         p= t('admin.submissions.empty')

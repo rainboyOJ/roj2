@@ -63,6 +63,8 @@ const resetPasswordSchema = z.object({
 
 export interface CreateSubmissionResult {
   id: string;
+  publicId: string;
+  submissionNo: number | null;
   status: string;
   verdict: string;
 }
@@ -84,6 +86,8 @@ export interface SessionUser {
 
 export interface SubmissionViewModel {
   id: string;
+  publicId: string;
+  submissionNo: number | null;
   userId: string;
   pid: string;
   problemTitle: string;
@@ -628,7 +632,8 @@ export function buildApp(services: ApiServerServices) {
       ...parsed.data,
     });
     return reply.code(201).send({
-      submissionId: created.id,
+      submissionId: created.publicId,
+      submissionNo: created.submissionNo,
       status: created.status,
       verdict: created.verdict,
     });
@@ -1037,7 +1042,7 @@ export function buildApp(services: ApiServerServices) {
       userId: user.id,
       ...parsed.data,
     });
-    return redirectWithLang(request, reply, `/submissions/${created.id}`);
+    return redirectWithLang(request, reply, `/submissions/${created.publicId}`);
   });
 
   return app;

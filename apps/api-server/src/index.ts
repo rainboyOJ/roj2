@@ -56,6 +56,7 @@ function mapAdminProblem(problem: {
 
 function mapSubmission(submission: {
   _id: string;
+  submissionNo?: number;
   userId: string;
   pid: string;
   problem?: {
@@ -79,9 +80,13 @@ function mapSubmission(submission: {
   const problemLabel = problemTitle.startsWith(submission.pid)
     ? problemTitle
     : `${submission.pid} ${problemTitle}`;
+  const submissionNo = submission.submissionNo ?? null;
+  const publicId = submissionNo === null ? submission._id : String(submissionNo);
 
   return {
     id: submission._id,
+    publicId,
+    submissionNo,
     userId: submission.userId,
     pid: submission.pid,
     problemTitle,
@@ -149,6 +154,8 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const created = await db.createSubmission(input);
       return {
         id: created._id,
+        publicId: created.submissionNo === undefined ? created._id : String(created.submissionNo),
+        submissionNo: created.submissionNo ?? null,
         status: created.status,
         verdict: created.verdict,
       };
@@ -162,7 +169,7 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       return problem ? mapProblem(problem) : null;
     },
     getSubmissionById: async (id: string) => {
-      const submission = await db.getSubmissionWithProblemById(id);
+      const submission = await db.getSubmissionWithProblemByPublicId(id);
       return submission ? mapSubmission(submission) : null;
     },
     listSubmissions: async (user) => {

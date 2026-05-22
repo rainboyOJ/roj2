@@ -8,6 +8,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
   return {
     createSubmission: async () => ({
       id: 'sub-1',
+      publicId: '42',
+      submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
     }),
@@ -29,6 +31,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     }),
     getSubmissionById: async () => ({
       id: 'sub-1',
+      publicId: '42',
+      submissionNo: 42,
       userId: 'user-1',
       pid: '1000',
       problemTitle: 'A + B Problem',
@@ -213,6 +217,8 @@ describe('rendered views', () => {
       listSubmissions: async () => [
         {
           id: 'sub-1',
+          publicId: '42',
+          submissionNo: 42,
           userId: 'user-1',
           pid: '1000',
           problemTitle: '1000 A + B Problem',
@@ -241,7 +247,8 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('提交列表');
     expect(response.body).toContain('<table');
-    expect(response.body).toContain('sub-1');
+    expect(response.body).toContain('42');
+    expect(response.body).not.toContain('sub-1');
     expect(response.body).toContain('Demo User (demo)');
     expect(response.body).toContain('1000 A + B Problem');
     expect(response.body).not.toContain('1000 1000 A + B Problem');
@@ -258,7 +265,7 @@ describe('rendered views', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/submissions/sub-1',
+      url: '/submissions/42',
       headers: {
         cookie: 'roj_session=token-1',
       },
