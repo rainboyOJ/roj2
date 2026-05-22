@@ -206,6 +206,7 @@ describe('auth routes', () => {
         userId: 'user-1',
         pid: '1000',
         problemTitle: 'A + B Problem',
+        problemLabel: '1000 A + B Problem',
         username: 'alice',
         displayName: 'Alice',
         language: 'python',

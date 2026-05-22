@@ -20,7 +20,7 @@ block content
               li
                 strong= t('submission.problem')
                 span
-                  a(href=urlWithLang(`/problem/${submission.pid}`))= `${submission.pid} ${submission.problemTitle}`
+                  a(href=urlWithLang(`/problem/${submission.pid}`))= submission.problemLabel
               li
                 strong= t('submission.language')
                 span.table-code= submission.language

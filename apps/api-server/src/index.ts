@@ -73,11 +73,17 @@ function mapSubmission(submission: {
     caseResults: SubmissionCaseResult[];
   };
 }): SubmissionViewModel {
+  const problemTitle = submission.problemTitle ?? submission.pid;
+  const problemLabel = problemTitle.startsWith(submission.pid)
+    ? problemTitle
+    : `${submission.pid} ${problemTitle}`;
+
   return {
     id: submission._id,
     userId: submission.userId,
     pid: submission.pid,
-    problemTitle: submission.problemTitle ?? submission.pid,
+    problemTitle,
+    problemLabel,
     username: submission.username,
     displayName: submission.displayName,
     language: submission.language,

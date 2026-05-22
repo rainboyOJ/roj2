@@ -87,6 +87,7 @@ export interface SubmissionViewModel {
   userId: string;
   pid: string;
   problemTitle: string;
+  problemLabel: string;
   username: string;
   displayName: string | undefined;
   language: string;

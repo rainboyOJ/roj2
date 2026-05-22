@@ -32,6 +32,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       userId: 'user-1',
       pid: '1000',
       problemTitle: 'A + B Problem',
+      problemLabel: '1000 A + B Problem',
       username: 'demo',
       displayName: 'Demo User',
       language: 'python',
@@ -214,7 +215,8 @@ describe('rendered views', () => {
           id: 'sub-1',
           userId: 'user-1',
           pid: '1000',
-          problemTitle: 'A + B Problem',
+          problemTitle: '1000 A + B Problem',
+          problemLabel: '1000 A + B Problem',
           username: 'demo',
           displayName: 'Demo User',
           language: 'python',
@@ -242,6 +244,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('sub-1');
     expect(response.body).toContain('Demo User (demo)');
     expect(response.body).toContain('1000 A + B Problem');
+    expect(response.body).not.toContain('1000 1000 A + B Problem');
     expect(response.body).toContain('python');
     expect(response.body).toContain('已完成');
     expect(response.body).toContain('个人中心');

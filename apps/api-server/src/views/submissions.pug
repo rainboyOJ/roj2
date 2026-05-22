@@ -29,7 +29,7 @@ block content
                   a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
                 td= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
                 td
-                  a(href=urlWithLang(`/problem/${submission.pid}`))= `${submission.pid} ${submission.problemTitle}`
+                  a(href=urlWithLang(`/problem/${submission.pid}`))= submission.problemLabel
                 td.table-code= submission.language
                 td= localizeStatus(submission.status)
                 td= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : '-'
