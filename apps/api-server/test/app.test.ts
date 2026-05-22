@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
+import { buildProductionServices } from '../src/index.ts';
 
 function createServices(overrides: Record<string, unknown> = {}) {
   // 统一构造假的 service，避免测试直接依赖数据库或外部 judge。
@@ -101,5 +102,82 @@ describe('POST /api/submissions', () => {
     });
 
     expect(response.statusCode).toBe(400);
+  });
+});
+
+describe('production services', () => {
+  it('populates problem titles for submission lists without reading denormalized titles', async () => {
+    const services = await buildProductionServices({
+      listVisibleProblems: async () => [],
+      getProblemByPid: async () => null,
+      createSubmission: async () => ({
+        _id: 'sub-1',
+        status: 'PENDING_DISPATCH',
+        verdict: 'PENDING',
+      }),
+      getSubmissionWithProblemById: async () => null,
+      listAllSubmissionsWithProblems: async () => [],
+      listSubmissionsWithProblemsByUser: async () => [
+        {
+          _id: 'sub-1',
+          userId: 'user-1',
+          problemId: 'problem-1',
+          pid: '1000',
+          problem: {
+            title: 'A + B Problem',
+          },
+          username: 'alice',
+          displayName: 'Alice',
+          language: 'python',
+          sourceCode: 'print(1)',
+          status: 'FINISHED',
+          verdict: 'AC',
+          judge: {
+            lastStatus: 'FINISHED',
+          },
+          result: {
+            message: 'ok',
+            caseResults: [],
+          },
+        },
+      ],
+      registerUser: async () => ({
+        _id: 'user-1',
+        username: 'alice',
+        approvalStatus: 'pending',
+      }),
+      loginUser: async () => null,
+      createSession: async () => ({ token: 'token-1' }),
+      destroySession: async () => undefined,
+      getUserBySessionToken: async () => null,
+      listUsersForAdmin: async () => [],
+      approveUser: async () => undefined,
+      rejectUser: async () => undefined,
+      buildSimpleRanklist: async () => [],
+      listGrades: async () => [],
+      createGrade: async () => ({ _id: 'grade-1', name: '2027', isActive: true, order: 4 }),
+      updateGrade: async () => undefined,
+      listAdminProblems: async () => [],
+      getAdminProblemById: async () => null,
+      createProblem: async () => ({ _id: 'problem-1', pid: '1001' }),
+      updateProblem: async () => undefined,
+      publishProblem: async () => undefined,
+      updateProfileClassName: async () => undefined,
+      resetUserPassword: async () => undefined,
+    } as never);
+
+    await expect(services.listSubmissions({
+      id: 'user-1',
+      username: 'alice',
+      role: 'student',
+      approvalStatus: 'approved',
+    })).resolves.toMatchObject([
+      {
+        id: 'sub-1',
+        pid: '1000',
+        problemTitle: 'A + B Problem',
+        problemLabel: '1000 A + B Problem',
+      },
+    ]);
   });
 });

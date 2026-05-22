@@ -341,7 +341,6 @@ export class RojDb {
       userId: user._id,
       problemId: problem._id,
       pid: problem.pid,
-      problemTitle: problem.title,
       username: user.username,
       displayName: user.name,
       language: input.language,
@@ -368,12 +367,44 @@ export class RojDb {
     return this.submissions().findOne({ _id: id });
   }
 
+  async getSubmissionWithProblemById(id: string) {
+    const submission = await this.getSubmissionById(id);
+    if (!submission) {
+      return null;
+    }
+
+    const problem = await this.problems().findOne({ _id: submission.problemId });
+    return {
+      ...submission,
+      problem,
+    };
+  }
+
+  async attachProblemsToSubmissions(submissions: SubmissionDocument[]) {
+    const problemIds = [...new Set(submissions.map((submission) => submission.problemId))];
+    const problems = await this.problems().find({ _id: { $in: problemIds } }).toArray();
+    const problemById = new Map(problems.map((problem) => [problem._id, problem]));
+
+    return submissions.map((submission) => ({
+      ...submission,
+      problem: problemById.get(submission.problemId) ?? null,
+    }));
+  }
+
   async listSubmissionsByUser(userId: string) {
     return this.submissions().find({ userId }).sort({ createdAt: -1 }).toArray();
   }
 
+  async listSubmissionsWithProblemsByUser(userId: string) {
+    return this.attachProblemsToSubmissions(await this.listSubmissionsByUser(userId));
+  }
+
   async listAllSubmissions() {
     return this.submissions().find({}).sort({ createdAt: -1 }).toArray();
+  }
+
+  async listAllSubmissionsWithProblems() {
+    return this.attachProblemsToSubmissions(await this.listAllSubmissions());
   }
 
   // 简化版排行榜，直接基于 submissions 汇总。

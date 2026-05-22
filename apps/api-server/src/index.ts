@@ -58,7 +58,9 @@ function mapSubmission(submission: {
   _id: string;
   userId: string;
   pid: string;
-  problemTitle?: string;
+  problem?: {
+    title: string;
+  } | null;
   username: string;
   displayName?: string;
   language: string;
@@ -73,7 +75,7 @@ function mapSubmission(submission: {
     caseResults: SubmissionCaseResult[];
   };
 }): SubmissionViewModel {
-  const problemTitle = submission.problemTitle ?? submission.pid;
+  const problemTitle = submission.problem?.title ?? submission.pid;
   const problemLabel = problemTitle.startsWith(submission.pid)
     ? problemTitle
     : `${submission.pid} ${problemTitle}`;
@@ -160,15 +162,15 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       return problem ? mapProblem(problem) : null;
     },
     getSubmissionById: async (id: string) => {
-      const submission = await db.getSubmissionById(id);
+      const submission = await db.getSubmissionWithProblemById(id);
       return submission ? mapSubmission(submission) : null;
     },
     listSubmissions: async (user) => {
       // 管理员看全站提交，学生只看自己的提交。
       const submissions =
         user.role === 'admin'
-          ? await db.listAllSubmissions()
-          : await db.listSubmissionsByUser(user.id);
+          ? await db.listAllSubmissionsWithProblems()
+          : await db.listSubmissionsWithProblemsByUser(user.id);
       return submissions.map(mapSubmission);
     },
     registerUser: async (input) => {
@@ -215,7 +217,7 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       await db.rejectUser(userId, adminUserId, reason);
     },
     listAdminSubmissions: async () => {
-      const submissions = await db.listAllSubmissions();
+      const submissions = await db.listAllSubmissionsWithProblems();
       return submissions.map(mapSubmission);
     },
     listRanklist: async () => {
