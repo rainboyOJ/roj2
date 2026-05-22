@@ -1,0 +1,84 @@
+services:
+  mongodb:
+    image: mongo:7.0.34-jammy
+    container_name: roj-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - roj-mongodb-data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  judge-server:
+    image: boxtest-judge-server:dev
+    container_name: roj-judge-server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
+  api-server:
+    build:
+      context: .
+    image: roj-codex:local
+    container_name: roj-api-server
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      judge-server:
+        condition: service_started
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: roj_demo
+      JUDGE_SERVER_HOST: judge-server
+      JUDGE_SERVER_PORT: 8000
+      JUDGE_RESPONSE_TIMEOUT_MS: 30000
+      JUDGE_POLL_INTERVAL_MS: 500
+      JUDGE_LEASE_MS: 30000
+    ports:
+      - "3000:3000"
+    command:
+      - sh
+      - -c
+      - npm run seed && npm run dev:api
+
+  judge-dispatcher:
+    image: roj-codex:local
+    container_name: roj-judge-dispatcher
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      judge-server:
+        condition: service_started
+      api-server:
+        condition: service_started
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB: roj_demo
+      JUDGE_SERVER_HOST: judge-server
+      JUDGE_SERVER_PORT: 8000
+      JUDGE_RESPONSE_TIMEOUT_MS: 30000
+      JUDGE_POLL_INTERVAL_MS: 500
+      JUDGE_LEASE_MS: 30000
+      JUDGE_LEASE_OWNER: dispatcher@docker-compose
+    command:
+      - npm
+      - run
+      - dev:dispatcher
+
+volumes:
+  roj-mongodb-data:
