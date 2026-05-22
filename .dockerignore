@@ -1,0 +1,9 @@
+.git
+.agents
+.codex
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+.env
+codex_resume

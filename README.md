@@ -192,6 +192,34 @@ npm run dev:api
 npm run dev:dispatcher
 ```
 
+## Docker 镜像
+
+构建镜像：
+
+```bash
+docker build -t roj-codex:local .
+```
+
+运行 API 服务：
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
+  -e JUDGE_SERVER_HOST=host.docker.internal \
+  roj-codex:local
+```
+
+运行 dispatcher：
+
+```bash
+docker run --rm \
+  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
+  -e JUDGE_SERVER_HOST=host.docker.internal \
+  roj-codex:local npm run dev:dispatcher
+```
+
+如果 MongoDB 或 `judge_server` 运行在同一个 Docker network 里，把上面的 host 改成对应的容器服务名。
+
 ## 推荐阅读顺序
 
 1. `docs/oj-nodejs-ts-mongodb-plan.md`
