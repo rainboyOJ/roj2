@@ -5,6 +5,7 @@
 // - 做登录态检查、管理员权限检查
 // - 渲染 Pug 模板
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import formbody from '@fastify/formbody';
@@ -265,6 +266,11 @@ export function buildApp(services: ApiServerServices) {
       pug,
     },
     root: path.join(__dirname, 'views'),
+  });
+
+  app.get('/favicon.svg', async (_request, reply) => {
+    const favicon = await readFile(path.join(__dirname, 'assets', 'favicon.svg'), 'utf-8');
+    return reply.type('image/svg+xml').send(favicon);
   });
 
   async function renderPage(

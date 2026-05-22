@@ -160,6 +160,7 @@ describe('rendered views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('https://cdn.jsdelivr.net/npm/@picocss/pico');
+    expect(response.body).toContain('href="/favicon.svg"');
     expect(response.body).toContain('<nav');
     expect(response.body).toContain('<html lang="zh-CN" data-theme="light">');
     expect(response.body).toContain('首页');
@@ -167,6 +168,20 @@ describe('rendered views', () => {
     expect(response.body).toContain('登录');
     expect(response.body).toContain('注册');
     expect(response.body).not.toContain('题目管理');
+  });
+
+  it('serves the site favicon', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/favicon.svg',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toContain('image/svg+xml');
+    expect(response.body).toContain('<svg');
+    expect(response.body).toContain('ROJ');
   });
 
   it('renders a home page in English when lang=en is provided', async () => {
