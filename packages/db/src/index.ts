@@ -341,6 +341,7 @@ export class RojDb {
       userId: user._id,
       problemId: problem._id,
       pid: problem.pid,
+      problemTitle: problem.title,
       username: user.username,
       displayName: user.name,
       language: input.language,

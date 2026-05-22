@@ -203,8 +203,18 @@ describe('auth routes', () => {
     const app = buildApp(createServices({
       getSubmissionById: async () => ({
         id: 'sub-1',
+        userId: 'user-1',
+        pid: '1000',
+        problemTitle: 'A + B Problem',
+        username: 'alice',
+        displayName: 'Alice',
+        language: 'python',
+        sourceCode: 'print(1)',
         status: 'FINISHED',
         verdict: 'AC',
+        judgeStatus: 'FINISHED',
+        message: 'ok',
+        caseResults: [],
       }),
     }));
 

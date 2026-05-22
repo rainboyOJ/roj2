@@ -56,6 +56,13 @@ function mapAdminProblem(problem: {
 
 function mapSubmission(submission: {
   _id: string;
+  userId: string;
+  pid: string;
+  problemTitle?: string;
+  username: string;
+  displayName?: string;
+  language: string;
+  sourceCode: string;
   status: string;
   verdict: string;
   judge: {
@@ -68,6 +75,13 @@ function mapSubmission(submission: {
 }): SubmissionViewModel {
   return {
     id: submission._id,
+    userId: submission.userId,
+    pid: submission.pid,
+    problemTitle: submission.problemTitle ?? submission.pid,
+    username: submission.username,
+    displayName: submission.displayName,
+    language: submission.language,
+    sourceCode: submission.sourceCode,
     status: submission.status,
     verdict: submission.verdict,
     judgeStatus: submission.judge.lastStatus,

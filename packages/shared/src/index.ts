@@ -147,6 +147,7 @@ export interface SubmissionDocument {
   userId: string;
   problemId: string;
   pid: string;
+  problemTitle?: string;
   username: string;
   displayName: string;
   language: AppLanguage;

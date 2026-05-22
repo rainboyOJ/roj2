@@ -9,6 +9,21 @@ block content
         p.page-lead= t('submission.lead')
     .detail-grid
       .detail-main
+        article.panel-card
+          header
+            h2= t('submission.info')
+          .panel-body
+            ul.compact-list
+              li
+                strong= t('submission.user')
+                span= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
+              li
+                strong= t('submission.problem')
+                span
+                  a(href=urlWithLang(`/problem/${submission.pid}`))= `${submission.pid} ${submission.problemTitle}`
+              li
+                strong= t('submission.language')
+                span.table-code= submission.language
         .metric-grid
           div.metric-card
             span.soft-note= t('submission.status')
@@ -25,6 +40,11 @@ block content
               h2= t('submission.judgeMessage')
             .panel-body.statement-block
               pre.mono-block= submission.message
+        article.panel-card
+          header
+            h2= t('submission.sourceCode')
+          .panel-body.statement-block
+            pre.mono-block= submission.sourceCode
         article.panel-card
           header
             h2= t('submission.caseResults')

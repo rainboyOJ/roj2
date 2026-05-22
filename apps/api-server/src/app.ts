@@ -84,6 +84,13 @@ export interface SessionUser {
 
 export interface SubmissionViewModel {
   id: string;
+  userId: string;
+  pid: string;
+  problemTitle: string;
+  username: string;
+  displayName: string | undefined;
+  language: string;
+  sourceCode: string;
   status: string;
   verdict: string;
   judgeStatus?: string | null;
@@ -536,6 +543,9 @@ export function buildApp(services: ApiServerServices) {
     if (!submission) {
       return reply.code(404).send('Submission not found');
     }
+    if (user.role !== 'admin' && submission.userId !== user.id) {
+      return reply.code(403).send('Forbidden');
+    }
 
     return renderPage(request, reply, 'submission.pug', { submission });
   });
@@ -573,6 +583,9 @@ export function buildApp(services: ApiServerServices) {
     const submission = await services.getSubmissionById(params.id);
     if (!submission) {
       return reply.code(404).send({ message: 'Submission not found' });
+    }
+    if (user.role !== 'admin' && submission.userId !== user.id) {
+      return reply.code(403).send({ message: 'Forbidden' });
     }
     return submission;
   });

@@ -63,6 +63,9 @@ type TranslationKey =
   | 'submissions.status'
   | 'submissions.judge'
   | 'submissions.submissionId'
+  | 'submissions.user'
+  | 'submissions.problem'
+  | 'submissions.language'
   | 'submissions.verdict'
   | 'submissions.action'
   | 'submissions.details'
@@ -72,6 +75,11 @@ type TranslationKey =
   | 'submission.status'
   | 'submission.verdict'
   | 'submission.judgeStatus'
+  | 'submission.info'
+  | 'submission.user'
+  | 'submission.problem'
+  | 'submission.language'
+  | 'submission.sourceCode'
   | 'submission.waiting'
   | 'submission.judgeMessage'
   | 'submission.caseResults'
@@ -179,6 +187,9 @@ type TranslationKey =
   | 'admin.submissions.title'
   | 'admin.submissions.lead'
   | 'admin.submissions.submissionId'
+  | 'admin.submissions.user'
+  | 'admin.submissions.problem'
+  | 'admin.submissions.language'
   | 'admin.submissions.status'
   | 'admin.submissions.judge'
   | 'admin.submissions.verdict'
@@ -296,6 +307,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'submissions.status': '状态',
     'submissions.judge': '评测机',
     'submissions.submissionId': '提交号',
+    'submissions.user': '用户',
+    'submissions.problem': '题目',
+    'submissions.language': '语言',
     'submissions.verdict': '结果',
     'submissions.action': '操作',
     'submissions.details': '查看详情',
@@ -305,6 +319,11 @@ const translations: Record<UiLang, TranslationMap> = {
     'submission.status': '状态',
     'submission.verdict': '结果',
     'submission.judgeStatus': '评测机状态',
+    'submission.info': '提交信息',
+    'submission.user': '提交用户',
+    'submission.problem': '题目',
+    'submission.language': '语言',
+    'submission.sourceCode': '提交代码',
     'submission.waiting': '等待中',
     'submission.judgeMessage': '评测信息',
     'submission.caseResults': '测试点结果',
@@ -412,6 +431,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.submissions.title': '提交管理',
     'admin.submissions.lead': '用标准列表视图查看所有提交的评测活动。',
     'admin.submissions.submissionId': '提交号',
+    'admin.submissions.user': '用户',
+    'admin.submissions.problem': '题目',
+    'admin.submissions.language': '语言',
     'admin.submissions.status': '状态',
     'admin.submissions.judge': '评测机',
     'admin.submissions.verdict': '结果',
@@ -526,6 +548,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'submissions.status': 'Status',
     'submissions.judge': 'Judge',
     'submissions.submissionId': 'Submission ID',
+    'submissions.user': 'User',
+    'submissions.problem': 'Problem',
+    'submissions.language': 'Language',
     'submissions.verdict': 'Verdict',
     'submissions.action': 'Action',
     'submissions.details': 'Details',
@@ -535,6 +560,11 @@ const translations: Record<UiLang, TranslationMap> = {
     'submission.status': 'Status',
     'submission.verdict': 'Verdict',
     'submission.judgeStatus': 'Judge status',
+    'submission.info': 'Submission info',
+    'submission.user': 'User',
+    'submission.problem': 'Problem',
+    'submission.language': 'Language',
+    'submission.sourceCode': 'Submitted code',
     'submission.waiting': 'Waiting',
     'submission.judgeMessage': 'Judge message',
     'submission.caseResults': 'Case results',
@@ -642,6 +672,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.submissions.title': 'Admin submissions',
     'admin.submissions.lead': 'Track judging activity across all submissions in a standard list view.',
     'admin.submissions.submissionId': 'Submission ID',
+    'admin.submissions.user': 'User',
+    'admin.submissions.problem': 'Problem',
+    'admin.submissions.language': 'Language',
     'admin.submissions.status': 'Status',
     'admin.submissions.judge': 'Judge',
     'admin.submissions.verdict': 'Verdict',

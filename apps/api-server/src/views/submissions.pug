@@ -15,6 +15,9 @@ block content
           thead
             tr
               th= t('submissions.submissionId')
+              th= t('submissions.user')
+              th= t('submissions.problem')
+              th= t('submissions.language')
               th= t('submissions.status')
               th= t('submissions.judge')
               th= t('submissions.verdict')
@@ -24,6 +27,10 @@ block content
               tr
                 td.table-code
                   a(href=urlWithLang(`/submissions/${submission.id}`))= submission.id
+                td= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
+                td
+                  a(href=urlWithLang(`/problem/${submission.pid}`))= `${submission.pid} ${submission.problemTitle}`
+                td.table-code= submission.language
                 td= localizeStatus(submission.status)
                 td= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : '-'
                 td
