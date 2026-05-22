@@ -20,6 +20,7 @@ import {
   type SubmissionDocument,
   type UserDocument,
 } from '@roj/shared';
+import { renderMarkdown } from '@roj/markdown-renderer';
 import { MongoClient } from 'mongodb';
 
 function debugJudge(message: string, details?: Record<string, unknown>) {
@@ -293,6 +294,7 @@ export class RojDb {
           pid: '1000',
           title: 'A + B Problem',
           statementMarkdown: 'Input two integers and print their sum.',
+          statementHtml: renderMarkdown('Input two integers and print their sum.'),
           allowLanguages: ['cpp', 'python'],
           isVisible: true,
           updatedAt: now,
@@ -721,6 +723,7 @@ export class RojDb {
       pid: input.pid,
       title: input.title,
       statementMarkdown: input.statementMarkdown,
+      statementHtml: renderMarkdown(input.statementMarkdown),
       allowLanguages: input.allowLanguages,
       isVisible: input.isVisible,
       createdAt: now,
@@ -744,6 +747,7 @@ export class RojDb {
           pid: input.pid,
           title: input.title,
           statementMarkdown: input.statementMarkdown,
+          statementHtml: renderMarkdown(input.statementMarkdown),
           allowLanguages: input.allowLanguages,
           isVisible: input.isVisible,
           updatedAt: new Date(),

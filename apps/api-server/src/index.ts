@@ -22,12 +22,14 @@ function mapProblem(problem: {
   pid: string;
   title: string;
   statementMarkdown: string;
+  statementHtml?: string;
   allowLanguages: string[];
 }): ProblemViewModel {
   return {
     pid: problem.pid,
     title: problem.title,
     statementMarkdown: problem.statementMarkdown,
+    statementHtml: problem.statementHtml ?? '',
     allowLanguages: problem.allowLanguages,
   };
 }
@@ -37,6 +39,7 @@ function mapAdminProblem(problem: {
   pid: string;
   title: string;
   statementMarkdown: string;
+  statementHtml?: string;
   allowLanguages: string[];
   isVisible: boolean;
 }): AdminProblemViewModel {
@@ -45,6 +48,7 @@ function mapAdminProblem(problem: {
     pid: problem.pid,
     title: problem.title,
     statementMarkdown: problem.statementMarkdown,
+    statementHtml: problem.statementHtml ?? '',
     allowLanguages: problem.allowLanguages,
     isVisible: problem.isVisible,
   };

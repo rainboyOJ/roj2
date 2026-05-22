@@ -114,6 +114,7 @@ export interface ProblemDocument {
   pid: string;
   title: string;
   statementMarkdown: string;
+  statementHtml: string;
   allowLanguages: AppLanguage[];
   isVisible: boolean;
   createdAt: Date;

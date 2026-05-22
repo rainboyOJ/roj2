@@ -17,8 +17,8 @@ block content
         article.panel-card
           header
             h2= t('problem.statement')
-          .panel-body.statement-block
-            pre.mono-block= problem.statementMarkdown
+          .panel-body.statement-block.markdown-body
+            != problem.statementHtml
       .detail-sidebar
         article.panel-card
           header

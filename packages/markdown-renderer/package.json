@@ -1,5 +1,5 @@
 {
-  "name": "@roj/db",
+  "name": "@roj/markdown-renderer",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,7 +7,8 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@roj/markdown-renderer": "0.1.0",
-    "@roj/shared": "0.1.0"
+    "katex": "^0.17.0",
+    "markdown-it": "^14.1.0",
+    "sanitize-html": "^2.17.0"
   }
 }

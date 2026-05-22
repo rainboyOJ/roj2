@@ -16,6 +16,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
         pid: '1000',
         title: 'A + B Problem',
         statementMarkdown: 'Input two integers and print their sum.',
+        statementHtml: '<p>Input two integers and print their sum.</p>',
         allowLanguages: ['cpp', 'python'],
       },
     ],
@@ -23,6 +24,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       pid: '1000',
       title: 'A + B Problem',
       statementMarkdown: 'Input two integers and print their sum.',
+      statementHtml: '<h2>Statement</h2><p>Input two integers and print their sum.</p>',
       allowLanguages: ['cpp', 'python'],
     }),
     getSubmissionById: async () => ({
@@ -119,6 +121,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       pid: '1000',
       title: 'A + B Problem',
       statementMarkdown: 'Input two integers and print their sum.',
+      statementHtml: '<p>Input two integers and print their sum.</p>',
       allowLanguages: ['cpp', 'python'],
       isVisible: true,
     }),
@@ -182,6 +185,19 @@ describe('rendered views', () => {
     expect(response.body).toContain('<table');
     expect(response.body).toContain('A + B Problem');
     expect(response.body).toContain('提交代码');
+  });
+
+  it('renders a problem statement from pre-rendered html', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problem/1000',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('<h2>Statement</h2>');
+    expect(response.body).not.toContain('<pre class="mono-block">');
   });
 
   it('renders submissions page as a table view for logged-in users', async () => {

@@ -71,6 +71,7 @@ export interface ProblemViewModel {
   pid: string;
   title: string;
   statementMarkdown: string;
+  statementHtml: string;
   allowLanguages: string[];
 }
 
