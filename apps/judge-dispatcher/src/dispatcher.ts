@@ -15,6 +15,15 @@ import {
   type AppLanguage,
 } from '@roj/shared';
 
+function debugJudge(message: string, details?: Record<string, unknown>) {
+  if (process.env.DEBUG_JUDGE !== '1') {
+    return;
+  }
+
+  const suffix = details ? ` ${JSON.stringify(details)}` : '';
+  console.log(`[DEBUG] [judge-dispatcher] ${message}${suffix}`);
+}
+
 export interface SubmissionForDispatch {
   id: string;
   pid: string;
@@ -50,7 +59,16 @@ export async function processSubmissionWithClient(
   client: JudgeClientLike,
   store: DispatcherStoreLike,
 ) {
+  debugJudge('test helper submit', {
+    localSubmissionId: submission.id,
+    pid: submission.pid,
+    language: submission.language,
+  });
   const ack = await client.submit(submission);
+  debugJudge('test helper ack', {
+    localSubmissionId: submission.id,
+    judgeSubmissionId: ack.submission_id,
+  });
   await store.saveAck(ack);
 
   // 先查一次结果，再按需继续轮询，便于测试覆盖 ack -> update -> final 这条链路。
@@ -59,6 +77,12 @@ export async function processSubmissionWithClient(
 
   while (!isTerminalSnapshot(final)) {
     final = await client.queryResult(ack.submission_id);
+    debugJudge('test helper snapshot', {
+      localSubmissionId: submission.id,
+      judgeSubmissionId: ack.submission_id,
+      status: final.status,
+      verdict: final.verdict,
+    });
     await store.saveSnapshot(final);
   }
 
@@ -94,6 +118,11 @@ export async function processClaimedSubmission(
   options: DispatcherRuntimeOptions,
   submission: SubmissionForDispatch,
 ) {
+  debugJudge('submit claimed submission', {
+    localSubmissionId: submission.id,
+    pid: submission.pid,
+    language: submission.language,
+  });
   const ack = await options.client.submit({
     uuid: Date.now(),
     pid: submission.pid,
@@ -101,6 +130,13 @@ export async function processClaimedSubmission(
     code: submission.sourceCode,
   });
 
+  debugJudge('judge ack received', {
+    localSubmissionId: submission.id,
+    judgeSubmissionId: ack.submission_id,
+    status: ack.status,
+    verdict: ack.verdict,
+    cases: ack.case_results.length,
+  });
   await options.db.saveJudgeAck(submission.id, {
     submissionId: ack.submission_id,
     status: ack.status,
@@ -114,6 +150,13 @@ export async function processClaimedSubmission(
     await delay(options.pollDelayMs);
     const snapshot = await options.client.queryResult(ack.submission_id);
 
+    debugJudge('judge snapshot received', {
+      localSubmissionId: submission.id,
+      judgeSubmissionId: snapshot.submission_id,
+      status: snapshot.status,
+      verdict: snapshot.verdict,
+      cases: snapshot.case_results.length,
+    });
     await options.db.saveJudgeSnapshot(submission.id, {
       submissionId: snapshot.submission_id,
       status: snapshot.status,
@@ -132,17 +175,29 @@ export async function processClaimedSubmission(
 // 没有任务就 sleep；有任务就 claim；claim 成功后串行处理当前 submission。
 export async function runDispatcherLoop(options: DispatcherRuntimeOptions) {
   while (true) {
+    debugJudge('claim pending submission', {
+      leaseOwner: options.leaseOwner,
+      leaseMs: options.leaseMs,
+    });
     const claimed = await options.db.claimPendingSubmission(
       options.leaseOwner,
       options.leaseMs,
     );
 
     if (!claimed) {
+      debugJudge('no pending submission', {
+        idleDelayMs: options.idleDelayMs,
+      });
       await delay(options.idleDelayMs);
       continue;
     }
 
     try {
+      debugJudge('submission claimed', {
+        localSubmissionId: claimed._id,
+        pid: claimed.pid,
+        language: claimed.language,
+      });
       // 当前最小实现是“一个循环一次只处理一条任务”，逻辑更直白，便于学习。
       await processClaimedSubmission(options, {
         id: claimed._id,
@@ -153,6 +208,10 @@ export async function runDispatcherLoop(options: DispatcherRuntimeOptions) {
     } catch (error) {
       // judge 网络错误、协议错误等都会被折叠成 FAILED，保证页面能看到终态。
       const message = error instanceof Error ? error.message : String(error);
+      debugJudge('submission failed', {
+        localSubmissionId: claimed._id,
+        message,
+      });
       await options.db.markSubmissionFailed(claimed._id, message);
     }
   }

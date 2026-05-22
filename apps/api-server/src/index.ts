@@ -14,7 +14,7 @@ import {
   type SessionUser,
   type SubmissionViewModel,
 } from './app.ts';
-import type { CreateSubmissionInput } from '@roj/shared';
+import type { CreateSubmissionInput, SubmissionCaseResult } from '@roj/shared';
 
 // 这一组 map* 函数的作用，是把 DB 文档转换成前端视图模型。
 // 这样 app.ts 不需要直接依赖 MongoDB 文档的完整结构。
@@ -59,6 +59,7 @@ function mapSubmission(submission: {
   };
   result: {
     message: string;
+    caseResults: SubmissionCaseResult[];
   };
 }): SubmissionViewModel {
   return {
@@ -67,6 +68,7 @@ function mapSubmission(submission: {
     verdict: submission.verdict,
     judgeStatus: submission.judge.lastStatus,
     message: submission.result.message,
+    caseResults: submission.result.caseResults,
   };
 }
 

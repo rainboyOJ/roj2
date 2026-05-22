@@ -25,6 +25,39 @@ block content
               h2= t('submission.judgeMessage')
             .panel-body.statement-block
               pre.mono-block= submission.message
+        article.panel-card
+          header
+            h2= t('submission.caseResults')
+            p= t('submission.caseResultsLead')
+          .panel-body
+            if submission.caseResults && submission.caseResults.length
+              .table-shell
+                table.data-table
+                  thead
+                    tr
+                      th= t('submission.caseSeq')
+                      th= t('submission.caseVerdict')
+                      th= t('submission.caseCpu')
+                      th= t('submission.caseReal')
+                      th= t('submission.caseMemory')
+                      th= t('submission.caseExit')
+                      th= t('submission.caseSignal')
+                      th= t('submission.caseError')
+                  tbody
+                    each item in submission.caseResults
+                      tr
+                        td.table-code= `#${item.seq_id}`
+                        td
+                          - const verdictClass = item.verdict === 'AC' ? 'ac' : (item.verdict === 'PENDING' ? 'pending' : 'failed')
+                          span(class=`status-chip ${verdictClass}`)= localizeVerdict(item.verdict)
+                        td.table-code= `${item.cpu_time_ms} ms`
+                        td.table-code= `${item.real_time_ms} ms`
+                        td.table-code= `${item.memory_kb} KB`
+                        td.table-code= item.exit_code
+                        td.table-code= item.signal
+                        td.table-code= item.error_code
+            else
+              p.soft-note= t('submission.noCaseResults')
       .detail-sidebar
         article.panel-card
           header

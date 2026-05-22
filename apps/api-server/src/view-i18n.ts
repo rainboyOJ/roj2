@@ -74,6 +74,17 @@ type TranslationKey =
   | 'submission.judgeStatus'
   | 'submission.waiting'
   | 'submission.judgeMessage'
+  | 'submission.caseResults'
+  | 'submission.caseResultsLead'
+  | 'submission.caseSeq'
+  | 'submission.caseVerdict'
+  | 'submission.caseCpu'
+  | 'submission.caseReal'
+  | 'submission.caseMemory'
+  | 'submission.caseExit'
+  | 'submission.caseSignal'
+  | 'submission.caseError'
+  | 'submission.noCaseResults'
   | 'submission.backToSubmissions'
   | 'submission.openProblems'
   | 'ranklist.title'
@@ -142,6 +153,18 @@ type TranslationKey =
   | 'admin.users.bulkApprove'
   | 'admin.users.bulkReject'
   | 'admin.users.empty'
+  | 'admin.dashboard.title'
+  | 'admin.dashboard.lead'
+  | 'admin.dashboard.problemsTitle'
+  | 'admin.dashboard.problemsBody'
+  | 'admin.dashboard.openProblems'
+  | 'admin.dashboard.createProblem'
+  | 'admin.dashboard.usersTitle'
+  | 'admin.dashboard.usersBody'
+  | 'admin.dashboard.openUsers'
+  | 'admin.dashboard.submissionsTitle'
+  | 'admin.dashboard.submissionsBody'
+  | 'admin.dashboard.openSubmissions'
   | 'admin.problems.title'
   | 'admin.problems.lead'
   | 'admin.problems.create'
@@ -284,6 +307,17 @@ const translations: Record<UiLang, TranslationMap> = {
     'submission.judgeStatus': '评测机状态',
     'submission.waiting': '等待中',
     'submission.judgeMessage': '评测信息',
+    'submission.caseResults': '测试点结果',
+    'submission.caseResultsLead': '逐个测试点查看判定、耗时、内存和退出信息。',
+    'submission.caseSeq': '测试点',
+    'submission.caseVerdict': '结果',
+    'submission.caseCpu': 'CPU',
+    'submission.caseReal': '实际时间',
+    'submission.caseMemory': '内存',
+    'submission.caseExit': '退出码',
+    'submission.caseSignal': '信号',
+    'submission.caseError': '错误码',
+    'submission.noCaseResults': '评测机还没有返回测试点结果。',
     'submission.backToSubmissions': '返回提交列表',
     'submission.openProblems': '打开题目列表',
     'ranklist.title': '排行榜',
@@ -352,6 +386,18 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.bulkApprove': '批量通过',
     'admin.users.bulkReject': '批量拒绝',
     'admin.users.empty': '没有需要查看的用户。',
+    'admin.dashboard.title': '管理后台',
+    'admin.dashboard.lead': '集中进入题目、用户和提交管理，不需要记住各个后台 URL。',
+    'admin.dashboard.problemsTitle': '题目管理',
+    'admin.dashboard.problemsBody': '创建、编辑、发布题目，并维护题面和支持语言。',
+    'admin.dashboard.openProblems': '打开题目管理',
+    'admin.dashboard.createProblem': '创建题目',
+    'admin.dashboard.usersTitle': '用户审核',
+    'admin.dashboard.usersBody': '查看注册用户，批量通过或拒绝学生账号。',
+    'admin.dashboard.openUsers': '打开用户管理',
+    'admin.dashboard.submissionsTitle': '提交管理',
+    'admin.dashboard.submissionsBody': '查看全站提交记录，追踪评测状态和最终结果。',
+    'admin.dashboard.openSubmissions': '打开提交管理',
     'admin.problems.title': '题目管理',
     'admin.problems.lead': '按 OJ 管理员常见的方式浏览和维护题目目录。',
     'admin.problems.create': '创建题目',
@@ -491,6 +537,17 @@ const translations: Record<UiLang, TranslationMap> = {
     'submission.judgeStatus': 'Judge status',
     'submission.waiting': 'Waiting',
     'submission.judgeMessage': 'Judge message',
+    'submission.caseResults': 'Case results',
+    'submission.caseResultsLead': 'Inspect each case verdict, timing, memory, and exit information.',
+    'submission.caseSeq': 'Case',
+    'submission.caseVerdict': 'Verdict',
+    'submission.caseCpu': 'CPU',
+    'submission.caseReal': 'Real time',
+    'submission.caseMemory': 'Memory',
+    'submission.caseExit': 'Exit',
+    'submission.caseSignal': 'Signal',
+    'submission.caseError': 'Error',
+    'submission.noCaseResults': 'The judge has not returned case results yet.',
     'submission.backToSubmissions': 'Back to submission list',
     'submission.openProblems': 'Open problem list',
     'ranklist.title': 'Ranklist',
@@ -559,6 +616,18 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.bulkApprove': 'Bulk approve',
     'admin.users.bulkReject': 'Bulk reject',
     'admin.users.empty': 'No users to review.',
+    'admin.dashboard.title': 'Admin dashboard',
+    'admin.dashboard.lead': 'Open all administrator tools from one place without memorizing backend URLs.',
+    'admin.dashboard.problemsTitle': 'Problem management',
+    'admin.dashboard.problemsBody': 'Create, edit, and publish problems with statements and language settings.',
+    'admin.dashboard.openProblems': 'Open problems',
+    'admin.dashboard.createProblem': 'Create problem',
+    'admin.dashboard.usersTitle': 'User approval',
+    'admin.dashboard.usersBody': 'Review registered users and approve or reject student accounts in batches.',
+    'admin.dashboard.openUsers': 'Open users',
+    'admin.dashboard.submissionsTitle': 'Submission management',
+    'admin.dashboard.submissionsBody': 'Review all submissions and track judging status and final verdicts.',
+    'admin.dashboard.openSubmissions': 'Open submissions',
     'admin.problems.title': 'Admin problems',
     'admin.problems.lead': 'Browse problems in the same way an OJ manager would scan the catalog.',
     'admin.problems.create': 'Create problem',

@@ -22,6 +22,15 @@ import {
 } from '@roj/shared';
 import { MongoClient } from 'mongodb';
 
+function debugJudge(message: string, details?: Record<string, unknown>) {
+  if (process.env.DEBUG_JUDGE !== '1') {
+    return;
+  }
+
+  const suffix = details ? ` ${JSON.stringify(details)}` : '';
+  console.log(`[DEBUG] [db] ${message}${suffix}`);
+}
+
 // 抢占待评测 submission 时使用的原子更新。
 export function buildLeaseUpdate(leaseOwner: string, now: Date, leaseMs: number) {
   return {
@@ -343,6 +352,12 @@ export class RojDb {
     };
 
     await this.submissions().insertOne(submission);
+    debugJudge('submission created', {
+      localSubmissionId: submission._id,
+      pid: submission.pid,
+      userId: submission.userId,
+      language: submission.language,
+    });
     return submission;
   }
 
@@ -426,12 +441,27 @@ export class RojDb {
       },
     );
 
+    if (result) {
+      debugJudge('submission claimed', {
+        localSubmissionId: result._id,
+        pid: result.pid,
+        leaseOwner,
+      });
+    }
+
     return result;
   }
 
   // 保存 judge 受理任务后的 ack。
   async saveJudgeAck(localSubmissionId: string, ack: JudgeSnapshotPersistInput) {
     const now = new Date();
+    debugJudge('save judge ack', {
+      localSubmissionId,
+      judgeSubmissionId: ack.submissionId,
+      status: ack.status,
+      verdict: ack.verdict,
+      cases: ack.case_results.length,
+    });
     await this.submissions().updateOne(
       { _id: localSubmissionId },
       {
@@ -452,6 +482,14 @@ export class RojDb {
   async saveJudgeSnapshot(localSubmissionId: string, snapshot: JudgeSnapshotPersistInput) {
     const now = new Date();
     const mapped = mapJudgeSnapshotToSubmissionState(snapshot);
+    debugJudge('save judge snapshot', {
+      localSubmissionId,
+      judgeSubmissionId: snapshot.submissionId,
+      judgeStatus: snapshot.status,
+      ojStatus: mapped.status,
+      verdict: mapped.verdict,
+      cases: snapshot.case_results.length,
+    });
     await this.submissions().updateOne(
       { _id: localSubmissionId },
       {
@@ -492,6 +530,10 @@ export class RojDb {
   // 记录系统级失败，例如 judge 通信或 dispatcher 自身异常。
   async markSubmissionFailed(localSubmissionId: string, message: string) {
     const now = new Date();
+    debugJudge('mark submission failed', {
+      localSubmissionId,
+      message,
+    });
     await this.submissions().updateOne(
       { _id: localSubmissionId },
       {

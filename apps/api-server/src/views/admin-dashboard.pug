@@ -1,0 +1,26 @@
+//- 管理后台首页：集中展示管理员可用功能入口。
+extends layout.pug
+
+block content
+  section.list-panel
+    header
+      hgroup
+        h1= t('admin.dashboard.title')
+        p.page-lead= t('admin.dashboard.lead')
+    .feature-grid
+      article.feature-card
+        h3= t('admin.dashboard.problemsTitle')
+        p= t('admin.dashboard.problemsBody')
+        .page-actions
+          a(href=urlWithLang('/admin/problems') role="button")= t('admin.dashboard.openProblems')
+          a(href=urlWithLang('/admin/problems/new') role="button" class="secondary")= t('admin.dashboard.createProblem')
+      article.feature-card
+        h3= t('admin.dashboard.usersTitle')
+        p= t('admin.dashboard.usersBody')
+        .page-actions
+          a(href=urlWithLang('/admin/users') role="button")= t('admin.dashboard.openUsers')
+      article.feature-card
+        h3= t('admin.dashboard.submissionsTitle')
+        p= t('admin.dashboard.submissionsBody')
+        .page-actions
+          a(href=urlWithLang('/admin/submissions') role="button")= t('admin.dashboard.openSubmissions')

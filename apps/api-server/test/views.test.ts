@@ -31,6 +31,18 @@ function createServices(overrides: Record<string, unknown> = {}) {
       verdict: 'AC',
       judgeStatus: 'FINISHED',
       message: 'ok',
+      caseResults: [
+        {
+          seq_id: 1,
+          verdict: 'AC',
+          cpu_time_ms: 3,
+          real_time_ms: 5,
+          memory_kb: 1024,
+          signal: 0,
+          exit_code: 0,
+          error_code: 0,
+        },
+      ],
     }),
     listSubmissions: async () => [],
     registerUser: async () => ({
@@ -181,6 +193,7 @@ describe('rendered views', () => {
           verdict: 'AC',
           judgeStatus: 'FINISHED',
           message: 'ok',
+          caseResults: [],
         },
       ],
     }));
@@ -202,6 +215,24 @@ describe('rendered views', () => {
     expect(response.body).toContain('登出');
     expect(response.body).not.toContain('登录');
     expect(response.body).not.toContain('注册');
+  });
+
+  it('renders case results on the submission detail page', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/submissions/sub-1',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('测试点结果');
+    expect(response.body).toContain('#1');
+    expect(response.body).toContain('3 ms');
+    expect(response.body).toContain('1024 KB');
   });
 
   it('renders login form with Pico-style page content', async () => {
@@ -279,6 +310,31 @@ describe('rendered views', () => {
     expect(response.body).toContain('用户');
     expect(response.body).not.toContain('登录');
     expect(response.body).not.toContain('注册');
+  });
+
+  it('renders the admin dashboard for admins', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('管理后台');
+    expect(response.body).toContain('打开题目管理');
+    expect(response.body).toContain('打开用户管理');
+    expect(response.body).toContain('打开提交管理');
   });
 
   it('renders the admin problem edit page for admins', async () => {

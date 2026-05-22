@@ -11,7 +11,7 @@ import formbody from '@fastify/formbody';
 import view from '@fastify/view';
 import Fastify from 'fastify';
 import pug from 'pug';
-import { OJSubmissionStatuses } from '@roj/shared';
+import { OJSubmissionStatuses, type SubmissionCaseResult } from '@roj/shared';
 import { z } from 'zod';
 
 import { createViewContext, resolveUiLang, type UiLang } from './view-i18n.ts';
@@ -87,6 +87,7 @@ export interface SubmissionViewModel {
   verdict: string;
   judgeStatus?: string | null;
   message?: string;
+  caseResults: SubmissionCaseResult[];
 }
 
 export interface GradeViewModel {
@@ -347,7 +348,7 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(403).send('Forbidden');
     }
 
-    return redirectWithLang(request, reply, '/admin/problems');
+    return renderPage(request, reply, 'admin-dashboard.pug');
   });
 
   app.get('/admin/users', async (request, reply) => {

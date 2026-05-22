@@ -6,6 +6,15 @@
 import net from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 
+function debugJudge(message: string, details?: Record<string, unknown>) {
+  if (process.env.DEBUG_JUDGE !== '1') {
+    return;
+  }
+
+  const suffix = details ? ` ${JSON.stringify(details)}` : '';
+  console.log(`[DEBUG] [judge-driver] ${message}${suffix}`);
+}
+
 export const Language = {
   CPP: 0,
   C: 1,
@@ -658,8 +667,10 @@ export class JudgeServerClient {
   }
 
   async createSession(signal?: AbortSignal): Promise<JudgeSession> {
+    debugJudge('create session');
     const session = new JudgeSession(this.options);
     await session.connect(signal);
+    debugJudge('session connected');
     return session;
   }
 
@@ -667,9 +678,22 @@ export class JudgeServerClient {
     request: SubmitRequestInput,
     options: WaitOptions = {},
   ): Promise<SubmissionAckResponse> {
+    debugJudge('submit request', {
+      uuid: request.uuid,
+      pid: request.pid,
+      lang: request.lang,
+      codeBytes: Buffer.byteLength(request.code, 'utf8'),
+    });
     const session = await this.createSession(options.signal);
     try {
-      return await session.submit(request, options);
+      const ack = await session.submit(request, options);
+      debugJudge('submit ack', {
+        submission_id: ack.submission_id,
+        status: ack.status,
+        verdict: ack.verdict,
+        cases: ack.case_results.length,
+      });
+      return ack;
     } finally {
       session.close();
     }
@@ -679,6 +703,9 @@ export class JudgeServerClient {
     submissionId: number,
     options: WaitOptions = {},
   ): Promise<QueryResultResponse> {
+    debugJudge('query_result request', {
+      submission_id: submissionId,
+    });
     const session = await this.createSession(options.signal);
     try {
       await session.send({
@@ -701,6 +728,13 @@ export class JudgeServerClient {
         );
       }
 
+      debugJudge('query_result response', {
+        submission_id: message.submission_id,
+        type: message.type,
+        status: message.status,
+        verdict: message.verdict,
+        cases: message.case_results.length,
+      });
       return message;
     } finally {
       session.close();
@@ -783,6 +817,13 @@ export class JudgeServerClient {
       );
       // 把每次轮询到的快照交给调用方，便于打印日志或持久化中间状态。
       options.onSnapshot?.(snapshot);
+
+      debugJudge('poll snapshot', {
+        submission_id: snapshot.submission_id,
+        status: snapshot.status,
+        verdict: snapshot.verdict,
+        cases: snapshot.case_results.length,
+      });
 
       // 只有收到 submission_finished 才认为评测完成。
       // 其他 update 状态会继续进入下一轮轮询。
