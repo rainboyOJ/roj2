@@ -5,9 +5,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="${WORKSPACE_DIR:-$(dirname "$ROOT_DIR")}"
 
-# TODO: Fill these URLs when the repositories are published.
-JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-}"
-ROJ_REPO_URL="${ROJ_REPO_URL:-}"
+JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-https://github.com/rainboyOJ/judge_server_cpp.git}"
+ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
 
 JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/boxtest-opencode-dev}"
 ROJ_DIR="${ROJ_DIR:-$ROOT_DIR}"
