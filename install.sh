@@ -30,9 +30,16 @@ COMPOSE_CMD=(docker compose)
 
 # 支持 ./install.sh install 和 ./install.sh update，默认 install。
 COMMAND="${1:-install}"
+STEP_INDEX=0
+STEP_TOTAL=0
 
 log() {
   printf '[install] %s\n' "$*"
+}
+
+step() {
+  STEP_INDEX=$((STEP_INDEX + 1))
+  printf '[install] [%2d/%2d] %s\n' "$STEP_INDEX" "$STEP_TOTAL" "$*"
 }
 
 warn() {
@@ -200,16 +207,22 @@ main() {
   # update 模式强制更新仓库并重新构建镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
     install)
+      STEP_TOTAL=12
       ;;
     update)
+      STEP_TOTAL=12
       UPDATE_REPOS=1
       SKIP_BUILD=0
       ;;
     clear)
+      STEP_TOTAL=4
+      step "check Docker command"
       require_command docker
+      step "setup Docker permissions and Compose command"
       setup_docker_commands
+      step "remove related containers and images"
       clear_docker_resources
-      log "clear complete"
+      step "finish clear"
       return 0
       ;;
     -h|--help|help)
@@ -222,19 +235,26 @@ main() {
       ;;
   esac
 
+  step "check git command"
   require_command git
+  step "setup Docker permissions and Compose command"
   setup_docker_commands
 
   log "This installer may use sudo for Docker, depending on your local Docker permissions."
 
   # 先准备两个代码仓库，再检查构建所需文件。
+  step "prepare judge_server repository"
   pull_or_update_repo "judge_server" "$JUDGE_SERVER_REPO_URL" "$JUDGE_SERVER_DIR"
+  step "prepare roj2 repository"
   pull_or_update_repo "roj_codex" "$ROJ_REPO_URL" "$ROJ_DIR"
 
+  step "check required project files"
   ensure_files
+  step "prepare judge_server image"
   ensure_judge_image
 
   # 构建 roj2 的应用镜像；SKIP_BUILD=1 时只检查镜像是否已经存在。
+  step "prepare application image"
   if [[ "$SKIP_BUILD" == "1" ]]; then
     if ! "${DOCKER_CMD[@]}" image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
       fail "SKIP_BUILD=1 was set, but image $IMAGE_NAME does not exist"
@@ -245,17 +265,22 @@ main() {
     "${DOCKER_CMD[@]}" build -t "$IMAGE_NAME" "$ROJ_DIR"
   fi
 
-  log "starting services with Docker Compose"
+  step "prepare Docker Compose workspace"
   (
     # docker compose 需要在 roj2 仓库目录下执行，因为 compose 文件在这个目录中。
     cd "$ROJ_DIR"
+    export IMAGE_NAME
 
     # update 模式先停掉旧容器，避免旧服务或孤儿容器继续占用端口。
+    step "stop old services when updating"
     if [[ "$COMMAND" == "update" ]]; then
       "${COMPOSE_CMD[@]}" down --remove-orphans
+    else
+      log "install mode: skip stopping existing services"
     fi
 
     # 如果刚刚已经 docker build 过，compose up --build 会确保 compose 里的服务也同步刷新。
+    step "start services with Docker Compose"
     if [[ "$SKIP_BUILD" == "1" ]]; then
       "${COMPOSE_CMD[@]}" up -d
     else
@@ -263,6 +288,7 @@ main() {
     fi
   )
 
+  step "finish install"
   cat <<EOF
 [install] done
 [install] API: http://127.0.0.1:3000/problems

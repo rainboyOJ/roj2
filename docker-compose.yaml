@@ -30,7 +30,7 @@ services:
   api-server:
     build:
       context: .
-    image: roj-codex:local
+    image: ${IMAGE_NAME:-roj2:local}
     container_name: roj-api-server
     restart: unless-stopped
     depends_on:
@@ -56,7 +56,7 @@ services:
       - npm run seed && npm run dev:api
 
   judge-dispatcher:
-    image: roj-codex:local
+    image: ${IMAGE_NAME:-roj2:local}
     container_name: roj-judge-dispatcher
     restart: unless-stopped
     depends_on:
