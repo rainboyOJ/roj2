@@ -33,21 +33,40 @@ COMMAND="${1:-install}"
 STEP_INDEX=0
 STEP_TOTAL=0
 
+if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_CYAN=$'\033[36m'
+  C_GREEN=$'\033[32m'
+  C_YELLOW=$'\033[33m'
+  C_RED=$'\033[31m'
+else
+  C_RESET=""
+  C_BOLD=""
+  C_CYAN=""
+  C_GREEN=""
+  C_YELLOW=""
+  C_RED=""
+fi
+
 log() {
-  printf '[install] %s\n' "$*"
+  printf '%s[install]%s %s\n' "$C_CYAN" "$C_RESET" "$*"
 }
 
 step() {
   STEP_INDEX=$((STEP_INDEX + 1))
-  printf '[install] [%2d/%2d] %s\n' "$STEP_INDEX" "$STEP_TOTAL" "$*"
+  printf '%s[install]%s %s[%2d/%2d]%s %s%s%s\n' \
+    "$C_CYAN" "$C_RESET" \
+    "$C_GREEN" "$STEP_INDEX" "$STEP_TOTAL" "$C_RESET" \
+    "$C_BOLD$C_CYAN" "$*" "$C_RESET"
 }
 
 warn() {
-  printf '[install] WARN: %s\n' "$*" >&2
+  printf '%s[install]%s %sWARN:%s %s\n' "$C_CYAN" "$C_RESET" "$C_YELLOW" "$C_RESET" "$*" >&2
 }
 
 fail() {
-  printf '[install] ERROR: %s\n' "$*" >&2
+  printf '%s[install]%s %sERROR:%s %s\n' "$C_CYAN" "$C_RESET" "$C_RED" "$C_RESET" "$*" >&2
   exit 1
 }
 
@@ -207,10 +226,10 @@ main() {
   # update 模式强制更新仓库并重新构建镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
     install)
-      STEP_TOTAL=12
+      STEP_TOTAL=10
       ;;
     update)
-      STEP_TOTAL=12
+      STEP_TOTAL=11
       UPDATE_REPOS=1
       SKIP_BUILD=0
       ;;
@@ -266,27 +285,25 @@ main() {
   fi
 
   step "prepare Docker Compose workspace"
-  (
-    # docker compose 需要在 roj2 仓库目录下执行，因为 compose 文件在这个目录中。
-    cd "$ROJ_DIR"
-    export IMAGE_NAME
+  # docker compose 需要在 roj2 仓库目录下执行，因为 compose 文件在这个目录中。
+  cd "$ROJ_DIR"
+  export IMAGE_NAME
 
-    # update 模式先停掉旧容器，避免旧服务或孤儿容器继续占用端口。
+  # update 模式先停掉旧容器，避免旧服务或孤儿容器继续占用端口。
+  if [[ "$COMMAND" == "update" ]]; then
     step "stop old services when updating"
-    if [[ "$COMMAND" == "update" ]]; then
-      "${COMPOSE_CMD[@]}" down --remove-orphans
-    else
-      log "install mode: skip stopping existing services"
-    fi
+    "${COMPOSE_CMD[@]}" down --remove-orphans
+  else
+    log "install mode: skip stopping existing services"
+  fi
 
-    # 如果刚刚已经 docker build 过，compose up --build 会确保 compose 里的服务也同步刷新。
-    step "start services with Docker Compose"
-    if [[ "$SKIP_BUILD" == "1" ]]; then
-      "${COMPOSE_CMD[@]}" up -d
-    else
-      "${COMPOSE_CMD[@]}" up -d --build
-    fi
-  )
+  # 如果刚刚已经 docker build 过，compose up --build 会确保 compose 里的服务也同步刷新。
+  step "start services with Docker Compose"
+  if [[ "$SKIP_BUILD" == "1" ]]; then
+    "${COMPOSE_CMD[@]}" up -d
+  else
+    "${COMPOSE_CMD[@]}" up -d --build
+  fi
 
   step "finish install"
   cat <<EOF
