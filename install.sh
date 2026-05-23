@@ -2,20 +2,33 @@
 
 set -euo pipefail
 
+# 脚本所在目录。当前脚本可能从任意目录执行，所以先定位 install.sh 自己的位置。
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WORKSPACE_DIR="${WORKSPACE_DIR:-$(dirname "$ROOT_DIR")}"
 
+# 默认把 judge_server 和 roj2 拉到当前工作目录下；也可以通过 WORKSPACE_DIR 覆盖。
+WORKSPACE_DIR="${WORKSPACE_DIR:-$PWD}"
+
+# GitHub 访问较慢时使用代理。设置 GITHUB_PROXY= 可以关闭代理，直接访问原始 GitHub URL。
+GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.com/}"
+
+# 两个需要拉取的仓库地址：judge_server 负责实际评测，roj2 是本 OJ Web/API 项目。
 JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-https://github.com/rainboyOJ/judge_server_cpp.git}"
 ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
 
-JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/boxtest-opencode-dev}"
-ROJ_DIR="${ROJ_DIR:-$ROOT_DIR}"
-IMAGE_NAME="${IMAGE_NAME:-roj-codex:local}"
+# 两个仓库的本地目录，以及最终构建出来的 OJ 镜像名。
+JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/judge_server_cpp}"
+ROJ_DIR="${ROJ_DIR:-$WORKSPACE_DIR/roj2}"
+IMAGE_NAME="${IMAGE_NAME:-roj2:local}"
+
+# UPDATE_REPOS=1 时会 git fetch/pull；SKIP_BUILD=1 时跳过镜像构建，直接复用本地镜像。
 UPDATE_REPOS="${UPDATE_REPOS:-0}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
 
+# 这两个数组会在 setup_docker_commands 中根据当前用户权限被改成 docker 或 sudo docker。
 DOCKER_CMD=(docker)
 COMPOSE_CMD=(docker compose)
+
+# 支持 ./install.sh install 和 ./install.sh update，默认 install。
 COMMAND="${1:-install}"
 
 log() {
@@ -36,10 +49,12 @@ usage() {
 Usage:
   ./install.sh          Install and start services.
   ./install.sh update   Update repositories, rebuild images, and restart services.
+  ./install.sh clear    Remove related containers and local build images.
 
 Environment:
   UPDATE_REPOS=1        Update existing local git repositories.
   SKIP_BUILD=1          Reuse existing ${IMAGE_NAME} instead of building.
+  GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
 EOF
 }
 
@@ -47,10 +62,27 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing required command: $1"
 }
 
+# 判断仓库地址是否还是占位值。占位地址不会尝试 clone。
 is_placeholder_url() {
   [[ -z "$1" || "$1" == TODO* || "$1" == "placeholder" ]]
 }
 
+# 如果启用了 GitHub 代理，并且 URL 是 https://github.com/...，则拼出代理后的下载地址。
+# 例如：https://github.com/a/b.git -> https://gh-proxy.com/https://github.com/a/b.git
+proxied_git_url() {
+  local url=$1
+  local proxy=${GITHUB_PROXY%/}
+
+  if [[ -z "$proxy" || "$url" != https://github.com/* ]]; then
+    printf '%s\n' "$url"
+    return
+  fi
+
+  printf '%s/%s\n' "$proxy" "$url"
+}
+
+# 选择可用的 Docker / Compose 命令。
+# 如果当前用户不能直接访问 Docker daemon，就使用 sudo docker。
 setup_docker_commands() {
   require_command docker
 
@@ -81,10 +113,17 @@ setup_docker_commands() {
   fail "missing Docker Compose plugin or docker-compose binary"
 }
 
+# 拉取或更新指定仓库：
+# - 目录不存在：git clone
+# - 目录存在且是 git 仓库：install 模式复用，update 模式 fast-forward 更新
+# - 目录存在但不是 git 仓库：只警告，不覆盖用户文件
 pull_or_update_repo() {
   local name=$1
   local url=$2
   local dir=$3
+  local network_url
+
+  network_url="$(proxied_git_url "$url")"
 
   if [[ -d "$dir/.git" ]]; then
     if [[ "$UPDATE_REPOS" != "1" ]]; then
@@ -96,7 +135,7 @@ pull_or_update_repo() {
     if is_placeholder_url "$url"; then
       git -C "$dir" pull --ff-only
     else
-      git -C "$dir" fetch "$url"
+      git -C "$dir" fetch "$network_url"
       git -C "$dir" merge --ff-only FETCH_HEAD
     fi
     return
@@ -112,15 +151,22 @@ pull_or_update_repo() {
     return
   fi
 
-  log "cloning $name into $dir"
-  git clone "$url" "$dir"
+  if [[ "$network_url" != "$url" ]]; then
+    log "cloning $name through GitHub proxy into $dir"
+  else
+    log "cloning $name into $dir"
+  fi
+  git clone "$network_url" "$dir"
 }
 
+# 启动前检查 roj2 仓库里必须存在 Dockerfile 和 docker-compose.yaml。
 ensure_files() {
   [[ -f "$ROJ_DIR/Dockerfile" ]] || fail "missing Dockerfile in $ROJ_DIR"
   [[ -f "$ROJ_DIR/docker-compose.yaml" ]] || fail "missing docker-compose.yaml in $ROJ_DIR"
 }
 
+# 确保 judge_server 的 Docker 镜像存在。
+# 如果本地没有 boxtest-judge-server:dev，就尝试从 judge_server 仓库构建。
 ensure_judge_image() {
   if "${DOCKER_CMD[@]}" image inspect boxtest-judge-server:dev >/dev/null 2>&1; then
     log "using existing judge image: boxtest-judge-server:dev"
@@ -136,13 +182,35 @@ ensure_judge_image() {
   fail "judge image boxtest-judge-server:dev not found, and no Dockerfile found in $JUDGE_SERVER_DIR"
 }
 
+clear_docker_resources() {
+  log "removing related containers"
+  "${DOCKER_CMD[@]}" rm -f \
+    roj-api-server \
+    roj-judge-dispatcher \
+    roj-mongodb \
+    roj-judge-server >/dev/null 2>&1 || true
+
+  log "removing local build images"
+  "${DOCKER_CMD[@]}" rmi \
+    "$IMAGE_NAME" \
+    boxtest-judge-server:dev >/dev/null 2>&1 || true
+}
+
 main() {
+  # update 模式强制更新仓库并重新构建镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
     install)
       ;;
     update)
       UPDATE_REPOS=1
       SKIP_BUILD=0
+      ;;
+    clear)
+      require_command docker
+      setup_docker_commands
+      clear_docker_resources
+      log "clear complete"
+      return 0
       ;;
     -h|--help|help)
       usage
@@ -158,12 +226,15 @@ main() {
   setup_docker_commands
 
   log "This installer may use sudo for Docker, depending on your local Docker permissions."
+
+  # 先准备两个代码仓库，再检查构建所需文件。
   pull_or_update_repo "judge_server" "$JUDGE_SERVER_REPO_URL" "$JUDGE_SERVER_DIR"
   pull_or_update_repo "roj_codex" "$ROJ_REPO_URL" "$ROJ_DIR"
 
   ensure_files
   ensure_judge_image
 
+  # 构建 roj2 的应用镜像；SKIP_BUILD=1 时只检查镜像是否已经存在。
   if [[ "$SKIP_BUILD" == "1" ]]; then
     if ! "${DOCKER_CMD[@]}" image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
       fail "SKIP_BUILD=1 was set, but image $IMAGE_NAME does not exist"
@@ -176,11 +247,15 @@ main() {
 
   log "starting services with Docker Compose"
   (
+    # docker compose 需要在 roj2 仓库目录下执行，因为 compose 文件在这个目录中。
     cd "$ROJ_DIR"
+
+    # update 模式先停掉旧容器，避免旧服务或孤儿容器继续占用端口。
     if [[ "$COMMAND" == "update" ]]; then
       "${COMPOSE_CMD[@]}" down --remove-orphans
     fi
 
+    # 如果刚刚已经 docker build 过，compose up --build 会确保 compose 里的服务也同步刷新。
     if [[ "$SKIP_BUILD" == "1" ]]; then
       "${COMPOSE_CMD[@]}" up -d
     else
