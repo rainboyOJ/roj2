@@ -291,7 +291,7 @@ main() {
   step "prepare judge_server repository"
   pull_or_update_repo "judge_server" "$JUDGE_SERVER_REPO_URL" "$JUDGE_SERVER_DIR"
   step "prepare roj2 repository"
-  pull_or_update_repo "roj_codex" "$ROJ_REPO_URL" "$ROJ_DIR"
+  pull_or_update_repo "roj2" "$ROJ_REPO_URL" "$ROJ_DIR"
 
   step "check required project files"
   ensure_files
