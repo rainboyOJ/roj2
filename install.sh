@@ -339,6 +339,25 @@ main() {
   cat <<EOF
 [install] done
 [install] API: http://127.0.0.1:3000/problems
+[install]
+[install] judge_server runtime files:
+[install]   config:    $JUDGE_SERVER_CONFIG_PATH
+[install]   testData:  $JUDGE_SERVER_TESTDATA_DIR
+[install]
+[install] To change judge_server settings:
+[install]   1. stop services:
+[install]      cd $ROJ_DIR && ${COMPOSE_CMD[*]} down
+[install]   2. edit $JUDGE_SERVER_CONFIG_PATH
+[install]   3. put problem data under $JUDGE_SERVER_TESTDATA_DIR/<pid>/data
+[install]   4. start services:
+[install]      cd $ROJ_DIR
+[install]      IMAGE_NAME="$IMAGE_NAME" \\
+[install]      JUDGE_SERVER_CONFIG_PATH="$JUDGE_SERVER_CONFIG_PATH" \\
+[install]      JUDGE_SERVER_TESTDATA_DIR="$JUDGE_SERVER_TESTDATA_DIR" \\
+[install]      ${COMPOSE_CMD[*]} up -d
+[install]
+[install] Logs:
+[install]   cd $ROJ_DIR && ${COMPOSE_CMD[*]} logs -f judge-server judge-dispatcher api-server
 [install] Stop: ${COMPOSE_CMD[*]} down
 EOF
 }
