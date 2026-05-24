@@ -23,6 +23,11 @@ IMAGE_NAME="${IMAGE_NAME:-roj2:local}"
 # UPDATE_REPOS=1 时会 git fetch/pull；SKIP_BUILD=1 时跳过镜像构建，直接复用本地镜像。
 UPDATE_REPOS="${UPDATE_REPOS:-0}"
 SKIP_BUILD="${SKIP_BUILD:-0}"
+FORCE_JUDGE_CONFIG_COPY="${FORCE_JUDGE_CONFIG_COPY:-0}"
+
+# judge_server 容器运行时挂载的配置和测试数据目录。
+JUDGE_SERVER_CONFIG_PATH="${JUDGE_SERVER_CONFIG_PATH:-$ROOT_DIR/judge_server_config.json}"
+JUDGE_SERVER_TESTDATA_DIR="${JUDGE_SERVER_TESTDATA_DIR:-$ROOT_DIR/judge_server_testData}"
 
 # 这两个数组会在 setup_docker_commands 中根据当前用户权限被改成 docker 或 sudo docker。
 DOCKER_CMD=(docker)
@@ -81,6 +86,8 @@ Environment:
   UPDATE_REPOS=1        Update existing local git repositories.
   SKIP_BUILD=1          Reuse existing ${IMAGE_NAME} instead of building.
   GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
+  FORCE_JUDGE_CONFIG_COPY=1
+                         Overwrite judge_server_config.json from judge_server repo.
 EOF
 }
 
@@ -208,6 +215,25 @@ ensure_judge_image() {
   fail "judge image boxtest-judge-server:dev not found, and no Dockerfile found in $JUDGE_SERVER_DIR"
 }
 
+prepare_judge_runtime_files() {
+  local source_config="$JUDGE_SERVER_DIR/config/config.json"
+
+  [[ -f "$source_config" ]] || fail "missing judge_server config: $source_config"
+
+  mkdir -p "$(dirname "$JUDGE_SERVER_CONFIG_PATH")"
+  mkdir -p "$JUDGE_SERVER_TESTDATA_DIR"
+
+  if [[ ! -f "$JUDGE_SERVER_CONFIG_PATH" || "$FORCE_JUDGE_CONFIG_COPY" == "1" ]]; then
+    cp "$source_config" "$JUDGE_SERVER_CONFIG_PATH"
+    sed -i -E 's#"test_data_path"[[:space:]]*:[[:space:]]*"[^"]*"#"test_data_path": "/opt/boxtest/testData"#' "$JUDGE_SERVER_CONFIG_PATH"
+    log "copied judge config to $JUDGE_SERVER_CONFIG_PATH"
+  else
+    log "using existing judge config: $JUDGE_SERVER_CONFIG_PATH"
+  fi
+
+  log "using judge test data directory: $JUDGE_SERVER_TESTDATA_DIR"
+}
+
 clear_docker_resources() {
   log "removing related containers"
   "${DOCKER_CMD[@]}" rm -f \
@@ -226,10 +252,10 @@ main() {
   # update 模式强制更新仓库并重新构建镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
     install)
-      STEP_TOTAL=10
+      STEP_TOTAL=11
       ;;
     update)
-      STEP_TOTAL=11
+      STEP_TOTAL=12
       UPDATE_REPOS=1
       SKIP_BUILD=0
       ;;
@@ -271,6 +297,8 @@ main() {
   ensure_files
   step "prepare judge_server image"
   ensure_judge_image
+  step "prepare judge_server runtime files"
+  prepare_judge_runtime_files
 
   # 构建 roj2 的应用镜像；SKIP_BUILD=1 时只检查镜像是否已经存在。
   step "prepare application image"
@@ -288,6 +316,8 @@ main() {
   # docker compose 需要在 roj2 仓库目录下执行，因为 compose 文件在这个目录中。
   cd "$ROJ_DIR"
   export IMAGE_NAME
+  export JUDGE_SERVER_CONFIG_PATH
+  export JUDGE_SERVER_TESTDATA_DIR
 
   # update 模式先停掉旧容器，避免旧服务或孤儿容器继续占用端口。
   if [[ "$COMMAND" == "update" ]]; then

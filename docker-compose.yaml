@@ -26,6 +26,12 @@ services:
     restart: unless-stopped
     expose:
       - "8000"
+    volumes:
+      - ${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}:/opt/boxtest/config/config.json:ro
+      - ${JUDGE_SERVER_TESTDATA_DIR:-./judge_server_testData}:/opt/boxtest/testData:ro
+    command:
+      - ./build/judge_server
+      - config/config.json
 
   api-server:
     build:
