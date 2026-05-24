@@ -194,6 +194,66 @@ npm run dev:dispatcher
 
 ## Docker 镜像
 
+### GHCR 自动构建
+
+本仓库已经配置 GitHub Actions：代码 push 到 GitHub 的 `master` / `main` 分支后，会自动构建 Docker 镜像并推送到 GitHub Container Registry。
+
+默认镜像地址：
+
+```text
+ghcr.io/rainboyoj/roj2:latest
+```
+
+首次发布后，需要在 GitHub 的 Package 设置里确认这个 GHCR package 是 public；否则外部用户拉取时需要先 `docker login ghcr.io`。
+
+常用拉取命令：
+
+```bash
+docker pull ghcr.io/rainboyoj/roj2:latest
+```
+
+也可以拉取某次提交对应的镜像：
+
+```bash
+docker pull ghcr.io/rainboyoj/roj2:sha-<commit-sha>
+```
+
+如果发布 Git tag，例如 `v0.1.0`，Actions 还会生成：
+
+```text
+ghcr.io/rainboyoj/roj2:v0.1.0
+```
+
+### 使用 GHCR 镜像运行
+
+运行 API 服务：
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
+  -e JUDGE_SERVER_HOST=host.docker.internal \
+  ghcr.io/rainboyoj/roj2:latest
+```
+
+运行 dispatcher：
+
+```bash
+docker run --rm \
+  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
+  -e JUDGE_SERVER_HOST=host.docker.internal \
+  ghcr.io/rainboyoj/roj2:latest npm run dev:dispatcher
+```
+
+如果使用本仓库的 `docker-compose.yaml`，可以通过 `IMAGE_NAME` 指定使用 GHCR 镜像：
+
+```bash
+IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest docker compose up -d
+```
+
+注意：`docker-compose.yaml` 里的 `judge-server` 镜像仍然需要单独准备，因为它来自 `judge_server_cpp` 项目。
+
+### 本地构建
+
 构建镜像：
 
 ```bash
