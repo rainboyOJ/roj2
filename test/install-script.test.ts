@@ -72,6 +72,7 @@ exit 0
     await mkdir(deployDir, { recursive: true });
     await mkdir(join(judgeDir, '.git'), { recursive: true });
     await mkdir(join(judgeDir, 'config'), { recursive: true });
+    await mkdir(join(judgeDir, 'testData', '1000', 'data'), { recursive: true });
     await mkdir(rojDir, { recursive: true });
     await mkdir(join(rojDir, '.git'), { recursive: true });
 
@@ -83,6 +84,8 @@ exit 0
       }, null, 2),
     );
     await writeFile(join(judgeDir, 'Dockerfile'), 'FROM scratch\n');
+    await writeFile(join(judgeDir, 'testData', '1000', 'data', 'problem1.in'), '1 2\n');
+    await writeFile(join(judgeDir, 'testData', '1000', 'data', 'problem1.out'), '3\n');
     await writeFile(join(rojDir, 'Dockerfile'), 'FROM scratch\n');
     await writeFile(
       join(rojDir, 'docker-compose.yaml'),
@@ -168,6 +171,11 @@ exit 0
       expect(composeFile).toContain('context: ${ROJ_BUILD_CONTEXT:-.}');
       const testDataStat = await stat(join(deployDir, 'judge_server_testData'));
       expect(testDataStat.isDirectory()).toBe(true);
+      const defaultProblemInput = await readFile(
+        join(deployDir, 'judge_server_testData', '1000', 'data', 'problem1.in'),
+        'utf8',
+      );
+      expect(defaultProblemInput).toBe('1 2\n');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
