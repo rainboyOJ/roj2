@@ -212,20 +212,6 @@ describe('rendered views', () => {
     expect(katex.body).toContain('katex');
   });
 
-  it('renders a home page in English when lang=en is provided', async () => {
-    const app = buildApp(createServices());
-
-    const response = await app.inject({
-      method: 'GET',
-      url: '/?lang=en',
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('Home');
-    expect(response.body).toContain('Practice for school OJ');
-    expect(response.body).toContain('href="/?lang=zh"');
-  });
-
   it('renders problems page as a table view', async () => {
     const app = buildApp(createServices());
 
@@ -428,7 +414,7 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('action="/profile/password?lang=zh"');
+    expect(response.body).toContain('action="/profile/password"');
     expect(response.body).toContain('name="currentPassword"');
     expect(response.body).toContain('name="newPassword"');
   });

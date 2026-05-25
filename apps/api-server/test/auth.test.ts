@@ -82,7 +82,7 @@ describe('auth routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/login?lang=zh',
+      url: '/login',
       payload: {
         username: 'alice',
         password: 'secret123',
@@ -90,7 +90,7 @@ describe('auth routes', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/?lang=zh');
+    expect(response.headers.location).toBe('/');
     expect(response.headers['set-cookie']).toContain('roj_session=');
   });
 
@@ -99,7 +99,7 @@ describe('auth routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/register?lang=zh',
+      url: '/register',
       payload: {
         username: 'alice',
         name: 'Alice',
@@ -111,7 +111,7 @@ describe('auth routes', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/login?lang=zh');
+    expect(response.headers.location).toBe('/login');
   });
 
   it('registers a student account', async () => {
@@ -158,14 +158,14 @@ describe('auth routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/logout?lang=zh',
+      url: '/logout',
       headers: {
         cookie: 'roj_session=token-1',
       },
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/?lang=zh');
+    expect(response.headers.location).toBe('/');
     expect(response.headers['set-cookie']).toContain('roj_session=;');
     expect(response.headers['set-cookie']).toContain('Max-Age=0');
   });

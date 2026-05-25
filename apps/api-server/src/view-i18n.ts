@@ -1,6 +1,6 @@
 // 这个文件集中管理页面文案和视图辅助函数。
-// 目前支持中英双语，Pug 模板里看到的 t()/localize*() 都从这里来。
-export type UiLang = 'zh' | 'en';
+// 当前只保留中文，Pug 模板里看到的 t()/localize*() 都从这里来。
+export type UiLang = 'zh';
 
 type TranslationKey =
   | 'site.tagline'
@@ -19,8 +19,6 @@ type TranslationKey =
   | 'nav.admin.submissions'
   | 'nav.admin.languages'
   | 'nav.admin.grades'
-  | 'lang.zh'
-  | 'lang.en'
   | 'home.title'
   | 'home.lead'
   | 'home.description'
@@ -135,9 +133,6 @@ type TranslationKey =
   | 'register.username'
   | 'register.name'
   | 'register.gender'
-  | 'register.genderMale'
-  | 'register.genderFemale'
-  | 'register.genderOther'
   | 'register.grade'
   | 'register.className'
   | 'register.password'
@@ -298,8 +293,6 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.admin.submissions': '提交管理',
     'nav.admin.languages': '语言设置',
     'nav.admin.grades': '年级管理',
-    'lang.zh': '中文',
-    'lang.en': 'English',
     'home.title': '学校 OJ 练习平台',
     'home.lead': '一个适合教学场景的简洁在线评测工作区，用来读题、交题和查看结果。',
     'home.description': '这个站点面向学习使用：导航简单、页面清晰，常见 OJ 操作可以直接进入。',
@@ -414,9 +407,6 @@ const translations: Record<UiLang, TranslationMap> = {
     'register.username': '用户名',
     'register.name': '姓名',
     'register.gender': '性别',
-    'register.genderMale': '男',
-    'register.genderFemale': '女',
-    'register.genderOther': '其他',
     'register.grade': '年级',
     'register.className': '班级',
     'register.password': '密码',
@@ -557,289 +547,11 @@ const translations: Record<UiLang, TranslationMap> = {
     'role.student': '学生',
     'role.admin': '管理员',
   },
-  en: {
-    'site.tagline': 'Simple school OJ',
-    'nav.home': 'Home',
-    'nav.problems': 'Problems',
-    'nav.submissions': 'Submissions',
-    'nav.ranklist': 'Ranklist',
-    'nav.contests': 'Contests',
-    'nav.profile': 'Profile',
-    'nav.logout': 'Logout',
-    'nav.login': 'Login',
-    'nav.register': 'Register',
-    'nav.admin': 'Admin',
-    'nav.admin.users': 'Users',
-    'nav.admin.problems': 'Problems',
-    'nav.admin.submissions': 'Submissions',
-    'nav.admin.languages': 'Languages',
-    'nav.admin.grades': 'Grades',
-    'lang.zh': '中文',
-    'lang.en': 'English',
-    'home.title': 'Practice for school OJ',
-    'home.lead': 'A compact online judge workspace for reading problems, submitting code, and checking results.',
-    'home.description': 'This site is tuned for learning use: simple navigation, clear pages, and direct access to the most common OJ workflows.',
-    'home.start.title': 'Start solving',
-    'home.start.body': 'Open the problem list, choose a task, and submit Python or C++ code.',
-    'home.start.cta': 'Go to problems',
-    'home.results.title': 'Check results',
-    'home.results.body': 'Revisit your submissions and follow each judging result until it reaches a final verdict.',
-    'home.results.cta': 'View submissions',
-    'home.rankings.title': 'Read rankings',
-    'home.rankings.body': 'Open a simple ranklist page with a classic OJ layout.',
-    'home.rankings.cta': 'Open ranklist',
-    'home.quickLinks': 'Quick links',
-    'home.learningFlow': 'Learning flow',
-    'home.flow.step1': 'Read the statement.',
-    'home.flow.step2': 'Write a small correct program first.',
-    'home.flow.step3': 'Submit and inspect the verdict.',
-    'home.flow.step4': 'Retry based on the result.',
-    'problems.title': 'Problem list',
-    'problems.lead': 'Browse public problems, open a statement, and submit code from the detail page.',
-    'problems.openSubmissionList': 'Submission list',
-    'problems.login': 'Login',
-    'problems.itemLead': 'Submit code, check verdicts, and revisit this problem anytime.',
-    'problems.pid': 'PID',
-    'problems.problem': 'Problem',
-    'problems.languages': 'Languages',
-    'problems.action': 'Action',
-    'problems.submit': 'Submit code',
-    'problems.empty': 'No visible problems yet.',
-    'problem.lead': 'Read the statement, pick a supported language, and submit a solution below.',
-    'problem.statement': 'Statement',
-    'problem.submit': 'Submit code',
-    'problem.workflow': 'Use the same workflow you would expect on a standard OJ page.',
-    'problem.language': 'Language',
-    'problem.sourceCode': 'Source code',
-    'problem.placeholder': 'Write your solution here',
-    'problem.backToProblems': 'Back to problem list',
-    'submissions.title': 'Submission list',
-    'submissions.lead': 'Review recent judging activity and reopen any submission for details.',
-    'submissions.problemList': 'Problem list',
-    'submissions.itemLead': 'Track the result of this submission from queued to final verdict.',
-    'submissions.status': 'Status',
-    'submissions.judge': 'Judge',
-    'submissions.submissionId': 'Submission ID',
-    'submissions.user': 'User',
-    'submissions.problem': 'Problem',
-    'submissions.language': 'Language',
-    'submissions.score': 'Score',
-    'submissions.verdict': 'Verdict',
-    'submissions.action': 'Action',
-    'submissions.details': 'Details',
-    'submissions.empty': 'No submissions yet.',
-    'submission.title': 'Submission',
-    'submission.lead': 'This page refreshes automatically while judging is still in progress.',
-    'submission.status': 'Status',
-    'submission.verdict': 'Verdict',
-    'submission.score': 'Score',
-    'submission.judgeStatus': 'Judge status',
-    'submission.info': 'Submission info',
-    'submission.user': 'User',
-    'submission.problem': 'Problem',
-    'submission.language': 'Language',
-    'submission.sourceCode': 'Submitted code',
-    'submission.waiting': 'Waiting',
-    'submission.judgeMessage': 'Judge message',
-    'submission.caseResults': 'Case results',
-    'submission.caseResultsLead': 'Inspect each case verdict, timing, memory, and exit information.',
-    'submission.caseSeq': 'Case',
-    'submission.caseVerdict': 'Verdict',
-    'submission.caseCpu': 'CPU',
-    'submission.caseReal': 'Real time',
-    'submission.caseMemory': 'Memory',
-    'submission.caseExit': 'Exit',
-    'submission.caseSignal': 'Signal',
-    'submission.caseError': 'Error',
-    'submission.noCaseResults': 'The judge has not returned case results yet.',
-    'submission.backToSubmissions': 'Back to submission list',
-    'submission.openProblems': 'Open problem list',
-    'ranklist.title': 'Ranklist',
-    'ranklist.lead': 'A simplified school OJ ranklist based on accepted count and recent accepted submissions.',
-    'ranklist.rank': 'Rank',
-    'ranklist.user': 'User',
-    'ranklist.accepted': 'Accepted',
-    'ranklist.totalSubmissions': 'Total submissions',
-    'ranklist.lastAc': 'Last AC',
-    'ranklist.noData': 'No ranking data yet.',
-    'ranklist.na': 'N/A',
-    'contests.title': 'Contest list',
-    'contests.lead': 'Common OJ navigation usually includes contests, so this page provides the first structured version.',
-    'contests.start': 'Start',
-    'contests.end': 'End',
-    'contests.name': 'Contest',
-    'contests.status': 'Status',
-    'contests.action': 'Action',
-    'contests.open': 'Open contest page',
-    'contests.empty': 'No contests yet.',
-    'contest.status': 'Status',
-    'contest.start': 'Start',
-    'contest.end': 'End',
-    'contest.aboutTitle': 'About this page',
-    'contest.aboutBody': 'This is a first-stage contest page shell. It gives the OJ a standard contest navigation flow now, while real contest rules and scoreboard behavior can be added later without redesigning the page system.',
-    'login.title': 'Account login',
-    'login.lead': 'Sign in to submit code, review your history, and access the common OJ pages.',
-    'login.username': 'Username',
-    'login.password': 'Password',
-    'login.usernamePlaceholder': 'demo',
-    'login.passwordPlaceholder': 'Enter your password',
-    'login.submit': 'Sign in',
-    'login.createAccount': 'Create account',
-    'register.title': 'Student registration',
-    'register.lead': 'Create a basic account for class use and wait for administrator approval when needed.',
-    'register.username': 'Username',
-    'register.name': 'Name',
-    'register.gender': 'Gender',
-    'register.genderMale': 'Male',
-    'register.genderFemale': 'Female',
-    'register.genderOther': 'Other',
-    'register.grade': 'Grade',
-    'register.className': 'Class',
-    'register.password': 'Password',
-    'register.usernamePlaceholder': 'student_01',
-    'register.namePlaceholder': 'Your name',
-    'register.genderPlaceholder': 'male / female / other',
-    'register.gradePlaceholder': '2025',
-    'register.classNamePlaceholder': 'Class 1',
-    'register.passwordPlaceholder': 'At least 8 characters',
-    'register.submit': 'Register',
-    'register.backToLogin': 'Back to login',
-    'profile.title': 'Profile',
-    'profile.lead': 'Basic account information for the current user.',
-    'profile.username': 'Username',
-    'profile.role': 'Role',
-    'profile.approval': 'Approval',
-    'profile.password': 'Change password',
-    'profile.currentPassword': 'Current password',
-    'profile.newPassword': 'New password',
-    'profile.updatePassword': 'Update password',
-    'admin.users.title': 'Admin users',
-    'admin.users.lead': 'Review current user accounts and their approval status.',
-    'admin.users.noDisplayName': 'No display name',
-    'admin.users.username': 'Username',
-    'admin.users.name': 'Name',
-    'admin.users.role': 'Role',
-    'admin.users.approval': 'Approval',
-    'admin.users.actions': 'Actions',
-    'admin.users.select': 'Select',
-    'admin.users.approve': 'Approve',
-    'admin.users.reject': 'Reject',
-    'admin.users.bulkApprove': 'Bulk approve',
-    'admin.users.bulkReject': 'Bulk reject',
-    'admin.users.resetPassword': 'Reset password',
-    'admin.users.newPassword': 'New password',
-    'admin.users.delete': 'Delete user',
-    'admin.users.empty': 'No users to review.',
-    'admin.dashboard.title': 'Admin dashboard',
-    'admin.dashboard.lead': 'Open all administrator tools from one place without memorizing backend URLs.',
-    'admin.dashboard.problemsTitle': 'Problem management',
-    'admin.dashboard.problemsBody': 'Create, edit, and publish problems with statements and language settings.',
-    'admin.dashboard.openProblems': 'Open problems',
-    'admin.dashboard.createProblem': 'Create problem',
-    'admin.dashboard.usersTitle': 'User approval',
-    'admin.dashboard.usersBody': 'Review registered users and approve or reject student accounts in batches.',
-    'admin.dashboard.openUsers': 'Open users',
-    'admin.dashboard.submissionsTitle': 'Submission management',
-    'admin.dashboard.submissionsBody': 'Review all submissions and track judging status and final verdicts.',
-    'admin.dashboard.openSubmissions': 'Open submissions',
-    'admin.dashboard.languagesTitle': 'Language settings',
-    'admin.dashboard.languagesBody': 'Control which programming languages are globally available for users to submit.',
-    'admin.dashboard.openLanguages': 'Open language settings',
-    'admin.dashboard.gradesTitle': 'Grade management',
-    'admin.dashboard.gradesBody': 'Maintain the grade options that students can choose during registration.',
-    'admin.dashboard.openGrades': 'Open grades',
-    'admin.grades.title': 'Grade management',
-    'admin.grades.lead': 'Maintain selectable registration grades and whether each grade is enabled.',
-    'admin.grades.name': 'Grade',
-    'admin.grades.active': 'Enabled',
-    'admin.grades.order': 'Order',
-    'admin.grades.actions': 'Actions',
-    'admin.grades.create': 'Create grade',
-    'admin.grades.save': 'Save',
-    'admin.grades.empty': 'No grades yet.',
-    'admin.problems.title': 'Admin problems',
-    'admin.problems.lead': 'Browse problems in the same way an OJ manager would scan the catalog.',
-    'admin.problems.create': 'Create problem',
-    'admin.problems.pid': 'PID',
-    'admin.problems.titleColumn': 'Title',
-    'admin.problems.languages': 'Languages',
-    'admin.problems.visibility': 'Visibility',
-    'admin.problems.action': 'Action',
-    'admin.problems.edit': 'Edit',
-    'admin.problems.publish': 'Publish',
-    'admin.problems.empty': 'No problems available.',
-    'admin.submissions.title': 'Admin submissions',
-    'admin.submissions.lead': 'Track judging activity across all submissions in a standard list view.',
-    'admin.submissions.submissionId': 'Submission ID',
-    'admin.submissions.user': 'User',
-    'admin.submissions.problem': 'Problem',
-    'admin.submissions.language': 'Language',
-    'admin.submissions.score': 'Score',
-    'admin.submissions.status': 'Status',
-    'admin.submissions.judge': 'Judge',
-    'admin.submissions.verdict': 'Verdict',
-    'admin.submissions.action': 'Action',
-    'admin.submissions.empty': 'No submissions yet.',
-    'admin.problemForm.createTitle': 'Create problem',
-    'admin.problemForm.createLead': 'Add a new problem metadata record for the OJ.',
-    'admin.problemForm.editTitle': 'Edit problem',
-    'admin.problemForm.editLead': 'Update title, statement, languages, and visibility for an existing problem.',
-    'admin.problemForm.pid': 'PID',
-    'admin.problemForm.title': 'Title',
-    'admin.problemForm.statement': 'Statement',
-    'admin.problemForm.languages': 'Languages',
-    'admin.problemForm.visible': 'Visible',
-    'admin.problemForm.hidden': 'Hidden',
-    'admin.problemForm.visibleOption': 'Visible',
-    'admin.problemForm.save': 'Save problem',
-    'admin.problemForm.back': 'Back',
-    'admin.problemForm.publish': 'Publish problem',
-    'admin.languages.title': 'Language settings',
-    'admin.languages.lead': 'Control which programming languages are visible to users and allowed for submissions site-wide.',
-    'admin.languages.enabled': 'Enabled languages',
-    'admin.languages.save': 'Save settings',
-    'admin.languages.back': 'Back to admin dashboard',
-    'status.pending': 'pending',
-    'status.approved': 'approved',
-    'status.rejected': 'rejected',
-    'status.visible': 'Visible',
-    'status.hidden': 'Hidden',
-    'contestStatus.Upcoming': 'Upcoming',
-    'contestStatus.Open Practice': 'Open Practice',
-    'contestStatus.Running': 'Running',
-    'contestStatus.Finished': 'Finished',
-    'submissionStatus.PENDING_DISPATCH': 'Pending dispatch',
-    'submissionStatus.SENT_TO_JUDGE': 'Sent to judge',
-    'submissionStatus.JUDGING': 'Judging',
-    'submissionStatus.FINISHED': 'Finished',
-    'submissionStatus.FAILED': 'Failed',
-    'judgeStatus.QUEUED': 'Queued',
-    'judgeStatus.PREPARING': 'Preparing',
-    'judgeStatus.COMPILING': 'Compiling',
-    'judgeStatus.RUNNING': 'Running',
-    'judgeStatus.FINISHED': 'Finished',
-    'judgeStatus.FAILED': 'Failed',
-    'verdict.PENDING': 'PENDING',
-    'verdict.AC': 'AC',
-    'verdict.WA': 'WA',
-    'verdict.TLE': 'TLE',
-    'verdict.MLE': 'MLE',
-    'verdict.RE': 'RE',
-    'verdict.OLE': 'OLE',
-    'verdict.PE': 'PE',
-    'verdict.CE': 'CE',
-    'verdict.UNKNOWN': 'UNKNOWN',
-    'verdict.SYSTEM_ERROR': 'SYSTEM_ERROR',
-    'role.student': 'student',
-    'role.admin': 'admin',
-  },
 };
 
 export interface ViewContextHelpers {
-  lang: UiLang;
   t: (key: TranslationKey) => string;
   urlWithLang: (path: string) => string;
-  currentUrlForLang: (targetLang: UiLang) => string;
   localizeStatus: (status: string | null | undefined) => string;
   localizeJudgeStatus: (status: string | null | undefined) => string;
   localizeVerdict: (verdict: string | null | undefined) => string;
@@ -855,79 +567,61 @@ function hasTranslationKey(
   return key in translations[lang];
 }
 
-// 往任意路径里补上 lang 参数，同时保留 query 和 hash。
-function withLang(path: string, lang: UiLang) {
-  const [pathnameWithQuery, hash = ''] = path.split('#', 2);
-  const [pathname, search = ''] = pathnameWithQuery.split('?', 2);
-  const params = new URLSearchParams(search);
-  params.set('lang', lang);
-  const query = params.toString();
-  const url = query ? `${pathname}?${query}` : pathname;
-  return hash ? `${url}#${hash}` : url;
+function withLang(path: string) {
+  return path;
 }
 
-export function resolveUiLang(input: unknown): UiLang {
-  return input === 'en' ? 'en' : 'zh';
-}
-
-export function createViewContext(
-  lang: UiLang,
-  currentPath: string,
-): ViewContextHelpers {
+export function createViewContext(): ViewContextHelpers {
   // 这里返回的是模板运行时的 helper 集合。
   // Pug 里不应该自己拼状态文案和语言链接，而是统一走这些 helper。
   return {
-    lang,
     t(key) {
-      return translations[lang][key];
+      return translations.zh[key];
     },
     urlWithLang(path) {
-      return withLang(path, lang);
-    },
-    currentUrlForLang(targetLang) {
-      return withLang(currentPath, targetLang);
+      return withLang(path);
     },
     localizeStatus(status) {
       if (!status) {
         return '';
       }
       const key = `submissionStatus.${status}`;
-      return hasTranslationKey(lang, key) ? translations[lang][key] : status;
+      return hasTranslationKey('zh', key) ? translations.zh[key] : status;
     },
     localizeJudgeStatus(status) {
       if (!status) {
         return '';
       }
       const key = `judgeStatus.${status}`;
-      return hasTranslationKey(lang, key) ? translations[lang][key] : status;
+      return hasTranslationKey('zh', key) ? translations.zh[key] : status;
     },
     localizeVerdict(verdict) {
       if (!verdict) {
         return '';
       }
       const key = `verdict.${verdict}`;
-      return hasTranslationKey(lang, key) ? translations[lang][key] : verdict;
+      return hasTranslationKey('zh', key) ? translations.zh[key] : verdict;
     },
     localizeContestStatus(status) {
       if (!status) {
         return '';
       }
       const key = `contestStatus.${status}`;
-      return hasTranslationKey(lang, key) ? translations[lang][key] : status;
+      return hasTranslationKey('zh', key) ? translations.zh[key] : status;
     },
     localizeApprovalStatus(status) {
       if (!status) {
         return '';
       }
       const key = `status.${status}`;
-      return hasTranslationKey(lang, key) ? translations[lang][key] : status;
+      return hasTranslationKey('zh', key) ? translations.zh[key] : status;
     },
     localizeRole(role) {
       if (!role) {
         return '';
       }
       const key = `role.${role}`;
-      return hasTranslationKey(lang, key) ? translations[lang][key] : role;
+      return hasTranslationKey('zh', key) ? translations.zh[key] : role;
     },
   };
 }

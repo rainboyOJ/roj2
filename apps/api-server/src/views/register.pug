@@ -23,13 +23,13 @@ block content
                 legend= t('register.gender')
                 label
                   input(type="radio" name="gender" value="male")
-                  = t('register.genderMale')
+                  | 男
                 label
                   input(type="radio" name="gender" value="female")
-                  = t('register.genderFemale')
+                  | 女
                 label
                   input(type="radio" name="gender" value="other" checked)
-                  = t('register.genderOther')
+                  | 其他
             div
               label(for="grade")= t('register.grade')
               select#grade(name="grade")

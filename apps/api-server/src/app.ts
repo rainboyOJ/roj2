@@ -16,7 +16,7 @@ import { OJSubmissionStatuses, type SubmissionCaseResult } from '@roj/shared';
 import type { AppLanguage } from '@roj/shared';
 import { z } from 'zod';
 
-import { createViewContext, resolveUiLang, type UiLang } from './view-i18n.ts';
+import { createViewContext } from './view-i18n.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -259,17 +259,6 @@ function clearSessionCookie(reply: {
   );
 }
 
-function getRequestLang(request: {
-  query?: unknown;
-}): UiLang {
-  const query = request.query;
-  if (query && typeof query === 'object' && 'lang' in query) {
-    return resolveUiLang((query as { lang?: unknown }).lang);
-  }
-
-  return 'zh';
-}
-
 function filterAllowedLanguages(
   allowLanguages: string[],
   enabledLanguages: readonly AppLanguage[],
@@ -277,12 +266,6 @@ function filterAllowedLanguages(
   return allowLanguages.filter((language) =>
     enabledLanguages.includes(language as AppLanguage),
   );
-}
-
-// 保证页面跳转后还能保留当前语言。
-function buildLangPath(pathname: string, lang: UiLang): string {
-  const separator = pathname.includes('?') ? '&' : '?';
-  return `${pathname}${separator}lang=${lang}`;
 }
 
 export function buildApp(services: ApiServerServices) {
@@ -339,13 +322,12 @@ export function buildApp(services: ApiServerServices) {
   ) {
     // 所有 Pug 页面都走这个统一入口，
     // 这样模板天然就能拿到 i18n helper、当前用户和 admin 区域标记。
-    const lang = getRequestLang(request);
     const currentPath = request.url || '/';
     const sessionToken = parseSessionToken(request.headers?.cookie);
     const currentUser = sessionToken ? await services.getCurrentUser(sessionToken) : null;
     const pathname = currentPath.split('?')[0] || '/';
     return reply.view(template, {
-      ...createViewContext(lang, currentPath),
+      ...createViewContext(),
       currentUser,
       isAdminArea: pathname === '/admin' || pathname.startsWith('/admin/'),
       ...data,
@@ -353,12 +335,11 @@ export function buildApp(services: ApiServerServices) {
   }
 
   function redirectWithLang(
-    request: { query?: unknown },
+    _request: { query?: unknown },
     reply: { redirect(location: string): unknown },
     pathname: string,
   ) {
-    const lang = getRequestLang(request);
-    return reply.redirect(buildLangPath(pathname, lang));
+    return reply.redirect(pathname);
   }
 
   // ===== 页面路由区 =====

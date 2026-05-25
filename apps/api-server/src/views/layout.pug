@@ -1,7 +1,7 @@
 //- 所有页面都继承这个布局文件。
 //- 它负责提供统一的 nav、整体样式，以及普通区 / 管理区的导航切换。
 doctype html
-html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
+html(lang="zh-CN" data-theme="light")
   head
     meta(charset="utf-8")
     meta(name="viewport" content="width=device-width, initial-scale=1")
@@ -75,19 +75,6 @@ html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
 
       .brand-block small {
         color: var(--soft-text);
-      }
-
-      .lang-switch {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        font-size: 0.92rem;
-        color: var(--soft-text);
-      }
-
-      .lang-switch a[aria-current="true"] {
-        font-weight: 700;
-        text-decoration: underline;
       }
 
       .page-lead {
@@ -700,16 +687,5 @@ html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
                 a(href=urlWithLang('/login'))= t('nav.login')
               li
                 a(href=urlWithLang('/register'))= t('nav.register')
-          li
-            span.lang-switch
-              a(
-                href=currentUrlForLang('zh')
-                aria-current=lang === 'zh'
-              )= t('lang.zh')
-              span /
-              a(
-                href=currentUrlForLang('en')
-                aria-current=lang === 'en'
-              )= t('lang.en')
     main.container
       block content

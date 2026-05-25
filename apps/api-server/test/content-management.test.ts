@@ -87,7 +87,7 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/users/bulk-approve?lang=zh',
+      url: '/admin/users/bulk-approve',
       headers: {
         cookie: 'roj_session=admin-token',
       },
@@ -97,7 +97,7 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/users?lang=zh');
+    expect(response.headers.location).toBe('/admin/users');
     expect(approved).toEqual([
       { userId: 'user-2', adminUserId: 'admin-1' },
       { userId: 'user-3', adminUserId: 'admin-1' },
@@ -120,7 +120,7 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/users/bulk-reject?lang=zh',
+      url: '/admin/users/bulk-reject',
       headers: {
         cookie: 'roj_session=admin-token',
       },
@@ -130,7 +130,7 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/users?lang=zh');
+    expect(response.headers.location).toBe('/admin/users');
     expect(rejected).toEqual([
       { userId: 'user-2', adminUserId: 'admin-1' },
       { userId: 'user-3', adminUserId: 'admin-1' },
@@ -392,7 +392,7 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/grades/grade-1?lang=zh',
+      url: '/admin/grades/grade-1',
       headers: {
         cookie: 'roj_session=admin-token',
       },
@@ -404,7 +404,7 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/grades?lang=zh');
+    expect(response.headers.location).toBe('/admin/grades');
     expect(updated).toEqual([
       {
         id: 'grade-1',

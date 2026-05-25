@@ -210,7 +210,7 @@
 - API 提交通常是 `POST /api/submissions` 后返回 JSON
 - 它们核心都调用同一个 `services.createSubmission()`
 
-## 7. 看国际化和模板运行时辅助
+## 7. 看模板运行时辅助
 
 然后看：
 
@@ -221,13 +221,11 @@
 - `translations`
 - `createViewContext()`
 - `urlWithLang()`
-- `currentUrlForLang()`
 - `localizeStatus()` / `localizeJudgeStatus()` / `localizeVerdict()`
 
 你会明白：
 
 - 为什么模板里能直接写 `t('...')`
-- 为什么页面切语言时能保留当前地址
 - 为什么状态和 verdict 能自动变成中文
 
 ## 8. 最后看页面模板
