@@ -21,6 +21,7 @@ ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
 JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/judge_server_cpp}"
 ROJ_DIR="${ROJ_DIR:-$WORKSPACE_DIR/roj2}"
 IMAGE_NAME="${IMAGE_NAME:-roj2:local}"
+API_HOST_PORT="${API_HOST_PORT:-3000}"
 
 # UPDATE_REPOS=1 时会 git fetch/pull；SKIP_BUILD=1 时跳过镜像构建，直接复用本地镜像。
 UPDATE_REPOS="${UPDATE_REPOS:-0}"
@@ -217,6 +218,7 @@ IMAGE_NAME=$IMAGE_NAME
 ROJ_BUILD_CONTEXT=$ROJ_DIR
 JUDGE_SERVER_CONFIG_PATH=$JUDGE_SERVER_CONFIG_PATH
 JUDGE_SERVER_TESTDATA_DIR=$JUDGE_SERVER_TESTDATA_DIR
+API_HOST_PORT=$API_HOST_PORT
 EOF
 
   log "prepared compose file: $COMPOSE_FILE_PATH"
@@ -365,6 +367,7 @@ main() {
   export ROJ_BUILD_CONTEXT="$ROJ_DIR"
   export JUDGE_SERVER_CONFIG_PATH
   export JUDGE_SERVER_TESTDATA_DIR
+  export API_HOST_PORT
 
   # update 模式先停掉旧容器，避免旧服务或孤儿容器继续占用端口。
   if [[ "$COMMAND" == "update" ]]; then
@@ -385,7 +388,7 @@ main() {
   step "finish install"
   cat <<EOF
 [install] done
-[install] API: http://127.0.0.1:3000/problems
+[install] API: http://127.0.0.1:$API_HOST_PORT/problems
 [install]
 [install] judge_server runtime files:
 [install]   config:    $JUDGE_SERVER_CONFIG_PATH

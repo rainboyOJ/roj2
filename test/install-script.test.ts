@@ -94,6 +94,8 @@ exit 0
     build:
       context: \${ROJ_BUILD_CONTEXT:-.}
     image: \${IMAGE_NAME:-roj2:local}
+    ports:
+      - "\${API_HOST_PORT:-3000}:3000"
   judge-server:
     image: boxtest-judge-server:dev
     volumes:
@@ -113,7 +115,12 @@ exit 0
     );
     await writeFile(
       join(rojDir, '.env.example'),
-      'IMAGE_NAME=roj2:local\nROJ_BUILD_CONTEXT=./roj2\n',
+      [
+        'IMAGE_NAME=roj2:local',
+        'ROJ_BUILD_CONTEXT=./roj2',
+        'API_HOST_PORT=3000',
+        '',
+      ].join('\n'),
     );
 
     await writeFile(
@@ -167,8 +174,10 @@ exit 0
 
       expect(envFile).toContain(`ROJ_BUILD_CONTEXT=${rojDir}`);
       expect(envFile).toContain(`JUDGE_SERVER_CONFIG_PATH=${join(deployDir, 'judge_server_config.json')}`);
+      expect(envFile).toContain('API_HOST_PORT=3000');
       expect(configFile).toContain('"test_data_path": "/opt/boxtest/testData"');
       expect(composeFile).toContain('context: ${ROJ_BUILD_CONTEXT:-.}');
+      expect(composeFile).toContain('${API_HOST_PORT:-3000}:3000');
       const testDataStat = await stat(join(deployDir, 'judge_server_testData'));
       expect(testDataStat.isDirectory()).toBe(true);
       const defaultProblemInput = await readFile(

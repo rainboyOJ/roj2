@@ -65,7 +65,7 @@ services:
       JUDGE_POLL_INTERVAL_MS: 500
       JUDGE_LEASE_MS: 30000
     ports:
-      - "3000:3000"
+      - "${API_HOST_PORT:-3000}:3000"
     command:
       - sh
       - -c
