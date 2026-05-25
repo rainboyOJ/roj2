@@ -12,6 +12,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
+      score: 0,
     }),
     listProblems: async () => [
       {
@@ -43,6 +44,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       sourceCode: 'print(1)',
       status: 'FINISHED',
       verdict: 'AC',
+      score: 100,
       judgeStatus: 'FINISHED',
       message: 'ok',
       caseResults: [
@@ -284,6 +286,7 @@ describe('rendered views', () => {
           sourceCode: 'print(1)',
           status: 'FINISHED',
           verdict: 'AC',
+          score: 67,
           judgeStatus: 'FINISHED',
           message: 'ok',
           caseResults: [],
@@ -308,6 +311,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('1000 A + B Problem');
     expect(response.body).not.toContain('1000 1000 A + B Problem');
     expect(response.body).toContain('python');
+    expect(response.body).toContain('67');
     expect(response.body).toContain('已完成');
     expect(response.body).toContain('个人中心');
     expect(response.body).toContain('登出');
@@ -330,6 +334,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('测试点结果');
     expect(response.body).toContain('提交代码');
     expect(response.body).toContain('print(1)');
+    expect(response.body).toContain('100');
     expect(response.body).toContain('#1');
     expect(response.body).toContain('3 ms');
     expect(response.body).toContain('1024 KB');

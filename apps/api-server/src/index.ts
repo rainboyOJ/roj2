@@ -69,12 +69,14 @@ function mapSubmission(submission: {
   sourceCode: string;
   status: string;
   verdict: string;
+  score?: number;
   judge: {
     lastStatus: string | null;
   };
   result: {
     message: string;
     caseResults: SubmissionCaseResult[];
+    score?: number;
   };
 }): SubmissionViewModel {
   const problemTitle = submission.problem?.title ?? submission.pid;
@@ -98,6 +100,7 @@ function mapSubmission(submission: {
     sourceCode: submission.sourceCode,
     status: submission.status,
     verdict: submission.verdict,
+    score: submission.score ?? submission.result.score ?? 0,
     judgeStatus: submission.judge.lastStatus,
     message: submission.result.message,
     caseResults: submission.result.caseResults,

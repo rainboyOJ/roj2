@@ -67,6 +67,7 @@ type TranslationKey =
   | 'submissions.user'
   | 'submissions.problem'
   | 'submissions.language'
+  | 'submissions.score'
   | 'submissions.verdict'
   | 'submissions.action'
   | 'submissions.details'
@@ -75,6 +76,7 @@ type TranslationKey =
   | 'submission.lead'
   | 'submission.status'
   | 'submission.verdict'
+  | 'submission.score'
   | 'submission.judgeStatus'
   | 'submission.info'
   | 'submission.user'
@@ -194,6 +196,7 @@ type TranslationKey =
   | 'admin.submissions.user'
   | 'admin.submissions.problem'
   | 'admin.submissions.language'
+  | 'admin.submissions.score'
   | 'admin.submissions.status'
   | 'admin.submissions.judge'
   | 'admin.submissions.verdict'
@@ -320,6 +323,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'submissions.user': '用户',
     'submissions.problem': '题目',
     'submissions.language': '语言',
+    'submissions.score': '分数',
     'submissions.verdict': '结果',
     'submissions.action': '操作',
     'submissions.details': '查看详情',
@@ -328,6 +332,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'submission.lead': '评测尚未结束时，这个页面会自动刷新。',
     'submission.status': '状态',
     'submission.verdict': '结果',
+    'submission.score': '分数',
     'submission.judgeStatus': '评测机状态',
     'submission.info': '提交信息',
     'submission.user': '提交用户',
@@ -447,6 +452,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.submissions.user': '用户',
     'admin.submissions.problem': '题目',
     'admin.submissions.language': '语言',
+    'admin.submissions.score': '分数',
     'admin.submissions.status': '状态',
     'admin.submissions.judge': '评测机',
     'admin.submissions.verdict': '结果',
@@ -570,6 +576,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'submissions.user': 'User',
     'submissions.problem': 'Problem',
     'submissions.language': 'Language',
+    'submissions.score': 'Score',
     'submissions.verdict': 'Verdict',
     'submissions.action': 'Action',
     'submissions.details': 'Details',
@@ -578,6 +585,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'submission.lead': 'This page refreshes automatically while judging is still in progress.',
     'submission.status': 'Status',
     'submission.verdict': 'Verdict',
+    'submission.score': 'Score',
     'submission.judgeStatus': 'Judge status',
     'submission.info': 'Submission info',
     'submission.user': 'User',
@@ -697,6 +705,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.submissions.user': 'User',
     'admin.submissions.problem': 'Problem',
     'admin.submissions.language': 'Language',
+    'admin.submissions.score': 'Score',
     'admin.submissions.status': 'Status',
     'admin.submissions.judge': 'Judge',
     'admin.submissions.verdict': 'Verdict',

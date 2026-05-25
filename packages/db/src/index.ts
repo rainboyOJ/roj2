@@ -12,6 +12,7 @@ import {
   createEmptyJudgeState,
   createEmptyResultState,
   mapJudgeSnapshotToSubmissionState,
+  type SubmissionCaseResult,
   type AppLanguage,
   type CounterDocument,
   type CreateSubmissionInput,
@@ -119,6 +120,17 @@ function verifyPassword(password: string, passwordHash: string): boolean {
     tagLength: expected.length,
   });
   return timingSafeEqual(actual, expected);
+}
+
+export function calculateSubmissionScore(
+  caseResults: readonly SubmissionCaseResult[],
+): number {
+  if (caseResults.length === 0) {
+    return 0;
+  }
+
+  const acceptedCount = caseResults.filter((item) => item.verdict === SubmissionVerdicts.AC).length;
+  return Math.round((acceptedCount / caseResults.length) * 100);
 }
 
 export class RojDb {
@@ -395,6 +407,7 @@ export class RojDb {
       sourceCode: input.sourceCode,
       status: OJSubmissionStatuses.PENDING_DISPATCH,
       verdict: SubmissionVerdicts.PENDING,
+      score: 0,
       judge: createEmptyJudgeState(),
       result: createEmptyResultState(),
       createdAt: now,
@@ -565,6 +578,7 @@ export class RojDb {
         $set: {
           status: OJSubmissionStatuses.JUDGING,
           verdict: ack.verdict,
+          score: 0,
           'judge.submissionId': ack.submissionId,
           'judge.lastStatus': ack.status,
           'judge.lastMessage': ack.message,
@@ -579,12 +593,14 @@ export class RojDb {
   async saveJudgeSnapshot(localSubmissionId: string, snapshot: JudgeSnapshotPersistInput) {
     const now = new Date();
     const mapped = mapJudgeSnapshotToSubmissionState(snapshot);
+    const score = calculateSubmissionScore(snapshot.case_results);
     debugJudge('save judge snapshot', {
       localSubmissionId,
       judgeSubmissionId: snapshot.submissionId,
       judgeStatus: snapshot.status,
       ojStatus: mapped.status,
       verdict: mapped.verdict,
+      score,
       cases: snapshot.case_results.length,
     });
     await this.submissions().updateOne(
@@ -593,6 +609,7 @@ export class RojDb {
         $set: {
           status: mapped.status,
           verdict: mapped.verdict,
+          score,
           'judge.lastStatus': snapshot.status,
           'judge.lastMessage': snapshot.message,
           'judge.lastPolledAt': now,
@@ -603,6 +620,7 @@ export class RojDb {
               : null,
           'result.caseResults': snapshot.case_results,
           'result.message': snapshot.message,
+          'result.score': score,
           updatedAt: now,
         },
       },
@@ -637,12 +655,14 @@ export class RojDb {
         $set: {
           status: OJSubmissionStatuses.FAILED,
           verdict: SubmissionVerdicts.SYSTEM_ERROR,
+          score: 0,
           'judge.lastStatus': 'FAILED',
           'judge.lastMessage': message,
           'judge.finishedAt': now,
           'judge.leaseOwner': null,
           'judge.leaseExpireAt': null,
           'result.message': message,
+          'result.score': 0,
           updatedAt: now,
         },
         $inc: {

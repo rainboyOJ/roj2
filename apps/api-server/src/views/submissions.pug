@@ -18,6 +18,7 @@ block content
               th= t('submissions.user')
               th= t('submissions.problem')
               th= t('submissions.language')
+              th= t('submissions.score')
               th= t('submissions.status')
               th= t('submissions.judge')
               th= t('submissions.verdict')
@@ -31,6 +32,7 @@ block content
                 td
                   a(href=urlWithLang(`/problem/${submission.pid}`))= submission.problemLabel
                 td.table-code= submission.language
+                td.table-code= submission.score
                 td= localizeStatus(submission.status)
                 td= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : '-'
                 td

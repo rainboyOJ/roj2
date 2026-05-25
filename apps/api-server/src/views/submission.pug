@@ -32,6 +32,9 @@ block content
             span.soft-note= t('submission.verdict')
             strong= localizeVerdict(submission.verdict)
           div.metric-card
+            span.soft-note= t('submission.score')
+            strong= submission.score
+          div.metric-card
             span.soft-note= t('submission.judgeStatus')
             strong= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : t('submission.waiting')
         if submission.message

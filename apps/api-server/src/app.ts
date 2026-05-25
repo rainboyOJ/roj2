@@ -108,6 +108,7 @@ export interface SubmissionViewModel {
   sourceCode: string;
   status: string;
   verdict: string;
+  score: number;
   judgeStatus?: string | null;
   message?: string;
   caseResults: SubmissionCaseResult[];

@@ -151,6 +151,7 @@ export interface SubmissionJudgeState {
 export interface SubmissionResultState {
   caseResults: SubmissionCaseResult[];
   message: string;
+  score: number;
 }
 
 // submissions 集合核心文档。
@@ -167,6 +168,7 @@ export interface SubmissionDocument {
   sourceCode: string;
   status: OJSubmissionStatus;
   verdict: string;
+  score: number;
   judge: SubmissionJudgeState;
   result: SubmissionResultState;
   createdAt: Date;
@@ -231,5 +233,6 @@ export function createEmptyResultState(): SubmissionResultState {
   return {
     caseResults: [],
     message: '',
+    score: 0,
   };
 }

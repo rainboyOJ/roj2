@@ -13,6 +13,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       submissionNo: 42,
       status: 'PENDING_DISPATCH',
       verdict: 'PENDING',
+      score: 0,
     }),
     listProblems: async () => [],
     getProblemByPid: async () => null,
@@ -163,12 +164,13 @@ describe('production services', () => {
     const services = await buildProductionServices({
       listVisibleProblems: async () => [],
       getProblemByPid: async () => null,
-      createSubmission: async () => ({
-        _id: 'sub-1',
-        submissionNo: 42,
-        status: 'PENDING_DISPATCH',
-        verdict: 'PENDING',
-      }),
+    createSubmission: async () => ({
+      _id: 'sub-1',
+      submissionNo: 42,
+      status: 'PENDING_DISPATCH',
+      verdict: 'PENDING',
+      score: 0,
+    }),
       getSubmissionWithProblemById: async () => null,
       listAllSubmissionsWithProblems: async () => [],
       listSubmissionsWithProblemsByUser: async () => [
@@ -187,6 +189,7 @@ describe('production services', () => {
           sourceCode: 'print(1)',
           status: 'FINISHED',
           verdict: 'AC',
+          score: 50,
           judge: {
             lastStatus: 'FINISHED',
           },
@@ -236,6 +239,7 @@ describe('production services', () => {
         pid: '1000',
         problemTitle: 'A + B Problem',
         problemLabel: '1000 A + B Problem',
+        score: 50,
       },
     ]);
   });
