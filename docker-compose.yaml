@@ -21,7 +21,7 @@ services:
       retries: 20
 
   judge-server:
-    image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}
+    image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}
     container_name: roj-judge-server
     restart: unless-stopped
     expose:

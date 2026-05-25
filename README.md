@@ -154,14 +154,14 @@ docker compose down
 
 ```text
 ghcr.io/rainboyoj/roj2:latest
-ghcr.io/rainboyoj/judge_server_cpp:latest
+ghcr.io/rainboyoj/judge-server-cpp:latest
 ```
 
 如需指定其他镜像：
 
 ```bash
 IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest \
-JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge_server_cpp:latest \
+JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest \
 docker compose up -d
 ```
 
@@ -173,14 +173,14 @@ docker compose up -d
 
 ```text
 ghcr.io/rainboyoj/roj2:latest
-ghcr.io/rainboyoj/judge_server_cpp:latest
+ghcr.io/rainboyoj/judge-server-cpp:latest
 ```
 
 拉取镜像：
 
 ```bash
 docker pull ghcr.io/rainboyoj/roj2:latest
-docker pull ghcr.io/rainboyoj/judge_server_cpp:latest
+docker pull ghcr.io/rainboyoj/judge-server-cpp:latest
 ```
 
 可用 tag：

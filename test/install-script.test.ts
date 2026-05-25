@@ -53,7 +53,7 @@ exit 0
         'rm -f roj-api-server roj-judge-dispatcher roj-mongodb roj-judge-server',
       );
       expect(log).toContain(
-        'rmi ghcr.io/rainboyoj/roj2:latest ghcr.io/rainboyoj/judge_server_cpp:latest',
+        'rmi ghcr.io/rainboyoj/roj2:latest ghcr.io/rainboyoj/judge-server-cpp:latest',
       );
     } finally {
       await rm(tempDir, { recursive: true, force: true });
@@ -97,7 +97,7 @@ exit 0
     ports:
       - "\${API_HOST_PORT:-3000}:3000"
   judge-server:
-    image: \${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}
+    image: \${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}
     volumes:
       - type: bind
         source: \${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}
@@ -117,7 +117,7 @@ exit 0
       join(rojDir, '.env.example'),
       [
         'IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest',
-        'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge_server_cpp:latest',
+        'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest',
         'API_HOST_PORT=3000',
         '',
       ].join('\n'),
@@ -174,14 +174,14 @@ exit 0
 
       expect(envFile).toContain('IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest');
       expect(envFile).toContain(
-        'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge_server_cpp:latest',
+        'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest',
       );
       expect(envFile).toContain(`JUDGE_SERVER_CONFIG_PATH=${join(deployDir, 'judge_server_config.json')}`);
       expect(envFile).toContain('API_HOST_PORT=3000');
       expect(configFile).toContain('"test_data_path": "/opt/boxtest/testData"');
       expect(composeFile).toContain('image: ${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}');
       expect(composeFile).toContain(
-        'image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}',
+        'image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}',
       );
       expect(composeFile).toContain('${API_HOST_PORT:-3000}:3000');
       const testDataStat = await stat(join(deployDir, 'judge_server_testData'));

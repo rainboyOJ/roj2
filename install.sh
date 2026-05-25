@@ -13,6 +13,9 @@ WORKSPACE_DIR="${WORKSPACE_DIR:-$DEPLOY_DIR}"
 # GitHub 访问较慢时使用代理。设置 GITHUB_PROXY= 可以关闭代理，直接访问原始 GitHub URL。
 GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.com/}"
 
+# GHCR 镜像访问较慢时使用 Docker 镜像代理。设置 DOCKER_IMAGE_PROXY= 可以关闭代理。
+DOCKER_IMAGE_PROXY="${DOCKER_IMAGE_PROXY:-gh-proxy.org/docker}"
+
 # 两个需要拉取的仓库地址：judge_server 负责实际评测，roj2 是本 OJ Web/API 项目。
 JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-https://github.com/rainboyOJ/judge_server_cpp.git}"
 ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
@@ -21,7 +24,7 @@ ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
 JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/judge_server_cpp}"
 ROJ_DIR="${ROJ_DIR:-$WORKSPACE_DIR/roj2}"
 IMAGE_NAME="${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}"
-JUDGE_SERVER_IMAGE_NAME="${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}"
+JUDGE_SERVER_IMAGE_NAME="${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}"
 API_HOST_PORT="${API_HOST_PORT:-3000}"
 
 # UPDATE_REPOS=1 时会 git fetch/pull。
@@ -95,6 +98,7 @@ Environment:
   JUDGE_SERVER_IMAGE_NAME=
                          judge_server image, defaults to ${JUDGE_SERVER_IMAGE_NAME}.
   GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
+  DOCKER_IMAGE_PROXY=   Disable the Docker image proxy and pull image names directly.
   FORCE_JUDGE_CONFIG_COPY=1
                          Overwrite judge_server_config.json from judge_server repo.
 EOF
@@ -121,6 +125,20 @@ proxied_git_url() {
   fi
 
   printf '%s/%s\n' "$proxy" "$url"
+}
+
+# 如果启用了 Docker 镜像代理，并且镜像名是 ghcr.io/...，则通过代理拉取。
+# 拉取后会重新 tag 回原始镜像名，这样 docker-compose.yaml 可以继续使用 ghcr.io/...。
+proxied_docker_image() {
+  local image=$1
+  local proxy=${DOCKER_IMAGE_PROXY%/}
+
+  if [[ -z "$proxy" || "$image" != ghcr.io/* ]]; then
+    printf '%s\n' "$image"
+    return
+  fi
+
+  printf '%s/%s\n' "$proxy" "$image"
 }
 
 # 选择可用的 Docker / Compose 命令。
@@ -227,11 +245,33 @@ EOF
   log "prepared env file: $ENV_FILE_PATH"
 }
 
+pull_and_tag_image() {
+  local label=$1
+  local image=$2
+  local pull_image
+
+  pull_image="$(proxied_docker_image "$image")"
+
+  if [[ "$pull_image" == "$image" ]]; then
+    log "pulling $label image: $image"
+    "${DOCKER_CMD[@]}" pull "$image"
+    return
+  fi
+
+  log "pulling $label image through Docker image proxy: $pull_image"
+  if "${DOCKER_CMD[@]}" pull "$pull_image"; then
+    log "tagging $pull_image as $image"
+    "${DOCKER_CMD[@]}" tag "$pull_image" "$image"
+    return
+  fi
+
+  warn "failed to pull $pull_image through Docker image proxy; falling back to $image"
+  "${DOCKER_CMD[@]}" pull "$image"
+}
+
 pull_runtime_images() {
-  log "pulling application image: $IMAGE_NAME"
-  "${DOCKER_CMD[@]}" pull "$IMAGE_NAME"
-  log "pulling judge_server image: $JUDGE_SERVER_IMAGE_NAME"
-  "${DOCKER_CMD[@]}" pull "$JUDGE_SERVER_IMAGE_NAME"
+  pull_and_tag_image "application" "$IMAGE_NAME"
+  pull_and_tag_image "judge_server" "$JUDGE_SERVER_IMAGE_NAME"
 }
 
 prepare_judge_runtime_files() {
