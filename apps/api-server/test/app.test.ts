@@ -67,6 +67,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
+    deleteUser: async () => undefined,
+    updateMyPassword: async () => undefined,
     ...overrides,
   };
 }

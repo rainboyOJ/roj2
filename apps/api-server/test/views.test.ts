@@ -149,6 +149,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
+    deleteUser: async () => undefined,
+    updateMyPassword: async () => undefined,
     ...overrides,
   };
 }
@@ -163,7 +165,9 @@ describe('rendered views', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('https://cdn.jsdelivr.net/npm/@picocss/pico');
+    expect(response.body).toContain('href="/assets/pico.classless.min.css"');
+    expect(response.body).toContain('href="/assets/katex.min.css"');
+    expect(response.body).not.toContain('https://cdn.jsdelivr.net');
     expect(response.body).toContain('href="/favicon.svg"');
     expect(response.body).toContain('<nav');
     expect(response.body).toContain('<html lang="zh-CN" data-theme="light">');
@@ -186,6 +190,26 @@ describe('rendered views', () => {
     expect(response.headers['content-type']).toContain('image/svg+xml');
     expect(response.body).toContain('<svg');
     expect(response.body).toContain('ROJ');
+  });
+
+  it('serves local stylesheet assets', async () => {
+    const app = buildApp(createServices());
+
+    const pico = await app.inject({
+      method: 'GET',
+      url: '/assets/pico.classless.min.css',
+    });
+    const katex = await app.inject({
+      method: 'GET',
+      url: '/assets/katex.min.css',
+    });
+
+    expect(pico.statusCode).toBe(200);
+    expect(pico.headers['content-type']).toContain('text/css');
+    expect(pico.body).toContain('--pico');
+    expect(katex.statusCode).toBe(200);
+    expect(katex.headers['content-type']).toContain('text/css');
+    expect(katex.body).toContain('katex');
   });
 
   it('renders a home page in English when lang=en is provided', async () => {
@@ -356,6 +380,59 @@ describe('rendered views', () => {
     expect(response.body).toContain('登录');
   });
 
+  it('renders registration form with gender radios, grade select, and numeric class input', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => null,
+      listGrades: async () => [
+        {
+          id: 'grade-1',
+          name: '2025',
+          isActive: true,
+          order: 1,
+        },
+        {
+          id: 'grade-2',
+          name: '2024',
+          isActive: false,
+          order: 2,
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/register',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('type="radio"');
+    expect(response.body).toContain('value="male"');
+    expect(response.body).toContain('value="female"');
+    expect(response.body).toContain('男');
+    expect(response.body).toContain('女');
+    expect(response.body).toContain('<select id="grade" name="grade">');
+    expect(response.body).toContain('value="2025"');
+    expect(response.body).not.toContain('value="2024"');
+    expect(response.body).toContain('input id="className" type="number"');
+  });
+
+  it('renders profile password change form', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/profile',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('action="/profile/password?lang=zh"');
+    expect(response.body).toContain('name="currentPassword"');
+    expect(response.body).toContain('name="newPassword"');
+  });
+
   it('renders the ranklist page', async () => {
     const app = buildApp(createServices());
 
@@ -502,5 +579,39 @@ describe('rendered views', () => {
     expect(response.body).toContain('form="bulk-user-review-form"');
     expect(response.body).toContain('id="approve-user-user-2"');
     expect(response.body).toContain('id="reject-user-user-2"');
+    expect(response.body).toContain('id="reset-password-user-user-2"');
+    expect(response.body).toContain('id="delete-user-user-2"');
+  });
+
+  it('renders admin grade management page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      listGrades: async () => [
+        {
+          id: 'grade-1',
+          name: '2025',
+          isActive: true,
+          order: 1,
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/grades',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('年级管理');
+    expect(response.body).toContain('2025');
+    expect(response.body).toContain('name="isActive"');
   });
 });

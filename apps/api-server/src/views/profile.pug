@@ -31,3 +31,13 @@ block content
               span.status-chip.failed= localizeApprovalStatus(user.approvalStatus)
             else
               span.status-chip.pending= localizeApprovalStatus(user.approvalStatus)
+        article.panel-card
+          header
+            h3= t('profile.password')
+          .panel-body
+            form(method="post" action=urlWithLang('/profile/password'))
+              label(for="currentPassword")= t('profile.currentPassword')
+              input#currentPassword(type="password" name="currentPassword")
+              label(for="newPassword")= t('profile.newPassword')
+              input#newPassword(type="password" name="newPassword")
+              button(type="submit")= t('profile.updatePassword')

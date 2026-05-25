@@ -967,6 +967,25 @@ export class RojDb {
       },
     );
   }
+
+  async updateMyPassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.users().findOne({ _id: userId });
+    if (!user || !verifyPassword(currentPassword, user.passwordHash)) {
+      throw new Error('invalid current password');
+    }
+
+    await this.resetUserPassword(userId, newPassword);
+  }
+
+  async deleteUser(userId: string) {
+    const user = await this.users().findOne({ _id: userId });
+    if (user?.role === 'admin') {
+      throw new Error('cannot delete admin user');
+    }
+
+    await this.users().deleteOne({ _id: userId });
+    await this.sessions().deleteMany({ userId });
+  }
 }
 
 // HTML 表单里语言先是 string，这里收窄回 AppLanguage。

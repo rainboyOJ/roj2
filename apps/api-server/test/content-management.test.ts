@@ -64,6 +64,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
+    deleteUser: async () => undefined,
+    updateMyPassword: async () => undefined,
     ...overrides,
   };
 }
@@ -346,5 +348,70 @@ describe('content management routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(receivedLanguages).toEqual(['python']);
+  });
+
+  it('deletes a user for admin users', async () => {
+    let deletedUserId = '';
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      deleteUser: async (userId: string) => {
+        deletedUserId = userId;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/admin/users/user-2',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(deletedUserId).toBe('user-2');
+  });
+
+  it('updates grades from the admin HTML page flow', async () => {
+    const updated: Array<{ id: string; name: string; isActive: boolean; order: number }> = [];
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      updateGrade: async (id: string, input: { name: string; isActive: boolean; order: number }) => {
+        updated.push({ id, ...input });
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/grades/grade-1?lang=zh',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+      payload: {
+        name: '2025',
+        isActive: 'true',
+        order: '1',
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/grades?lang=zh');
+    expect(updated).toEqual([
+      {
+        id: 'grade-1',
+        name: '2025',
+        isActive: true,
+        order: 1,
+      },
+    ]);
   });
 });

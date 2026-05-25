@@ -67,6 +67,11 @@ const resetPasswordSchema = z.object({
   password: z.string().min(8),
 });
 
+const updateMyPasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+
 export interface CreateSubmissionResult {
   id: string;
   publicId: string;
@@ -214,6 +219,8 @@ export interface ApiServerServices {
   publishProblem(id: string): Promise<void>;
   updateProfileClassName(userId: string, className: string): Promise<void>;
   resetUserPassword(userId: string, password: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
+  updateMyPassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
 }
 
 // 从 cookie 头里解析出 session token。
@@ -294,6 +301,36 @@ export function buildApp(services: ApiServerServices) {
     return reply.type('image/svg+xml').send(favicon);
   });
 
+  app.get('/assets/pico.classless.min.css', async (_request, reply) => {
+    const css = await readFile(path.join(__dirname, 'assets', 'pico.classless.min.css'), 'utf-8');
+    return reply.type('text/css').send(css);
+  });
+
+  app.get('/assets/katex.min.css', async (_request, reply) => {
+    const css = await readFile(path.join(__dirname, 'assets', 'katex.min.css'), 'utf-8');
+    return reply.type('text/css').send(css);
+  });
+
+  app.get('/assets/fonts/:file', async (request, reply) => {
+    const params = request.params as { file: string };
+    if (!/^[A-Za-z0-9_.-]+$/.test(params.file)) {
+      return reply.code(400).send('Invalid font path');
+    }
+
+    const font = await readFile(path.join(__dirname, 'assets', 'fonts', params.file));
+    if (params.file.endsWith('.woff2')) {
+      return reply.type('font/woff2').send(font);
+    }
+    if (params.file.endsWith('.woff')) {
+      return reply.type('font/woff').send(font);
+    }
+    if (params.file.endsWith('.ttf')) {
+      return reply.type('font/ttf').send(font);
+    }
+
+    return reply.code(404).send('Font not found');
+  });
+
   async function renderPage(
     request: { query?: unknown; url: string; headers?: { cookie?: string | undefined } },
     reply: { view(template: string, data?: Record<string, unknown>): unknown },
@@ -327,8 +364,10 @@ export function buildApp(services: ApiServerServices) {
   // ===== 页面路由区 =====
   app.get('/', async (request, reply) => renderPage(request, reply, 'home.pug'));
 
-  app.get('/register', async (request, reply) =>
-    renderPage(request, reply, 'register.pug'));
+  app.get('/register', async (request, reply) => {
+    const grades = (await services.listGrades()).filter((grade) => grade.isActive);
+    return renderPage(request, reply, 'register.pug', { grades });
+  });
 
   app.post('/register', async (request, reply) => {
     const parsed = registerSchema.safeParse(request.body);
@@ -378,6 +417,36 @@ export function buildApp(services: ApiServerServices) {
     return renderPage(request, reply, 'profile.pug', { user });
   });
 
+  app.post('/profile/password', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+
+    const raw = request.body as Record<string, string | undefined>;
+    const parsed = updateMyPasswordSchema.safeParse({
+      currentPassword: raw.currentPassword,
+      newPassword: raw.newPassword,
+    });
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid password payload');
+    }
+
+    try {
+      await services.updateMyPassword(
+        user.id,
+        parsed.data.currentPassword,
+        parsed.data.newPassword,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'failed to update password';
+      return reply.code(400).send(message);
+    }
+
+    return redirectWithLang(request, reply, '/profile');
+  });
+
   app.get('/admin', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -420,6 +489,104 @@ export function buildApp(services: ApiServerServices) {
 
     const users = await services.listAdminUsers();
     return renderPage(request, reply, 'admin-users.pug', { currentUser: user, users });
+  });
+
+  app.post('/admin/users/:id/reset-password', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const parsed = resetPasswordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid password payload');
+    }
+
+    const params = request.params as { id: string };
+    await services.resetUserPassword(params.id, parsed.data.password);
+    return redirectWithLang(request, reply, '/admin/users');
+  });
+
+  app.post('/admin/users/:id/delete', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const params = request.params as { id: string };
+    await services.deleteUser(params.id);
+    return redirectWithLang(request, reply, '/admin/users');
+  });
+
+  app.get('/admin/grades', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const grades = await services.listGrades();
+    return renderPage(request, reply, 'admin-grades.pug', { grades });
+  });
+
+  app.post('/admin/grades', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const raw = request.body as Record<string, string | undefined>;
+    const parsed = createGradeSchema.safeParse({
+      name: raw.name,
+      isActive: raw.isActive === 'true',
+      order: Number(raw.order ?? '0'),
+    });
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid grade payload');
+    }
+
+    await services.createGrade(parsed.data);
+    return redirectWithLang(request, reply, '/admin/grades');
+  });
+
+  app.post('/admin/grades/:id', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const params = request.params as { id: string };
+    const raw = request.body as Record<string, string | undefined>;
+    const parsed = createGradeSchema.safeParse({
+      name: raw.name,
+      isActive: raw.isActive === 'true',
+      order: Number(raw.order ?? '0'),
+    });
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid grade payload');
+    }
+
+    await services.updateGrade(params.id, parsed.data);
+    return redirectWithLang(request, reply, '/admin/grades');
   });
 
   app.post('/admin/users/bulk-approve', async (request, reply) => {
@@ -791,6 +958,34 @@ export function buildApp(services: ApiServerServices) {
     return reply.send({ ok: true });
   });
 
+  app.post('/api/me/password', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.code(401).send({ message: 'Login required' });
+    }
+
+    const parsed = updateMyPasswordSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        message: 'Invalid password payload',
+        issues: parsed.error.issues,
+      });
+    }
+
+    try {
+      await services.updateMyPassword(
+        user.id,
+        parsed.data.currentPassword,
+        parsed.data.newPassword,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'failed to update password';
+      return reply.code(400).send({ message });
+    }
+    return reply.send({ ok: true });
+  });
+
   // ===== 管理端 JSON API 区 =====
   app.get('/api/admin/users', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
@@ -856,6 +1051,21 @@ export function buildApp(services: ApiServerServices) {
 
     const params = request.params as { id: string };
     await services.resetUserPassword(params.id, parsed.data.password);
+    return reply.send({ ok: true });
+  });
+
+  app.delete('/api/admin/users/:id', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.code(401).send({ message: 'Login required' });
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send({ message: 'Admin required' });
+    }
+
+    const params = request.params as { id: string };
+    await services.deleteUser(params.id);
     return reply.send({ ok: true });
   });
 

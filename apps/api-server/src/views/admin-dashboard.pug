@@ -29,3 +29,8 @@ block content
         p= t('admin.dashboard.languagesBody')
         .page-actions
           a(href=urlWithLang('/admin/settings/languages') role="button")= t('admin.dashboard.openLanguages')
+      article.feature-card
+        h3= t('admin.dashboard.gradesTitle')
+        p= t('admin.dashboard.gradesBody')
+        .page-actions
+          a(href=urlWithLang('/admin/grades') role="button")= t('admin.dashboard.openGrades')

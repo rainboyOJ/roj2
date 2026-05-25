@@ -21,7 +21,7 @@ services:
       retries: 20
 
   judge-server:
-    image: boxtest-judge-server:dev
+    image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}
     container_name: roj-judge-server
     restart: unless-stopped
     expose:
@@ -44,9 +44,7 @@ services:
       - config/config.json
 
   api-server:
-    build:
-      context: ${ROJ_BUILD_CONTEXT:-.}
-    image: ${IMAGE_NAME:-roj2:local}
+    image: ${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}
     container_name: roj-api-server
     restart: unless-stopped
     depends_on:
@@ -72,7 +70,7 @@ services:
       - npm run seed && npm run dev:api
 
   judge-dispatcher:
-    image: ${IMAGE_NAME:-roj2:local}
+    image: ${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}
     container_name: roj-judge-dispatcher
     restart: unless-stopped
     depends_on:

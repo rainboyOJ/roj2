@@ -298,6 +298,12 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     resetUserPassword: async (userId, password) => {
       await db.resetUserPassword(userId, password);
     },
+    deleteUser: async (userId) => {
+      await db.deleteUser(userId);
+    },
+    updateMyPassword: async (userId, currentPassword, newPassword) => {
+      await db.updateMyPassword(userId, currentPassword, newPassword);
+    },
   };
 }
 

@@ -132,10 +132,10 @@ docker compose up -d
 - `api-server`
 - `judge-dispatcher`
 
-本地构建并启动：
+使用 GHCR 镜像启动：
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 查看日志：
@@ -150,13 +150,20 @@ docker compose logs -f judge-server judge-dispatcher api-server
 docker compose down
 ```
 
-如果要使用已发布的 GHCR 镜像运行 `api-server` 和 `judge-dispatcher`：
+默认镜像：
 
-```bash
-IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest docker compose up -d
+```text
+ghcr.io/rainboyoj/roj2:latest
+ghcr.io/rainboyoj/judge_server_cpp:latest
 ```
 
-注意：`judge-server` 镜像 `boxtest-judge-server:dev` 需要提前由 `judge_server_cpp` 项目构建或通过安装脚本准备。
+如需指定其他镜像：
+
+```bash
+IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest \
+JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge_server_cpp:latest \
+docker compose up -d
+```
 
 ## GHCR 镜像
 
@@ -166,12 +173,14 @@ IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest docker compose up -d
 
 ```text
 ghcr.io/rainboyoj/roj2:latest
+ghcr.io/rainboyoj/judge_server_cpp:latest
 ```
 
 拉取镜像：
 
 ```bash
 docker pull ghcr.io/rainboyoj/roj2:latest
+docker pull ghcr.io/rainboyoj/judge_server_cpp:latest
 ```
 
 可用 tag：

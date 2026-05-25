@@ -52,7 +52,9 @@ exit 0
       expect(log).toContain(
         'rm -f roj-api-server roj-judge-dispatcher roj-mongodb roj-judge-server',
       );
-      expect(log).toContain('rmi roj2:local boxtest-judge-server:dev');
+      expect(log).toContain(
+        'rmi ghcr.io/rainboyoj/roj2:latest ghcr.io/rainboyoj/judge_server_cpp:latest',
+      );
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
@@ -91,13 +93,11 @@ exit 0
       join(rojDir, 'docker-compose.yaml'),
       `services:
   api-server:
-    build:
-      context: \${ROJ_BUILD_CONTEXT:-.}
-    image: \${IMAGE_NAME:-roj2:local}
+    image: \${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}
     ports:
       - "\${API_HOST_PORT:-3000}:3000"
   judge-server:
-    image: boxtest-judge-server:dev
+    image: \${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}
     volumes:
       - type: bind
         source: \${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}
@@ -116,8 +116,8 @@ exit 0
     await writeFile(
       join(rojDir, '.env.example'),
       [
-        'IMAGE_NAME=roj2:local',
-        'ROJ_BUILD_CONTEXT=./roj2',
+        'IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest',
+        'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge_server_cpp:latest',
         'API_HOST_PORT=3000',
         '',
       ].join('\n'),
@@ -133,7 +133,7 @@ fi
 if [[ "$1" == "compose" && "$2" == "version" ]]; then
   exit 0
 fi
-if [[ "$1" == "image" && "$2" == "inspect" ]]; then
+if [[ "$1" == "pull" ]]; then
   exit 0
 fi
 if [[ "$1" == "compose" && "$2" == "up" ]]; then
@@ -172,11 +172,17 @@ exit 0
       const configFile = await readFile(join(deployDir, 'judge_server_config.json'), 'utf8');
       const composeFile = await readFile(join(deployDir, 'docker-compose.yaml'), 'utf8');
 
-      expect(envFile).toContain(`ROJ_BUILD_CONTEXT=${rojDir}`);
+      expect(envFile).toContain('IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest');
+      expect(envFile).toContain(
+        'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge_server_cpp:latest',
+      );
       expect(envFile).toContain(`JUDGE_SERVER_CONFIG_PATH=${join(deployDir, 'judge_server_config.json')}`);
       expect(envFile).toContain('API_HOST_PORT=3000');
       expect(configFile).toContain('"test_data_path": "/opt/boxtest/testData"');
-      expect(composeFile).toContain('context: ${ROJ_BUILD_CONTEXT:-.}');
+      expect(composeFile).toContain('image: ${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}');
+      expect(composeFile).toContain(
+        'image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}',
+      );
       expect(composeFile).toContain('${API_HOST_PORT:-3000}:3000');
       const testDataStat = await stat(join(deployDir, 'judge_server_testData'));
       expect(testDataStat.isDirectory()).toBe(true);

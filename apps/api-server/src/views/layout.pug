@@ -8,8 +8,8 @@ html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
     title= pageTitle ? `${pageTitle} | ROJ` : 'ROJ'
     meta(name="color-scheme" content="light")
     link(rel="icon" href="/favicon.svg" type="image/svg+xml")
-    link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css")
-    link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css")
+    link(rel="stylesheet" href="/assets/pico.classless.min.css")
+    link(rel="stylesheet" href="/assets/katex.min.css")
     style.
       :root {
         --pico-font-family-sans-serif: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -670,6 +670,8 @@ html(lang=lang === 'zh' ? 'zh-CN' : 'en' data-theme="light")
               a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
             li
               a(href=urlWithLang('/admin/settings/languages'))= t('nav.admin.languages')
+            li
+              a(href=urlWithLang('/admin/grades'))= t('nav.admin.grades')
             li
               a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
             li

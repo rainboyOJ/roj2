@@ -60,6 +60,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
+    deleteUser: async () => undefined,
+    updateMyPassword: async () => undefined,
     ...overrides,
   };
 }
@@ -305,5 +307,39 @@ describe('auth routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it('allows a logged-in user to update their own password', async () => {
+    let receivedInput: { userId: string; currentPassword: string; newPassword: string } | null = null;
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'user-1',
+        username: 'alice',
+        role: 'student' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      updateMyPassword: async (userId: string, currentPassword: string, newPassword: string) => {
+        receivedInput = { userId, currentPassword, newPassword };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/me/password',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+      payload: {
+        currentPassword: 'oldpassword123',
+        newPassword: 'newpassword123',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedInput).toEqual({
+      userId: 'user-1',
+      currentPassword: 'oldpassword123',
+      newPassword: 'newpassword123',
+    });
   });
 });

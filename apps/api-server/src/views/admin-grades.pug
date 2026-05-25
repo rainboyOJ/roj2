@@ -1,0 +1,49 @@
+//- 管理员年级管理页：维护注册页面可选年级。
+extends layout.pug
+
+block content
+  section.list-panel
+    header
+      hgroup
+        h1= t('admin.grades.title')
+        p.page-lead= t('admin.grades.lead')
+    article.panel-card.form-card
+      .panel-body
+        form(method="post" action=urlWithLang('/admin/grades'))
+          .form-grid
+            div
+              label(for="new-grade-name")= t('admin.grades.name')
+              input#new-grade-name(type="text" name="name")
+            div
+              label(for="new-grade-order")= t('admin.grades.order')
+              input#new-grade-order(type="number" name="order" value="0")
+          label
+            input(type="checkbox" name="isActive" value="true" checked)
+            = t('admin.grades.active')
+          button(type="submit")= t('admin.grades.create')
+    if grades.length
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= t('admin.grades.name')
+              th= t('admin.grades.active')
+              th= t('admin.grades.order')
+              th= t('admin.grades.actions')
+          tbody
+            each grade in grades
+              tr
+                td
+                  form(method="post" action=urlWithLang(`/admin/grades/${grade.id}`) id=`grade-form-${grade.id}`)
+                    input(type="text" name="name" value=grade.name)
+                td
+                  label
+                    input(type="checkbox" name="isActive" value="true" checked=grade.isActive form=`grade-form-${grade.id}`)
+                    = t('admin.grades.active')
+                td
+                  input(type="number" name="order" value=grade.order form=`grade-form-${grade.id}`)
+                td
+                  button(type="submit" form=`grade-form-${grade.id}`)= t('admin.grades.save')
+    else
+      article
+        p= t('admin.grades.empty')

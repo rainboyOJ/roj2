@@ -19,14 +19,25 @@ block content
               input#name(type="text" name="name" placeholder=t('register.namePlaceholder'))
           .form-grid
             div
-              label(for="gender")= t('register.gender')
-              input#gender(type="text" name="gender" placeholder=t('register.genderPlaceholder'))
+              fieldset
+                legend= t('register.gender')
+                label
+                  input(type="radio" name="gender" value="male")
+                  = t('register.genderMale')
+                label
+                  input(type="radio" name="gender" value="female")
+                  = t('register.genderFemale')
+                label
+                  input(type="radio" name="gender" value="other" checked)
+                  = t('register.genderOther')
             div
               label(for="grade")= t('register.grade')
-              input#grade(type="text" name="grade" placeholder=t('register.gradePlaceholder'))
+              select#grade(name="grade")
+                each grade in grades
+                  option(value=grade.name)= grade.name
           div
             label(for="className")= t('register.className')
-            input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder'))
+            input#className(type="number" name="className" min="1" step="1" placeholder=t('register.classNamePlaceholder'))
           div
             label(for="password")= t('register.password')
             input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))

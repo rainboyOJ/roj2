@@ -49,6 +49,11 @@ block content
                       form(method="post" action=urlWithLang('/admin/users/bulk-reject'))
                         input(type="hidden" name="userIds" value=user.id)
                         button(type="submit" class="secondary" id=`reject-user-${user.id}`)= t('admin.users.reject')
+                      form(method="post" action=urlWithLang(`/admin/users/${user.id}/reset-password`))
+                        input(type="password" name="password" placeholder=t('admin.users.newPassword'))
+                        button(type="submit" class="secondary" id=`reset-password-user-${user.id}`)= t('admin.users.resetPassword')
+                      form(method="post" action=urlWithLang(`/admin/users/${user.id}/delete`))
+                        button(type="submit" class="contrast" id=`delete-user-${user.id}`)= t('admin.users.delete')
     else
       article
         p= t('admin.users.empty')

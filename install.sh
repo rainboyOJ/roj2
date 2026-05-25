@@ -17,15 +17,15 @@ GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.com/}"
 JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-https://github.com/rainboyOJ/judge_server_cpp.git}"
 ROJ_REPO_URL="${ROJ_REPO_URL:-https://github.com/rainboyOJ/roj2.git}"
 
-# 两个仓库的本地目录，以及最终构建出来的 OJ 镜像名。
+# 两个仓库的本地目录，以及容器运行时使用的镜像名。
 JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/judge_server_cpp}"
 ROJ_DIR="${ROJ_DIR:-$WORKSPACE_DIR/roj2}"
-IMAGE_NAME="${IMAGE_NAME:-roj2:local}"
+IMAGE_NAME="${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}"
+JUDGE_SERVER_IMAGE_NAME="${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge_server_cpp:latest}"
 API_HOST_PORT="${API_HOST_PORT:-3000}"
 
-# UPDATE_REPOS=1 时会 git fetch/pull；SKIP_BUILD=1 时跳过镜像构建，直接复用本地镜像。
+# UPDATE_REPOS=1 时会 git fetch/pull。
 UPDATE_REPOS="${UPDATE_REPOS:-0}"
-SKIP_BUILD="${SKIP_BUILD:-0}"
 FORCE_JUDGE_CONFIG_COPY="${FORCE_JUDGE_CONFIG_COPY:-0}"
 
 # judge_server 容器运行时挂载的配置和测试数据目录。
@@ -84,14 +84,16 @@ usage() {
   cat <<EOF
 Usage:
   ./install.sh          Install and start services.
-  ./install.sh update   Update repositories, rebuild images, and restart services.
-  ./install.sh clear    Remove related containers and local build images.
+  ./install.sh update   Update repositories, pull fresh images, and restart services.
+  ./install.sh clear    Remove related containers and pulled images.
 
 Environment:
   DEPLOY_DIR=           Directory for docker-compose.yaml, .env, judge config, and test data.
   WORKSPACE_DIR=        Directory where judge_server_cpp and roj2 are cloned.
   UPDATE_REPOS=1        Update existing local git repositories.
-  SKIP_BUILD=1          Reuse existing ${IMAGE_NAME} instead of building.
+  IMAGE_NAME=           OJ image, defaults to ${IMAGE_NAME}.
+  JUDGE_SERVER_IMAGE_NAME=
+                         judge_server image, defaults to ${JUDGE_SERVER_IMAGE_NAME}.
   GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
   FORCE_JUDGE_CONFIG_COPY=1
                          Overwrite judge_server_config.json from judge_server repo.
@@ -215,7 +217,7 @@ prepare_deploy_workspace() {
 
   cat >"$ENV_FILE_PATH" <<EOF
 IMAGE_NAME=$IMAGE_NAME
-ROJ_BUILD_CONTEXT=$ROJ_DIR
+JUDGE_SERVER_IMAGE_NAME=$JUDGE_SERVER_IMAGE_NAME
 JUDGE_SERVER_CONFIG_PATH=$JUDGE_SERVER_CONFIG_PATH
 JUDGE_SERVER_TESTDATA_DIR=$JUDGE_SERVER_TESTDATA_DIR
 API_HOST_PORT=$API_HOST_PORT
@@ -225,21 +227,11 @@ EOF
   log "prepared env file: $ENV_FILE_PATH"
 }
 
-# 确保 judge_server 的 Docker 镜像存在。
-# 如果本地没有 boxtest-judge-server:dev，就尝试从 judge_server 仓库构建。
-ensure_judge_image() {
-  if "${DOCKER_CMD[@]}" image inspect boxtest-judge-server:dev >/dev/null 2>&1; then
-    log "using existing judge image: boxtest-judge-server:dev"
-    return
-  fi
-
-  if [[ -f "$JUDGE_SERVER_DIR/Dockerfile" ]]; then
-    log "building judge image from $JUDGE_SERVER_DIR"
-    "${DOCKER_CMD[@]}" build -t boxtest-judge-server:dev "$JUDGE_SERVER_DIR"
-    return
-  fi
-
-  fail "judge image boxtest-judge-server:dev not found, and no Dockerfile found in $JUDGE_SERVER_DIR"
+pull_runtime_images() {
+  log "pulling application image: $IMAGE_NAME"
+  "${DOCKER_CMD[@]}" pull "$IMAGE_NAME"
+  log "pulling judge_server image: $JUDGE_SERVER_IMAGE_NAME"
+  "${DOCKER_CMD[@]}" pull "$JUDGE_SERVER_IMAGE_NAME"
 }
 
 prepare_judge_runtime_files() {
@@ -288,22 +280,21 @@ clear_docker_resources() {
     roj-mongodb \
     roj-judge-server >/dev/null 2>&1 || true
 
-  log "removing local build images"
+  log "removing pulled images"
   "${DOCKER_CMD[@]}" rmi \
     "$IMAGE_NAME" \
-    boxtest-judge-server:dev >/dev/null 2>&1 || true
+    "$JUDGE_SERVER_IMAGE_NAME" >/dev/null 2>&1 || true
 }
 
 main() {
-  # update 模式强制更新仓库并重新构建镜像；install 模式默认复用已有仓库。
+  # update 模式强制更新仓库并重新拉取镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
     install)
-      STEP_TOTAL=12
+      STEP_TOTAL=11
       ;;
     update)
-      STEP_TOTAL=13
+      STEP_TOTAL=12
       UPDATE_REPOS=1
-      SKIP_BUILD=0
       ;;
     clear)
       STEP_TOTAL=4
@@ -343,28 +334,16 @@ main() {
   ensure_files
   step "prepare deploy workspace"
   prepare_deploy_workspace
-  step "prepare judge_server image"
-  ensure_judge_image
+  step "pull runtime Docker images"
+  pull_runtime_images
   step "prepare judge_server runtime files"
   prepare_judge_runtime_files
-
-  # 构建 roj2 的应用镜像；SKIP_BUILD=1 时只检查镜像是否已经存在。
-  step "prepare application image"
-  if [[ "$SKIP_BUILD" == "1" ]]; then
-    if ! "${DOCKER_CMD[@]}" image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
-      fail "SKIP_BUILD=1 was set, but image $IMAGE_NAME does not exist"
-    fi
-    log "using existing image $IMAGE_NAME"
-  else
-    log "building $IMAGE_NAME"
-    "${DOCKER_CMD[@]}" build -t "$IMAGE_NAME" "$ROJ_DIR"
-  fi
 
   step "prepare Docker Compose workspace"
   # docker compose 在部署目录中执行。compose 文件和 .env 都由 install.sh 生成在这里。
   cd "$DEPLOY_DIR"
   export IMAGE_NAME
-  export ROJ_BUILD_CONTEXT="$ROJ_DIR"
+  export JUDGE_SERVER_IMAGE_NAME
   export JUDGE_SERVER_CONFIG_PATH
   export JUDGE_SERVER_TESTDATA_DIR
   export API_HOST_PORT
@@ -377,13 +356,8 @@ main() {
     log "install mode: skip stopping existing services"
   fi
 
-  # 如果刚刚已经 docker build 过，compose up --build 会确保 compose 里的服务也同步刷新。
   step "start services with Docker Compose"
-  if [[ "$SKIP_BUILD" == "1" ]]; then
-    "${COMPOSE_CMD[@]}" up -d
-  else
-    "${COMPOSE_CMD[@]}" up -d --build
-  fi
+  "${COMPOSE_CMD[@]}" up -d
 
   step "finish install"
   cat <<EOF

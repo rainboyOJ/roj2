@@ -18,6 +18,7 @@ type TranslationKey =
   | 'nav.admin.problems'
   | 'nav.admin.submissions'
   | 'nav.admin.languages'
+  | 'nav.admin.grades'
   | 'lang.zh'
   | 'lang.en'
   | 'home.title'
@@ -134,6 +135,9 @@ type TranslationKey =
   | 'register.username'
   | 'register.name'
   | 'register.gender'
+  | 'register.genderMale'
+  | 'register.genderFemale'
+  | 'register.genderOther'
   | 'register.grade'
   | 'register.className'
   | 'register.password'
@@ -150,6 +154,10 @@ type TranslationKey =
   | 'profile.username'
   | 'profile.role'
   | 'profile.approval'
+  | 'profile.password'
+  | 'profile.currentPassword'
+  | 'profile.newPassword'
+  | 'profile.updatePassword'
   | 'admin.users.title'
   | 'admin.users.lead'
   | 'admin.users.noDisplayName'
@@ -163,6 +171,9 @@ type TranslationKey =
   | 'admin.users.reject'
   | 'admin.users.bulkApprove'
   | 'admin.users.bulkReject'
+  | 'admin.users.resetPassword'
+  | 'admin.users.newPassword'
+  | 'admin.users.delete'
   | 'admin.users.empty'
   | 'admin.dashboard.title'
   | 'admin.dashboard.lead'
@@ -179,6 +190,18 @@ type TranslationKey =
   | 'admin.dashboard.languagesTitle'
   | 'admin.dashboard.languagesBody'
   | 'admin.dashboard.openLanguages'
+  | 'admin.dashboard.gradesTitle'
+  | 'admin.dashboard.gradesBody'
+  | 'admin.dashboard.openGrades'
+  | 'admin.grades.title'
+  | 'admin.grades.lead'
+  | 'admin.grades.name'
+  | 'admin.grades.active'
+  | 'admin.grades.order'
+  | 'admin.grades.actions'
+  | 'admin.grades.create'
+  | 'admin.grades.save'
+  | 'admin.grades.empty'
   | 'admin.problems.title'
   | 'admin.problems.lead'
   | 'admin.problems.create'
@@ -274,6 +297,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.admin.problems': '题目管理',
     'nav.admin.submissions': '提交管理',
     'nav.admin.languages': '语言设置',
+    'nav.admin.grades': '年级管理',
     'lang.zh': '中文',
     'lang.en': 'English',
     'home.title': '学校 OJ 练习平台',
@@ -390,6 +414,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'register.username': '用户名',
     'register.name': '姓名',
     'register.gender': '性别',
+    'register.genderMale': '男',
+    'register.genderFemale': '女',
+    'register.genderOther': '其他',
     'register.grade': '年级',
     'register.className': '班级',
     'register.password': '密码',
@@ -406,6 +433,10 @@ const translations: Record<UiLang, TranslationMap> = {
     'profile.username': '用户名',
     'profile.role': '角色',
     'profile.approval': '审核状态',
+    'profile.password': '修改密码',
+    'profile.currentPassword': '当前密码',
+    'profile.newPassword': '新密码',
+    'profile.updatePassword': '更新密码',
     'admin.users.title': '用户管理',
     'admin.users.lead': '查看当前账号列表和审核状态。',
     'admin.users.noDisplayName': '没有显示姓名',
@@ -419,6 +450,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.reject': '拒绝',
     'admin.users.bulkApprove': '批量通过',
     'admin.users.bulkReject': '批量拒绝',
+    'admin.users.resetPassword': '重置密码',
+    'admin.users.newPassword': '新密码',
+    'admin.users.delete': '删除用户',
     'admin.users.empty': '没有需要查看的用户。',
     'admin.dashboard.title': '管理后台',
     'admin.dashboard.lead': '集中进入题目、用户和提交管理，不需要记住各个后台 URL。',
@@ -435,6 +469,18 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.dashboard.languagesTitle': '语言开关',
     'admin.dashboard.languagesBody': '控制整个 OJ 当前允许用户提交的编程语言集合。',
     'admin.dashboard.openLanguages': '打开语言设置',
+    'admin.dashboard.gradesTitle': '年级管理',
+    'admin.dashboard.gradesBody': '维护注册页中学生可以选择的年级范围。',
+    'admin.dashboard.openGrades': '打开年级管理',
+    'admin.grades.title': '年级管理',
+    'admin.grades.lead': '维护注册页面可选年级，并控制哪些年级启用。',
+    'admin.grades.name': '年级',
+    'admin.grades.active': '启用',
+    'admin.grades.order': '排序',
+    'admin.grades.actions': '操作',
+    'admin.grades.create': '创建年级',
+    'admin.grades.save': '保存',
+    'admin.grades.empty': '当前还没有年级。',
     'admin.problems.title': '题目管理',
     'admin.problems.lead': '按 OJ 管理员常见的方式浏览和维护题目目录。',
     'admin.problems.create': '创建题目',
@@ -527,6 +573,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.admin.problems': 'Problems',
     'nav.admin.submissions': 'Submissions',
     'nav.admin.languages': 'Languages',
+    'nav.admin.grades': 'Grades',
     'lang.zh': '中文',
     'lang.en': 'English',
     'home.title': 'Practice for school OJ',
@@ -643,6 +690,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'register.username': 'Username',
     'register.name': 'Name',
     'register.gender': 'Gender',
+    'register.genderMale': 'Male',
+    'register.genderFemale': 'Female',
+    'register.genderOther': 'Other',
     'register.grade': 'Grade',
     'register.className': 'Class',
     'register.password': 'Password',
@@ -659,6 +709,10 @@ const translations: Record<UiLang, TranslationMap> = {
     'profile.username': 'Username',
     'profile.role': 'Role',
     'profile.approval': 'Approval',
+    'profile.password': 'Change password',
+    'profile.currentPassword': 'Current password',
+    'profile.newPassword': 'New password',
+    'profile.updatePassword': 'Update password',
     'admin.users.title': 'Admin users',
     'admin.users.lead': 'Review current user accounts and their approval status.',
     'admin.users.noDisplayName': 'No display name',
@@ -672,6 +726,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.users.reject': 'Reject',
     'admin.users.bulkApprove': 'Bulk approve',
     'admin.users.bulkReject': 'Bulk reject',
+    'admin.users.resetPassword': 'Reset password',
+    'admin.users.newPassword': 'New password',
+    'admin.users.delete': 'Delete user',
     'admin.users.empty': 'No users to review.',
     'admin.dashboard.title': 'Admin dashboard',
     'admin.dashboard.lead': 'Open all administrator tools from one place without memorizing backend URLs.',
@@ -688,6 +745,18 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.dashboard.languagesTitle': 'Language settings',
     'admin.dashboard.languagesBody': 'Control which programming languages are globally available for users to submit.',
     'admin.dashboard.openLanguages': 'Open language settings',
+    'admin.dashboard.gradesTitle': 'Grade management',
+    'admin.dashboard.gradesBody': 'Maintain the grade options that students can choose during registration.',
+    'admin.dashboard.openGrades': 'Open grades',
+    'admin.grades.title': 'Grade management',
+    'admin.grades.lead': 'Maintain selectable registration grades and whether each grade is enabled.',
+    'admin.grades.name': 'Grade',
+    'admin.grades.active': 'Enabled',
+    'admin.grades.order': 'Order',
+    'admin.grades.actions': 'Actions',
+    'admin.grades.create': 'Create grade',
+    'admin.grades.save': 'Save',
+    'admin.grades.empty': 'No grades yet.',
     'admin.problems.title': 'Admin problems',
     'admin.problems.lead': 'Browse problems in the same way an OJ manager would scan the catalog.',
     'admin.problems.create': 'Create problem',
