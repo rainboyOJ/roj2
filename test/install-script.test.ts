@@ -98,6 +98,8 @@ exit 0
       - "\${API_HOST_PORT:-3000}:3000"
   judge-server:
     image: \${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}
+    ports:
+      - "\${JUDGE_SERVER_HOST_PORT:-8000}:8000"
     volumes:
       - type: bind
         source: \${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}
@@ -118,6 +120,7 @@ exit 0
       [
         'IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest',
         'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest',
+        'JUDGE_SERVER_HOST_PORT=8000',
         'JUDGE_SERVER_CONFIG_PATH=./judge_server_config.json',
         'JUDGE_SERVER_TESTDATA_DIR=./judge_server_testData',
         'API_HOST_PORT=3300',
@@ -178,6 +181,7 @@ exit 0
       expect(envFile).toContain(
         'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest',
       );
+      expect(envFile).toContain('JUDGE_SERVER_HOST_PORT=8000');
       expect(envFile).toContain('JUDGE_SERVER_CONFIG_PATH=./judge_server_config.json');
       expect(envFile).toContain('JUDGE_SERVER_TESTDATA_DIR=./judge_server_testData');
       expect(envFile).toContain('API_HOST_PORT=3300');
@@ -186,6 +190,7 @@ exit 0
       expect(composeFile).toContain(
         'image: ${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}',
       );
+      expect(composeFile).toContain('${JUDGE_SERVER_HOST_PORT:-8000}:8000');
       expect(composeFile).toContain('${API_HOST_PORT:-3000}:3000');
       const testDataStat = await stat(join(deployDir, 'judge_server_testData'));
       expect(testDataStat.isDirectory()).toBe(true);
