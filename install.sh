@@ -228,18 +228,8 @@ ensure_files() {
 prepare_deploy_workspace() {
   mkdir -p "$DEPLOY_DIR"
   cp "$ROJ_DIR/docker-compose.yaml" "$COMPOSE_FILE_PATH"
-
-  if [[ -f "$ROJ_DIR/.env.example" ]]; then
-    cp "$ROJ_DIR/.env.example" "$ENV_FILE_PATH"
-  fi
-
-  cat >"$ENV_FILE_PATH" <<EOF
-IMAGE_NAME=$IMAGE_NAME
-JUDGE_SERVER_IMAGE_NAME=$JUDGE_SERVER_IMAGE_NAME
-JUDGE_SERVER_CONFIG_PATH=$JUDGE_SERVER_CONFIG_PATH
-JUDGE_SERVER_TESTDATA_DIR=$JUDGE_SERVER_TESTDATA_DIR
-API_HOST_PORT=$API_HOST_PORT
-EOF
+  [[ -f "$ROJ_DIR/.env.example" ]] || fail "missing .env.example in $ROJ_DIR"
+  cp "$ROJ_DIR/.env.example" "$ENV_FILE_PATH"
 
   log "prepared compose file: $COMPOSE_FILE_PATH"
   log "prepared env file: $ENV_FILE_PATH"
