@@ -62,6 +62,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     }),
     updateProblem: async () => undefined,
     publishProblem: async () => undefined,
+    getEnabledLanguages: async () => ['cpp', 'python'] as const,
+    updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
     ...overrides,
@@ -105,6 +107,54 @@ describe('POST /api/submissions', () => {
     });
 
     expect(response.statusCode).toBe(400);
+  });
+
+  it('rejects a language disabled by admin settings', async () => {
+    const app = buildApp(createServices({
+      getEnabledLanguages: async () => ['python'] as const,
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/submissions',
+      payload: {
+        pid: '1000',
+        language: 'cpp',
+        sourceCode: 'int main() { return 0; }',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+});
+
+describe('GET /api/problems', () => {
+  it('filters problem languages by admin enabled settings', async () => {
+    const app = buildApp(createServices({
+      listProblems: async () => [
+        {
+          pid: '1000',
+          title: 'A + B Problem',
+          statementMarkdown: 'Input two integers and print their sum.',
+          statementHtml: '<p>Input two integers and print their sum.</p>',
+          allowLanguages: ['cpp', 'python'],
+        },
+      ],
+      getEnabledLanguages: async () => ['python'] as const,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/problems',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual([
+      expect.objectContaining({
+        pid: '1000',
+        allowLanguages: ['python'],
+      }),
+    ]);
   });
 });
 
@@ -167,6 +217,8 @@ describe('production services', () => {
       createProblem: async () => ({ _id: 'problem-1', pid: '1001' }),
       updateProblem: async () => undefined,
       publishProblem: async () => undefined,
+      getEnabledLanguages: async () => ['cpp', 'python'],
+      updateEnabledLanguages: async () => undefined,
       updateProfileClassName: async () => undefined,
       resetUserPassword: async () => undefined,
     } as never);

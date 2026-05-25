@@ -18,6 +18,7 @@ import {
   type GradeDocument,
   type ProblemDocument,
   type SessionDocument,
+  type SiteSettingsDocument,
   type SubmissionDocument,
   type UserDocument,
 } from '@roj/shared';
@@ -160,6 +161,10 @@ export class RojDb {
 
   counters() {
     return this.db.collection<CounterDocument>('counters');
+  }
+
+  settings() {
+    return this.db.collection<SiteSettingsDocument>('settings');
   }
 
   submissions() {
@@ -312,6 +317,17 @@ export class RojDb {
       },
       { upsert: true },
     );
+
+    await this.settings().updateOne(
+      { _id: 'site_settings' },
+      {
+        $set: {
+          enabledLanguages: ['cpp', 'python'],
+          updatedAt: now,
+        },
+      },
+      { upsert: true },
+    );
   }
 
   async listVisibleProblems() {
@@ -356,6 +372,10 @@ export class RojDb {
     const problem = await this.getProblemByPid(input.pid);
     if (!problem) {
       throw new Error(`problem ${input.pid} not found`);
+    }
+    const enabledLanguages = await this.getEnabledLanguages();
+    if (!enabledLanguages.includes(input.language)) {
+      throw new Error(`language ${input.language} is disabled`);
     }
     if (!problem.allowLanguages.includes(input.language)) {
       throw new Error(`language ${input.language} is not allowed for ${input.pid}`);
@@ -778,6 +798,27 @@ export class RojDb {
 
   async listAdminProblems() {
     return this.problems().find({}).sort({ pid: 1 }).toArray();
+  }
+
+  async getEnabledLanguages(): Promise<readonly AppLanguage[]> {
+    const settings = await this.settings().findOne({ _id: 'site_settings' });
+    if (!settings || settings.enabledLanguages.length === 0) {
+      return ['cpp', 'python'];
+    }
+    return settings.enabledLanguages;
+  }
+
+  async updateEnabledLanguages(enabledLanguages: AppLanguage[]) {
+    await this.settings().updateOne(
+      { _id: 'site_settings' },
+      {
+        $set: {
+          enabledLanguages,
+          updatedAt: new Date(),
+        },
+      },
+      { upsert: true },
+    );
   }
 
   async getAdminProblemById(id: string) {

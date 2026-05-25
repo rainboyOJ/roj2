@@ -56,6 +56,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     }),
     updateProblem: async () => undefined,
     publishProblem: async () => undefined,
+    getEnabledLanguages: async () => ['cpp', 'python'] as const,
+    updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
     ...overrides,

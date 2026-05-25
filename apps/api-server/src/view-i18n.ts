@@ -17,6 +17,7 @@ type TranslationKey =
   | 'nav.admin.users'
   | 'nav.admin.problems'
   | 'nav.admin.submissions'
+  | 'nav.admin.languages'
   | 'lang.zh'
   | 'lang.en'
   | 'home.title'
@@ -173,6 +174,9 @@ type TranslationKey =
   | 'admin.dashboard.submissionsTitle'
   | 'admin.dashboard.submissionsBody'
   | 'admin.dashboard.openSubmissions'
+  | 'admin.dashboard.languagesTitle'
+  | 'admin.dashboard.languagesBody'
+  | 'admin.dashboard.openLanguages'
   | 'admin.problems.title'
   | 'admin.problems.lead'
   | 'admin.problems.create'
@@ -209,6 +213,11 @@ type TranslationKey =
   | 'admin.problemForm.save'
   | 'admin.problemForm.back'
   | 'admin.problemForm.publish'
+  | 'admin.languages.title'
+  | 'admin.languages.lead'
+  | 'admin.languages.enabled'
+  | 'admin.languages.save'
+  | 'admin.languages.back'
   | 'status.pending'
   | 'status.approved'
   | 'status.rejected'
@@ -261,6 +270,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.admin.users': '用户',
     'nav.admin.problems': '题目管理',
     'nav.admin.submissions': '提交管理',
+    'nav.admin.languages': '语言设置',
     'lang.zh': '中文',
     'lang.en': 'English',
     'home.title': '学校 OJ 练习平台',
@@ -417,6 +427,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.dashboard.submissionsTitle': '提交管理',
     'admin.dashboard.submissionsBody': '查看全站提交记录，追踪评测状态和最终结果。',
     'admin.dashboard.openSubmissions': '打开提交管理',
+    'admin.dashboard.languagesTitle': '语言开关',
+    'admin.dashboard.languagesBody': '控制整个 OJ 当前允许用户提交的编程语言集合。',
+    'admin.dashboard.openLanguages': '打开语言设置',
     'admin.problems.title': '题目管理',
     'admin.problems.lead': '按 OJ 管理员常见的方式浏览和维护题目目录。',
     'admin.problems.create': '创建题目',
@@ -453,6 +466,11 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.problemForm.save': '保存题目',
     'admin.problemForm.back': '返回',
     'admin.problemForm.publish': '发布题目',
+    'admin.languages.title': '语言设置',
+    'admin.languages.lead': '控制全站哪些编程语言对用户可见且允许提交。',
+    'admin.languages.enabled': '启用语言',
+    'admin.languages.save': '保存设置',
+    'admin.languages.back': '返回管理后台',
     'status.pending': '待审核',
     'status.approved': '已通过',
     'status.rejected': '已拒绝',
@@ -502,6 +520,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'nav.admin.users': 'Users',
     'nav.admin.problems': 'Problems',
     'nav.admin.submissions': 'Submissions',
+    'nav.admin.languages': 'Languages',
     'lang.zh': '中文',
     'lang.en': 'English',
     'home.title': 'Practice for school OJ',
@@ -658,6 +677,9 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.dashboard.submissionsTitle': 'Submission management',
     'admin.dashboard.submissionsBody': 'Review all submissions and track judging status and final verdicts.',
     'admin.dashboard.openSubmissions': 'Open submissions',
+    'admin.dashboard.languagesTitle': 'Language settings',
+    'admin.dashboard.languagesBody': 'Control which programming languages are globally available for users to submit.',
+    'admin.dashboard.openLanguages': 'Open language settings',
     'admin.problems.title': 'Admin problems',
     'admin.problems.lead': 'Browse problems in the same way an OJ manager would scan the catalog.',
     'admin.problems.create': 'Create problem',
@@ -694,6 +716,11 @@ const translations: Record<UiLang, TranslationMap> = {
     'admin.problemForm.save': 'Save problem',
     'admin.problemForm.back': 'Back',
     'admin.problemForm.publish': 'Publish problem',
+    'admin.languages.title': 'Language settings',
+    'admin.languages.lead': 'Control which programming languages are visible to users and allowed for submissions site-wide.',
+    'admin.languages.enabled': 'Enabled languages',
+    'admin.languages.save': 'Save settings',
+    'admin.languages.back': 'Back to admin dashboard',
     'status.pending': 'pending',
     'status.approved': 'approved',
     'status.rejected': 'rejected',

@@ -1,0 +1,32 @@
+extends layout.pug
+
+block content
+  section.auth-panel
+    header
+      hgroup
+        h1= t('admin.languages.title')
+        p.page-lead= t('admin.languages.lead')
+    article.panel-card.form-card
+      .panel-body
+        form(method="post" action=urlWithLang('/admin/settings/languages'))
+          fieldset
+            legend= t('admin.languages.enabled')
+            label
+              input(
+                type="checkbox"
+                name="enabledLanguages"
+                value="cpp"
+                checked=settings.enabledLanguages.includes('cpp')
+              )
+              | C++
+            label
+              input(
+                type="checkbox"
+                name="enabledLanguages"
+                value="python"
+                checked=settings.enabledLanguages.includes('python')
+              )
+              | Python
+          .form-actions
+            button(type="submit")= t('admin.languages.save')
+            a(href=urlWithLang('/admin') role="button" class="secondary")= t('admin.languages.back')

@@ -15,6 +15,7 @@ import {
   type SubmissionViewModel,
 } from './app.ts';
 import type { CreateSubmissionInput, SubmissionCaseResult } from '@roj/shared';
+import type { AppLanguage } from '@roj/shared';
 
 // 这一组 map* 函数的作用，是把 DB 文档转换成前端视图模型。
 // 这样 app.ts 不需要直接依赖 MongoDB 文档的完整结构。
@@ -262,6 +263,10 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     },
     updateGrade: async (id, input) => {
       await db.updateGrade(id, input);
+    },
+    getEnabledLanguages: async (): Promise<readonly AppLanguage[]> => db.getEnabledLanguages(),
+    updateEnabledLanguages: async (enabledLanguages) => {
+      await db.updateEnabledLanguages(enabledLanguages);
     },
     listAdminProblems: async () => {
       const problems = await db.listAdminProblems();

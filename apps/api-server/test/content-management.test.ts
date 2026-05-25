@@ -60,6 +60,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     }),
     updateProblem: async () => undefined,
     publishProblem: async () => undefined,
+    getEnabledLanguages: async () => ['cpp', 'python'] as const,
+    updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
     ...overrides,
@@ -315,5 +317,34 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it('updates enabled languages for admin users', async () => {
+    let receivedLanguages: string[] = [];
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      updateEnabledLanguages: async (languages: Array<'cpp' | 'python'>) => {
+        receivedLanguages = languages;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/settings/languages',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+      payload: {
+        enabledLanguages: ['python'],
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedLanguages).toEqual(['python']);
   });
 });

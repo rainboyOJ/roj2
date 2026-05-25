@@ -143,6 +143,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     }),
     updateProblem: async () => undefined,
     publishProblem: async () => undefined,
+    getEnabledLanguages: async () => ['cpp', 'python'] as const,
+    updateEnabledLanguages: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
     ...overrides,
@@ -214,6 +216,22 @@ describe('rendered views', () => {
     expect(response.body).toContain('提交代码');
   });
 
+  it('renders only globally enabled languages on the problems list page', async () => {
+    const app = buildApp(createServices({
+      getEnabledLanguages: async () => ['python'] as const,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('python');
+    expect(response.body).not.toContain('cpp, python');
+    expect(response.body).not.toContain('<td>cpp</td>');
+  });
+
   it('renders a problem statement from pre-rendered html', async () => {
     const app = buildApp(createServices());
 
@@ -225,6 +243,28 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('<h2>Statement</h2>');
     expect(response.body).not.toContain('<pre class="mono-block">');
+  });
+
+  it('renders only globally enabled languages on the problem page', async () => {
+    const app = buildApp(createServices({
+      getProblemByPid: async () => ({
+        pid: '1000',
+        title: 'A + B Problem',
+        statementMarkdown: 'Input two integers and print their sum.',
+        statementHtml: '<p>Input two integers and print their sum.</p>',
+        allowLanguages: ['cpp', 'python'],
+      }),
+      getEnabledLanguages: async () => ['python'] as const,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problem/1000',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('option value="python"');
+    expect(response.body).not.toContain('option value="cpp"');
   });
 
   it('renders submissions page as a table view for logged-in users', async () => {

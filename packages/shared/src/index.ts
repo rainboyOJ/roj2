@@ -58,6 +58,12 @@ export const LanguageLabels = {
 // OJ 允许的编程语言。
 export type AppLanguage = keyof typeof LanguageLabels;
 
+export interface SiteSettingsDocument {
+  _id: 'site_settings';
+  enabledLanguages: AppLanguage[];
+  updatedAt: Date;
+}
+
 // 单个测试点结果，字段基本对齐 judge_server 的 case_results。
 export interface SubmissionCaseResult {
   seq_id: number;

@@ -24,3 +24,8 @@ block content
         p= t('admin.dashboard.submissionsBody')
         .page-actions
           a(href=urlWithLang('/admin/submissions') role="button")= t('admin.dashboard.openSubmissions')
+      article.feature-card
+        h3= t('admin.dashboard.languagesTitle')
+        p= t('admin.dashboard.languagesBody')
+        .page-actions
+          a(href=urlWithLang('/admin/settings/languages') role="button")= t('admin.dashboard.openLanguages')

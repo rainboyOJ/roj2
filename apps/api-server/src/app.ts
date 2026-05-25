@@ -13,6 +13,7 @@ import view from '@fastify/view';
 import Fastify from 'fastify';
 import pug from 'pug';
 import { OJSubmissionStatuses, type SubmissionCaseResult } from '@roj/shared';
+import type { AppLanguage } from '@roj/shared';
 import { z } from 'zod';
 
 import { createViewContext, resolveUiLang, type UiLang } from './view-i18n.ts';
@@ -46,6 +47,10 @@ const createGradeSchema = z.object({
   order: z.number().int(),
 });
 
+const enabledLanguagesSchema = z.object({
+  enabledLanguages: z.array(z.enum(['cpp', 'python'])).min(1),
+});
+
 const createProblemSchema = z.object({
   pid: z.string().min(1),
   title: z.string().min(1),
@@ -76,6 +81,10 @@ export interface ProblemViewModel {
   statementMarkdown: string;
   statementHtml: string;
   allowLanguages: string[];
+}
+
+export interface LanguageSettingsViewModel {
+  enabledLanguages: AppLanguage[];
 }
 
 export interface SessionUser {
@@ -183,6 +192,8 @@ export interface ApiServerServices {
     isActive: boolean;
     order: number;
   }): Promise<void>;
+  getEnabledLanguages(): Promise<readonly AppLanguage[]>;
+  updateEnabledLanguages(enabledLanguages: AppLanguage[]): Promise<void>;
   listAdminProblems(): Promise<AdminProblemViewModel[]>;
   getAdminProblemById(id: string): Promise<AdminProblemViewModel | null>;
   createProblem(input: {
@@ -249,6 +260,15 @@ function getRequestLang(request: {
   }
 
   return 'zh';
+}
+
+function filterAllowedLanguages(
+  allowLanguages: string[],
+  enabledLanguages: readonly AppLanguage[],
+): string[] {
+  return allowLanguages.filter((language) =>
+    enabledLanguages.includes(language as AppLanguage),
+  );
 }
 
 // 保证页面跳转后还能保留当前语言。
@@ -368,6 +388,22 @@ export function buildApp(services: ApiServerServices) {
     }
 
     return renderPage(request, reply, 'admin-dashboard.pug');
+  });
+
+  app.get('/admin/settings/languages', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const enabledLanguages = await services.getEnabledLanguages();
+    return renderPage(request, reply, 'admin-language-settings.pug', {
+      settings: { enabledLanguages },
+    });
   });
 
   app.get('/admin/users', async (request, reply) => {
@@ -508,8 +544,17 @@ export function buildApp(services: ApiServerServices) {
   });
 
   app.get('/problems', async (request, reply) => {
-    const problems = await services.listProblems();
-    return renderPage(request, reply, 'problems.pug', { problems });
+    const [problems, enabledLanguages] = await Promise.all([
+      services.listProblems(),
+      services.getEnabledLanguages(),
+    ]);
+
+    return renderPage(request, reply, 'problems.pug', {
+      problems: problems.map((problem) => ({
+        ...problem,
+        allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+      })),
+    });
   });
 
   app.get('/ranklist', async (request, reply) => {
@@ -538,8 +583,14 @@ export function buildApp(services: ApiServerServices) {
     if (!problem) {
       return reply.code(404).send('Problem not found');
     }
+    const enabledLanguages = await services.getEnabledLanguages();
 
-    return renderPage(request, reply, 'problem.pug', { problem });
+    return renderPage(request, reply, 'problem.pug', {
+      problem: {
+        ...problem,
+        allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+      },
+    });
   });
 
   app.get('/submissions/:id', async (request, reply) => {
@@ -572,7 +623,17 @@ export function buildApp(services: ApiServerServices) {
     return renderPage(request, reply, 'submissions.pug', { submissions });
   });
 
-  app.get('/api/problems', async () => services.listProblems());
+  app.get('/api/problems', async () => {
+    const [problems, enabledLanguages] = await Promise.all([
+      services.listProblems(),
+      services.getEnabledLanguages(),
+    ]);
+
+    return problems.map((problem) => ({
+      ...problem,
+      allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+    }));
+  });
 
   app.get('/api/problems/:pid', async (request, reply) => {
     const params = request.params as { pid: string };
@@ -580,7 +641,11 @@ export function buildApp(services: ApiServerServices) {
     if (!problem) {
       return reply.code(404).send({ message: 'Problem not found' });
     }
-    return problem;
+    const enabledLanguages = await services.getEnabledLanguages();
+    return {
+      ...problem,
+      allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+    };
   });
 
   app.get('/api/submissions/:id', async (request, reply) => {
@@ -630,6 +695,12 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(400).send({
         message: 'Invalid submission payload',
         issues: parsed.error.issues,
+      });
+    }
+    const enabledLanguages = await services.getEnabledLanguages();
+    if (!enabledLanguages.includes(parsed.data.language)) {
+      return reply.code(400).send({
+        message: `language ${parsed.data.language} is disabled`,
       });
     }
 
@@ -882,6 +953,43 @@ export function buildApp(services: ApiServerServices) {
     };
   });
 
+  app.get('/api/admin/settings/languages', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.code(401).send({ message: 'Login required' });
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send({ message: 'Admin required' });
+    }
+
+    return {
+      enabledLanguages: await services.getEnabledLanguages(),
+    };
+  });
+
+  app.post('/api/admin/settings/languages', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return reply.code(401).send({ message: 'Login required' });
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send({ message: 'Admin required' });
+    }
+
+    const parsed = enabledLanguagesSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        message: 'Invalid language settings payload',
+        issues: parsed.error.issues,
+      });
+    }
+
+    await services.updateEnabledLanguages(parsed.data.enabledLanguages);
+    return reply.send({ ok: true });
+  });
+
   app.post('/api/admin/problems', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const user = await services.getCurrentUser(token);
@@ -1027,6 +1135,32 @@ export function buildApp(services: ApiServerServices) {
     return redirectWithLang(request, reply, '/admin/problems');
   });
 
+  app.post('/admin/settings/languages', async (request, reply) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const user = await services.getCurrentUser(token);
+    if (!user) {
+      return redirectWithLang(request, reply, '/login');
+    }
+    if (user.role !== 'admin') {
+      return reply.code(403).send('Forbidden');
+    }
+
+    const raw = request.body as { enabledLanguages?: string | string[] };
+    const enabledLanguages = Array.isArray(raw.enabledLanguages)
+      ? raw.enabledLanguages
+      : raw.enabledLanguages
+        ? [raw.enabledLanguages]
+        : [];
+
+    const parsed = enabledLanguagesSchema.safeParse({ enabledLanguages });
+    if (!parsed.success) {
+      return reply.code(400).send('Invalid language settings payload');
+    }
+
+    await services.updateEnabledLanguages(parsed.data.enabledLanguages);
+    return redirectWithLang(request, reply, '/admin/settings/languages');
+  });
+
   app.post('/submissions', async (request, reply) => {
     // 页面提交流程和 API 提交流程的核心逻辑一样，
     // 区别只在于这里最终跳转到 submission 详情页。
@@ -1042,6 +1176,10 @@ export function buildApp(services: ApiServerServices) {
     const parsed = createSubmissionSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send('Invalid submission payload');
+    }
+    const enabledLanguages = await services.getEnabledLanguages();
+    if (!enabledLanguages.includes(parsed.data.language)) {
+      return reply.code(400).send(`language ${parsed.data.language} is disabled`);
     }
 
     const created = await services.createSubmission({
