@@ -25,7 +25,7 @@ JUDGE_SERVER_DIR="${JUDGE_SERVER_DIR:-$WORKSPACE_DIR/judge_server_cpp}"
 ROJ_DIR="${ROJ_DIR:-$WORKSPACE_DIR/roj2}"
 IMAGE_NAME="${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}"
 JUDGE_SERVER_IMAGE_NAME="${JUDGE_SERVER_IMAGE_NAME:-ghcr.io/rainboyoj/judge-server-cpp:latest}"
-API_HOST_PORT="${API_HOST_PORT:-3000}"
+API_HOST_PORT="${API_HOST_PORT:-3300}"
 
 # UPDATE_REPOS=1 时会 git fetch/pull。
 UPDATE_REPOS="${UPDATE_REPOS:-0}"

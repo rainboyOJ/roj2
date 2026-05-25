@@ -118,7 +118,7 @@ exit 0
       [
         'IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest',
         'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest',
-        'API_HOST_PORT=3000',
+        'API_HOST_PORT=3300',
         '',
       ].join('\n'),
     );
@@ -177,7 +177,7 @@ exit 0
         'JUDGE_SERVER_IMAGE_NAME=ghcr.io/rainboyoj/judge-server-cpp:latest',
       );
       expect(envFile).toContain(`JUDGE_SERVER_CONFIG_PATH=${join(deployDir, 'judge_server_config.json')}`);
-      expect(envFile).toContain('API_HOST_PORT=3000');
+      expect(envFile).toContain('API_HOST_PORT=3300');
       expect(configFile).toContain('"test_data_path": "/opt/boxtest/testData"');
       expect(composeFile).toContain('image: ${IMAGE_NAME:-ghcr.io/rainboyoj/roj2:latest}');
       expect(composeFile).toContain(

@@ -65,12 +65,30 @@ html(lang="zh-CN" data-theme="light")
         max-width: 1100px;
         margin: 0 auto;
         padding: 0.7rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .site-header nav ul {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+      }
+
+      .site-header nav ul li {
+        margin: 0;
       }
 
       .brand-block {
         display: inline-flex;
         flex-direction: column;
         gap: 0.1rem;
+        white-space: nowrap;
       }
 
       .brand-block small {
@@ -640,6 +658,14 @@ html(lang="zh-CN" data-theme="light")
           display: block;
           margin-top: 0.25rem;
           text-align: left;
+        }
+
+        .site-header nav {
+          align-items: flex-start;
+        }
+
+        .site-header nav ul {
+          justify-content: flex-start;
         }
       }
   body
