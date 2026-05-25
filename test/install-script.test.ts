@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFile } from 'node:child_process';
@@ -53,6 +53,121 @@ exit 0
         'rm -f roj-api-server roj-judge-dispatcher roj-mongodb roj-judge-server',
       );
       expect(log).toContain('rmi roj2:local boxtest-judge-server:dev');
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('prepares deploy files in an empty execution directory', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'roj-install-deploy-'));
+    const binDir = join(tempDir, 'bin');
+    const deployDir = join(tempDir, 'deploy');
+    const judgeDir = join(tempDir, 'judge_server_cpp');
+    const rojDir = join(tempDir, 'roj2');
+    const fakeDockerPath = join(binDir, 'docker');
+    const fakeGitPath = join(binDir, 'git');
+    const scriptPath = join(process.cwd(), 'install.sh');
+
+    await mkdir(binDir, { recursive: true });
+    await mkdir(deployDir, { recursive: true });
+    await mkdir(join(judgeDir, '.git'), { recursive: true });
+    await mkdir(join(judgeDir, 'config'), { recursive: true });
+    await mkdir(rojDir, { recursive: true });
+    await mkdir(join(rojDir, '.git'), { recursive: true });
+
+    await writeFile(
+      join(judgeDir, 'config', 'config.json'),
+      JSON.stringify({
+        server: { port: 8000 },
+        testing: { test_data_path: '../testData' },
+      }, null, 2),
+    );
+    await writeFile(join(judgeDir, 'Dockerfile'), 'FROM scratch\n');
+    await writeFile(join(rojDir, 'Dockerfile'), 'FROM scratch\n');
+    await writeFile(
+      join(rojDir, 'docker-compose.yaml'),
+      `services:
+  api-server:
+    build:
+      context: \${ROJ_BUILD_CONTEXT:-.}
+    image: \${IMAGE_NAME:-roj2:local}
+  judge-server:
+    image: boxtest-judge-server:dev
+    volumes:
+      - type: bind
+        source: \${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}
+        target: /opt/boxtest/config/config.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: \${JUDGE_SERVER_TESTDATA_DIR:-./judge_server_testData}
+        target: /opt/boxtest/testData
+        read_only: true
+        bind:
+          create_host_path: false
+`,
+    );
+    await writeFile(
+      join(rojDir, '.env.example'),
+      'IMAGE_NAME=roj2:local\nROJ_BUILD_CONTEXT=./roj2\n',
+    );
+
+    await writeFile(
+      fakeDockerPath,
+      `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1" == "info" ]]; then
+  exit 0
+fi
+if [[ "$1" == "compose" && "$2" == "version" ]]; then
+  exit 0
+fi
+if [[ "$1" == "image" && "$2" == "inspect" ]]; then
+  exit 0
+fi
+if [[ "$1" == "compose" && "$2" == "up" ]]; then
+  exit 0
+fi
+exit 0
+`,
+      { mode: 0o755 },
+    );
+    await writeFile(
+      fakeGitPath,
+      `#!/usr/bin/env bash
+set -euo pipefail
+exit 0
+`,
+      { mode: 0o755 },
+    );
+
+    try {
+      await expect(
+        execFileAsync(scriptPath, [], {
+          cwd: deployDir,
+          env: {
+            ...process.env,
+            PATH: `${binDir}:${process.env.PATH ?? ''}`,
+            JUDGE_SERVER_DIR: judgeDir,
+            ROJ_DIR: rojDir,
+            GITHUB_PROXY: '',
+          },
+        }),
+      ).resolves.toMatchObject({
+        stderr: '',
+      });
+
+      const envFile = await readFile(join(deployDir, '.env'), 'utf8');
+      const configFile = await readFile(join(deployDir, 'judge_server_config.json'), 'utf8');
+      const composeFile = await readFile(join(deployDir, 'docker-compose.yaml'), 'utf8');
+
+      expect(envFile).toContain(`ROJ_BUILD_CONTEXT=${rojDir}`);
+      expect(envFile).toContain(`JUDGE_SERVER_CONFIG_PATH=${join(deployDir, 'judge_server_config.json')}`);
+      expect(configFile).toContain('"test_data_path": "/opt/boxtest/testData"');
+      expect(composeFile).toContain('context: ${ROJ_BUILD_CONTEXT:-.}');
+      const testDataStat = await stat(join(deployDir, 'judge_server_testData'));
+      expect(testDataStat.isDirectory()).toBe(true);
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }

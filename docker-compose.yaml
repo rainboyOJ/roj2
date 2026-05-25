@@ -27,15 +27,25 @@ services:
     expose:
       - "8000"
     volumes:
-      - ${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}:/opt/boxtest/config/config.json:ro
-      - ${JUDGE_SERVER_TESTDATA_DIR:-./judge_server_testData}:/opt/boxtest/testData:ro
+      - type: bind
+        source: ${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}
+        target: /opt/boxtest/config/config.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${JUDGE_SERVER_TESTDATA_DIR:-./judge_server_testData}
+        target: /opt/boxtest/testData
+        read_only: true
+        bind:
+          create_host_path: false
     command:
       - ./build/judge_server
       - config/config.json
 
   api-server:
     build:
-      context: .
+      context: ${ROJ_BUILD_CONTEXT:-.}
     image: ${IMAGE_NAME:-roj2:local}
     container_name: roj-api-server
     restart: unless-stopped

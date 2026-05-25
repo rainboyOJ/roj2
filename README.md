@@ -1,289 +1,248 @@
 # roj2
 
-这个仓库现在不只是 handoff 包，也包含了一个已经能跑起来的最小 OJ 主链路实现。
+`roj2` 是一个基于 Node.js、TypeScript、MongoDB 和外部 `judge_server` 的在线评测系统。项目提供服务端渲染页面、JSON API、后台评测调度器和 judge 通信驱动，适合校内 OJ、课程训练和小规模题库管理场景。
 
-当前范围：
+## 功能概览
 
-- Pug 页面：题目列表、题目详情、提交详情
-- 认证页面：注册、登录、profile、管理员用户审核
-- HTTP API：题目列表、题目详情、创建 submission、查询 submission
-- MongoDB 持久化：`users`、`problems`、`submissions`
-- MongoDB session：`sessions`
-- 后台 `judge-dispatcher`
-- 复用现有 `packages/judge-driver` 与 `judge_server` 通信
-- seed 数据：`admin`、`demo`、样例届别、`1000` 题目
+- 用户注册、登录、会话管理
+- 管理员用户审核
+- 题目列表、题目详情、题面 Markdown HTML 渲染
+- 提交代码、提交列表、提交详情
+- 评测结果、测试点结果和提交源码展示
+- 管理端题目、用户、提交入口
+- MongoDB 持久化存储
+- 独立 `judge-dispatcher` 后台评测调度
+- `judge-driver` TCP 协议客户端
+- Docker / Docker Compose 部署
+- GHCR 镜像自动构建发布
 
-暂未实现：
-
-- 题目后台管理
-- 多节点 judge 调度
-
-## 目录结构
+## 架构
 
 ```text
-.
-  ├── apps/
-  │   ├── api-server/
-  │   └── judge-dispatcher/
-  ├── packages/
-  │   ├── db/
-  │   ├── judge-driver/
-  │   └── shared/
-  ├── docs/
-  │   ├── oj-nodejs-ts-mongodb-plan.md
-  │   └── superpowers/
-  ├── package.json
-  └── tsconfig.base.json
+Browser
+  -> api-server
+  -> MongoDB
+  -> judge-dispatcher
+  -> judge_server
 ```
 
-## 本地运行
+核心模块：
 
-前提：
+- `apps/api-server`：HTTP API、页面路由、Pug 模板渲染
+- `apps/judge-dispatcher`：从 MongoDB 抢占待评测提交，发送给 `judge_server`
+- `packages/db`：MongoDB 数据访问层
+- `packages/shared`：共享领域类型、状态常量和状态映射
+- `packages/judge-driver`：`judge_server` TCP JSON 协议客户端
+- `packages/markdown-renderer`：题面 Markdown 渲染
 
-- Node.js 22+
+`api-server` 和 `judge-dispatcher` 不直接通信。二者通过 MongoDB 的 `submissions` 集合协作：
+
+```text
+PENDING_DISPATCH -> SENT_TO_JUDGE -> JUDGING -> FINISHED / FAILED
+```
+
+## 环境要求
+
+- Node.js 25+
+- npm
 - Docker
-- 一个可访问的 `judge_server`
-- `judge_server` 侧已有 `testData/1000/data`
+- Docker Compose
+- MongoDB，默认可由 Compose 启动
+- `judge_server_cpp` 镜像或源码仓库
 
-### 1. 安装依赖
+## 快速部署
 
-```bash
-npm install
-```
-
-### 2. 一键启动整个测试栈
+推荐使用安装脚本准备 `judge_server`、构建镜像并拉起服务：
 
 ```bash
-./scripts/dev-up.sh
+./install.sh
 ```
 
-这个脚本会自动完成这些事情：
+可以在一个空目录中执行安装脚本。脚本会在当前目录创建部署所需资源：
 
-- 如果根目录没有 `.env`，从 `.env.example` 复制一份
-- `source .env` 并导出环境变量
-- 检查 `127.0.0.1:27017` 是否已有 MongoDB；没有的话尝试启动 Docker 容器
-- 执行 `npm run seed`
-- 启动 `judge_server`
-- 启动 `api-server`
-- 启动 `judge-dispatcher`
+```text
+judge_server_cpp/
+roj2/
+docker-compose.yaml
+.env
+judge_server_config.json
+judge_server_testData/
+```
 
-启动后直接访问：
+更新代码、重建镜像并重启服务：
+
+```bash
+./install.sh update
+```
+
+清理相关容器和本地构建镜像：
+
+```bash
+./install.sh clear
+```
+
+安装完成后访问：
 
 ```text
 http://127.0.0.1:3000/problems
 ```
 
-默认账号：
-
-- `admin / admin123456`
-- `demo / demo123456`
-
-停止整套服务：
-
-```bash
-./scripts/dev-down.sh
-```
-
-或者在 `dev-up.sh` 当前终端里按 `Ctrl-C`。
-
-### 3. MongoDB 说明
-
-脚本默认尝试使用：
-
-```bash
-mongo:7.0.34-jammy
-```
-
-但需要注意：
-
-- 之所以默认固定到 `7.0.34-jammy`，是因为这台机器当前的 Linux kernel `7.0.3-arch1-1` 下，MongoDB `8.x` 镜像存在已知启动兼容问题。
-- 如果你本机已经有可用的 MongoDB 在 `127.0.0.1:27017` 上运行，脚本会直接复用它。
-- 如果你仍然想换成别的 Mongo 镜像，也可以覆盖默认值。
-- 也可以通过环境变量覆盖脚本默认镜像，例如：
-
-```bash
-MONGO_IMAGE=<your-working-mongo-image> ./scripts/dev-up.sh
-```
-
-### 4. 手动启动方式
-
-如果你要逐个进程排查，也可以继续用手动方式。
-
-先准备环境变量：
-
-```bash
-cp .env.example .env
-```
-
-如果你的 `judge_server` 不在 `127.0.0.1:8000`，修改对应变量。
-注意：当前代码不会自动读取 `.env`，所以手动启动前需要先执行：
-
-```bash
-set -a
-source .env
-set +a
-```
-
-然后再分别执行下面的命令。
-
-### 5. 初始化 demo 数据
-
-```bash
-npm run seed
-```
-
-这会创建：
-
-- 管理员 `admin / admin123456`
-- 用户 `demo`
-- 密码 `demo123456`
-- 题目 `1000`
-
-### 6. 启动 API
-
-```bash
-npm run dev:api
-```
-
-默认监听：
+默认种子账号：
 
 ```text
-http://127.0.0.1:3000
+admin / admin123456
+demo  / demo123456
 ```
 
-### 7. 启动 dispatcher
+## judge_server 配置
 
-```bash
-npm run dev:dispatcher
-```
-
-### 8. 启动 judge_server
-
-在 `judge_server` 仓库中：
-
-```bash
-cd /home/rainboy/mycode/boxtest-opencode-dev
-./build/judge_server config/config.json
-```
-
-### 9. 打开页面提测
-
-访问：
+安装脚本会在部署目录创建：
 
 ```text
-http://127.0.0.1:3000/problems
+judge_server_config.json
+judge_server_testData/
 ```
 
-第一次使用可以：
-
-1. 打开 `/login` 用 `admin / admin123456` 登录
-2. 打开 `/admin/users` 审核学生
-3. 或直接用种子账号 `demo / demo123456` 登录后提测
-
-进入题目 `1000`，提交 C++ 或 Python 代码，页面会自动跳到 submission 详情，并每 2 秒刷新直到终态。
-
-## 常用命令
-
-```bash
-npm test
-npm run typecheck
-npm run seed
-npm run dev:api
-npm run dev:dispatcher
-```
-
-## Docker 镜像
-
-### GHCR 自动构建
-
-本仓库已经配置 GitHub Actions：代码 push 到 GitHub 的 `master` / `main` 分支后，会自动构建 Docker 镜像并推送到 GitHub Container Registry。
-
-默认镜像地址：
+Compose 会把它们挂载到 `judge-server` 容器：
 
 ```text
-ghcr.io/rainboyoj/roj2:latest
+judge_server_config.json -> /opt/boxtest/config/config.json
+judge_server_testData/   -> /opt/boxtest/testData
 ```
 
-首次发布后，需要在 GitHub 的 Package 设置里确认这个 GHCR package 是 public；否则外部用户拉取时需要先 `docker login ghcr.io`。
-
-常用拉取命令：
-
-```bash
-docker pull ghcr.io/rainboyoj/roj2:latest
-```
-
-也可以拉取某次提交对应的镜像：
-
-```bash
-docker pull ghcr.io/rainboyoj/roj2:sha-<commit-sha>
-```
-
-如果发布 Git tag，例如 `v0.1.0`，Actions 还会生成：
+题目测试数据目录格式：
 
 ```text
-ghcr.io/rainboyoj/roj2:v0.1.0
+judge_server_testData/<pid>/data
 ```
 
-### 使用 GHCR 镜像运行
-
-运行 API 服务：
+修改 `judge_server` 配置或测试数据后，建议重启整套服务：
 
 ```bash
-docker run --rm -p 3000:3000 \
-  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
-  -e JUDGE_SERVER_HOST=host.docker.internal \
-  ghcr.io/rainboyoj/roj2:latest
+docker compose down
+docker compose up -d
 ```
 
-运行 dispatcher：
+## Docker Compose
+
+本仓库提供 `docker-compose.yaml`，包含：
+
+- `mongodb`
+- `judge-server`
+- `api-server`
+- `judge-dispatcher`
+
+本地构建并启动：
 
 ```bash
-docker run --rm \
-  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
-  -e JUDGE_SERVER_HOST=host.docker.internal \
-  ghcr.io/rainboyoj/roj2:latest npm run dev:dispatcher
+docker compose up -d --build
 ```
 
-如果使用本仓库的 `docker-compose.yaml`，可以通过 `IMAGE_NAME` 指定使用 GHCR 镜像：
+查看日志：
+
+```bash
+docker compose logs -f judge-server judge-dispatcher api-server
+```
+
+停止服务：
+
+```bash
+docker compose down
+```
+
+如果要使用已发布的 GHCR 镜像运行 `api-server` 和 `judge-dispatcher`：
 
 ```bash
 IMAGE_NAME=ghcr.io/rainboyoj/roj2:latest docker compose up -d
 ```
 
-注意：`docker-compose.yaml` 里的 `judge-server` 镜像仍然需要单独准备，因为它来自 `judge_server_cpp` 项目。
+注意：`judge-server` 镜像 `boxtest-judge-server:dev` 需要提前由 `judge_server_cpp` 项目构建或通过安装脚本准备。
 
-### 本地构建
+## GHCR 镜像
 
-构建镜像：
+代码 push 到 GitHub 的 `master` / `main` 分支后，GitHub Actions 会自动构建并发布镜像到 GitHub Container Registry。
 
-```bash
-docker build -t roj-codex:local .
+镜像地址：
+
+```text
+ghcr.io/rainboyoj/roj2:latest
 ```
 
-运行 API 服务：
+拉取镜像：
 
 ```bash
-docker run --rm -p 3000:3000 \
-  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
-  -e JUDGE_SERVER_HOST=host.docker.internal \
-  roj-codex:local
+docker pull ghcr.io/rainboyoj/roj2:latest
 ```
 
-运行 dispatcher：
+可用 tag：
+
+- `latest`：默认分支最新镜像
+- `master` / `main`：分支镜像
+- `sha-<commit-sha>`：提交镜像
+- `v*`：版本 tag 镜像
+
+如果 GHCR package 未设置为 public，拉取前需要登录：
 
 ```bash
-docker run --rm \
-  -e MONGODB_URI=mongodb://host.docker.internal:27017 \
-  -e JUDGE_SERVER_HOST=host.docker.internal \
-  roj-codex:local npm run dev:dispatcher
+docker login ghcr.io
 ```
 
-如果 MongoDB 或 `judge_server` 运行在同一个 Docker network 里，把上面的 host 改成对应的容器服务名。
+## 本地开发
 
-## 推荐阅读顺序
+安装依赖：
 
-1. `docs/oj-nodejs-ts-mongodb-plan.md`
-2. `docs/superpowers/specs/2026-05-17-judge-pipeline-design.md`
-3. `packages/judge-driver/README.md`
-4. `apps/api-server/src/index.ts`
-5. `apps/judge-dispatcher/src/index.ts`
+```bash
+npm install
+```
+
+初始化种子数据：
+
+```bash
+npm run seed
+```
+
+启动 API 服务：
+
+```bash
+npm run dev:api
+```
+
+启动评测调度器：
+
+```bash
+npm run dev:dispatcher
+```
+
+常用检查：
+
+```bash
+npm test
+npm run typecheck
+```
+
+## 环境变量
+
+常用环境变量：
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `HOST` | `0.0.0.0` | API 监听地址 |
+| `PORT` | `3000` | API 监听端口 |
+| `MONGODB_URI` | `mongodb://127.0.0.1:27017` | MongoDB 地址 |
+| `MONGODB_DB` | `roj_demo` | MongoDB 数据库名 |
+| `JUDGE_SERVER_HOST` | `127.0.0.1` | `judge_server` 地址 |
+| `JUDGE_SERVER_PORT` | `8000` | `judge_server` 端口 |
+| `JUDGE_RESPONSE_TIMEOUT_MS` | `30000` | judge 响应超时 |
+| `JUDGE_POLL_INTERVAL_MS` | `500` | dispatcher 轮询间隔 |
+| `JUDGE_LEASE_MS` | `30000` | submission 抢占租约时间 |
+
+## 文档
+
+- `docs/judge_flow_source_reading.md`：一次评测的完整源码链路
+- `docs/source-reading-guide.md`：源码阅读顺序
+- `packages/judge-driver/README.md`：judge TCP 客户端说明
+- `docs/docker_one_key_build_and_run.md`：Docker 一键构建部署说明
+
+## License
+
+当前仓库未声明开源许可证。使用、分发或部署前请先确认项目授权。

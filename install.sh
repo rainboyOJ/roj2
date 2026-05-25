@@ -5,8 +5,10 @@ set -euo pipefail
 # 脚本所在目录。当前脚本可能从任意目录执行，所以先定位 install.sh 自己的位置。
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# 默认把 judge_server 和 roj2 拉到当前工作目录下；也可以通过 WORKSPACE_DIR 覆盖。
-WORKSPACE_DIR="${WORKSPACE_DIR:-$PWD}"
+# 默认把当前执行目录作为部署目录。用户可以在一个空目录中执行 install.sh，
+# 脚本会把仓库、compose 文件、.env、judge 配置和测试数据目录都准备在这里。
+DEPLOY_DIR="${DEPLOY_DIR:-$PWD}"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$DEPLOY_DIR}"
 
 # GitHub 访问较慢时使用代理。设置 GITHUB_PROXY= 可以关闭代理，直接访问原始 GitHub URL。
 GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.com/}"
@@ -26,8 +28,10 @@ SKIP_BUILD="${SKIP_BUILD:-0}"
 FORCE_JUDGE_CONFIG_COPY="${FORCE_JUDGE_CONFIG_COPY:-0}"
 
 # judge_server 容器运行时挂载的配置和测试数据目录。
-JUDGE_SERVER_CONFIG_PATH="${JUDGE_SERVER_CONFIG_PATH:-$ROOT_DIR/judge_server_config.json}"
-JUDGE_SERVER_TESTDATA_DIR="${JUDGE_SERVER_TESTDATA_DIR:-$ROOT_DIR/judge_server_testData}"
+COMPOSE_FILE_PATH="${COMPOSE_FILE_PATH:-$DEPLOY_DIR/docker-compose.yaml}"
+ENV_FILE_PATH="${ENV_FILE_PATH:-$DEPLOY_DIR/.env}"
+JUDGE_SERVER_CONFIG_PATH="${JUDGE_SERVER_CONFIG_PATH:-$DEPLOY_DIR/judge_server_config.json}"
+JUDGE_SERVER_TESTDATA_DIR="${JUDGE_SERVER_TESTDATA_DIR:-$DEPLOY_DIR/judge_server_testData}"
 
 # 这两个数组会在 setup_docker_commands 中根据当前用户权限被改成 docker 或 sudo docker。
 DOCKER_CMD=(docker)
@@ -83,6 +87,8 @@ Usage:
   ./install.sh clear    Remove related containers and local build images.
 
 Environment:
+  DEPLOY_DIR=           Directory for docker-compose.yaml, .env, judge config, and test data.
+  WORKSPACE_DIR=        Directory where judge_server_cpp and roj2 are cloned.
   UPDATE_REPOS=1        Update existing local git repositories.
   SKIP_BUILD=1          Reuse existing ${IMAGE_NAME} instead of building.
   GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
@@ -198,6 +204,25 @@ ensure_files() {
   [[ -f "$ROJ_DIR/docker-compose.yaml" ]] || fail "missing docker-compose.yaml in $ROJ_DIR"
 }
 
+prepare_deploy_workspace() {
+  mkdir -p "$DEPLOY_DIR"
+  cp "$ROJ_DIR/docker-compose.yaml" "$COMPOSE_FILE_PATH"
+
+  if [[ -f "$ROJ_DIR/.env.example" ]]; then
+    cp "$ROJ_DIR/.env.example" "$ENV_FILE_PATH"
+  fi
+
+  cat >"$ENV_FILE_PATH" <<EOF
+IMAGE_NAME=$IMAGE_NAME
+ROJ_BUILD_CONTEXT=$ROJ_DIR
+JUDGE_SERVER_CONFIG_PATH=$JUDGE_SERVER_CONFIG_PATH
+JUDGE_SERVER_TESTDATA_DIR=$JUDGE_SERVER_TESTDATA_DIR
+EOF
+
+  log "prepared compose file: $COMPOSE_FILE_PATH"
+  log "prepared env file: $ENV_FILE_PATH"
+}
+
 # 确保 judge_server 的 Docker 镜像存在。
 # 如果本地没有 boxtest-judge-server:dev，就尝试从 judge_server 仓库构建。
 ensure_judge_image() {
@@ -222,6 +247,14 @@ prepare_judge_runtime_files() {
 
   mkdir -p "$(dirname "$JUDGE_SERVER_CONFIG_PATH")"
   mkdir -p "$JUDGE_SERVER_TESTDATA_DIR"
+
+  if [[ -d "$JUDGE_SERVER_CONFIG_PATH" ]]; then
+    fail "$JUDGE_SERVER_CONFIG_PATH is a directory; remove it and rerun install.sh so it can be created as a file"
+  fi
+
+  if [[ -e "$JUDGE_SERVER_TESTDATA_DIR" && ! -d "$JUDGE_SERVER_TESTDATA_DIR" ]]; then
+    fail "$JUDGE_SERVER_TESTDATA_DIR exists but is not a directory"
+  fi
 
   if [[ ! -f "$JUDGE_SERVER_CONFIG_PATH" || "$FORCE_JUDGE_CONFIG_COPY" == "1" ]]; then
     cp "$source_config" "$JUDGE_SERVER_CONFIG_PATH"
@@ -252,10 +285,10 @@ main() {
   # update 模式强制更新仓库并重新构建镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
     install)
-      STEP_TOTAL=11
+      STEP_TOTAL=12
       ;;
     update)
-      STEP_TOTAL=12
+      STEP_TOTAL=13
       UPDATE_REPOS=1
       SKIP_BUILD=0
       ;;
@@ -295,6 +328,8 @@ main() {
 
   step "check required project files"
   ensure_files
+  step "prepare deploy workspace"
+  prepare_deploy_workspace
   step "prepare judge_server image"
   ensure_judge_image
   step "prepare judge_server runtime files"
@@ -313,9 +348,10 @@ main() {
   fi
 
   step "prepare Docker Compose workspace"
-  # docker compose 需要在 roj2 仓库目录下执行，因为 compose 文件在这个目录中。
-  cd "$ROJ_DIR"
+  # docker compose 在部署目录中执行。compose 文件和 .env 都由 install.sh 生成在这里。
+  cd "$DEPLOY_DIR"
   export IMAGE_NAME
+  export ROJ_BUILD_CONTEXT="$ROJ_DIR"
   export JUDGE_SERVER_CONFIG_PATH
   export JUDGE_SERVER_TESTDATA_DIR
 
@@ -346,18 +382,14 @@ main() {
 [install]
 [install] To change judge_server settings:
 [install]   1. stop services:
-[install]      cd $ROJ_DIR && ${COMPOSE_CMD[*]} down
+[install]      cd $DEPLOY_DIR && ${COMPOSE_CMD[*]} down
 [install]   2. edit $JUDGE_SERVER_CONFIG_PATH
 [install]   3. put problem data under $JUDGE_SERVER_TESTDATA_DIR/<pid>/data
 [install]   4. start services:
-[install]      cd $ROJ_DIR
-[install]      IMAGE_NAME="$IMAGE_NAME" \\
-[install]      JUDGE_SERVER_CONFIG_PATH="$JUDGE_SERVER_CONFIG_PATH" \\
-[install]      JUDGE_SERVER_TESTDATA_DIR="$JUDGE_SERVER_TESTDATA_DIR" \\
-[install]      ${COMPOSE_CMD[*]} up -d
+[install]      cd $DEPLOY_DIR && ${COMPOSE_CMD[*]} up -d
 [install]
 [install] Logs:
-[install]   cd $ROJ_DIR && ${COMPOSE_CMD[*]} logs -f judge-server judge-dispatcher api-server
+[install]   cd $DEPLOY_DIR && ${COMPOSE_CMD[*]} logs -f judge-server judge-dispatcher api-server
 [install] Stop: ${COMPOSE_CMD[*]} down
 EOF
 }
