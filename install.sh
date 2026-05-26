@@ -36,6 +36,7 @@ API_HOST_PORT="${API_HOST_PORT:-3300}"
 UPDATE_REPOS="${UPDATE_REPOS:-0}"
 FORCE_JUDGE_CONFIG_COPY="${FORCE_JUDGE_CONFIG_COPY:-0}"
 SKIP_RUNTIME_IMAGE_PULL="${SKIP_RUNTIME_IMAGE_PULL:-0}"
+CLEAR_MONGODB_DATA="${CLEAR_MONGODB_DATA:-}"
 
 # judge_server 容器运行时挂载的配置和测试数据目录。
 COMPOSE_FILE_PATH="${COMPOSE_FILE_PATH:-$DEPLOY_DIR/docker-compose.yaml}"
@@ -112,6 +113,8 @@ Environment:
                          Overwrite judge_server_config.json from judge_server repo.
   SKIP_RUNTIME_IMAGE_PULL=1
                          Skip pulling runtime Docker images; useful for CI with local builds.
+  CLEAR_MONGODB_DATA=1
+                         Remove the MongoDB data volume when running ./install.sh clear.
 EOF
 }
 
@@ -414,6 +417,40 @@ clear_docker_resources() {
     "$JUDGE_SERVER_IMAGE_NAME" >/dev/null 2>&1 || true
 }
 
+confirm_clear_mongodb_data() {
+  local choice
+
+  if [[ -n "$CLEAR_MONGODB_DATA" ]]; then
+    case "$CLEAR_MONGODB_DATA" in
+      1|yes|YES|true|TRUE)
+        CLEAR_MONGODB_DATA=1
+        log "will remove MongoDB data volume: roj-mongodb-data"
+        return
+        ;;
+      0|no|NO|false|FALSE)
+        CLEAR_MONGODB_DATA=0
+        log "will keep MongoDB data volume: roj-mongodb-data"
+        return
+        ;;
+      *)
+        fail "invalid CLEAR_MONGODB_DATA value: $CLEAR_MONGODB_DATA"
+        ;;
+    esac
+  fi
+
+  read -r -p "[install] Remove MongoDB data volume roj-mongodb-data? [y/N]: " choice
+  case "${choice:-N}" in
+    y|Y|yes|YES)
+      CLEAR_MONGODB_DATA=1
+      log "will remove MongoDB data volume: roj-mongodb-data"
+      ;;
+    *)
+      CLEAR_MONGODB_DATA=0
+      log "will keep MongoDB data volume: roj-mongodb-data"
+      ;;
+  esac
+}
+
 main() {
   # update 模式强制更新仓库并重新拉取镜像；install 模式默认复用已有仓库。
   case "$COMMAND" in
@@ -425,13 +462,19 @@ main() {
       UPDATE_REPOS=1
       ;;
     clear)
-      STEP_TOTAL=4
+      STEP_TOTAL=5
       step "check Docker command"
       require_command docker
       step "setup Docker permissions and Compose command"
       setup_docker_commands
+      step "confirm whether to remove MongoDB data"
+      confirm_clear_mongodb_data
       step "remove related containers and images"
       clear_docker_resources
+      if [[ "$CLEAR_MONGODB_DATA" == "1" ]]; then
+        step "remove MongoDB data volume"
+        "${DOCKER_CMD[@]}" volume rm roj-mongodb-data >/dev/null 2>&1 || true
+      fi
       step "finish clear"
       return 0
       ;;
