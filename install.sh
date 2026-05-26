@@ -367,8 +367,10 @@ pull_runtime_images() {
 
 prepare_judge_runtime_files() {
   local source_config="$JUDGE_SERVER_DIR/config/config.json"
-  local source_default_testdata="$JUDGE_SERVER_DIR/testData/1000"
-  local target_default_testdata="$JUDGE_SERVER_TESTDATA_DIR/1000"
+  local source_default_problem_data="$ROJ_DIR/packages/db/default_problems/1000/data"
+  local fallback_default_testdata="$JUDGE_SERVER_DIR/testData/1000"
+  local target_default_problem_dir="$JUDGE_SERVER_TESTDATA_DIR/1000"
+  local target_default_problem_data="$target_default_problem_dir/data"
 
   [[ -f "$source_config" ]] || fail "missing judge_server config: $source_config"
 
@@ -391,13 +393,17 @@ prepare_judge_runtime_files() {
     log "using existing judge config: $JUDGE_SERVER_CONFIG_PATH"
   fi
 
-  if [[ -d "$source_default_testdata" && ! -e "$target_default_testdata" ]]; then
-    cp -R "$source_default_testdata" "$target_default_testdata"
-    log "copied default judge test data to $target_default_testdata"
-  elif [[ -d "$target_default_testdata" ]]; then
-    log "using existing default judge test data: $target_default_testdata"
+  if [[ -d "$target_default_problem_data" ]]; then
+    log "using existing default judge test data: $target_default_problem_data"
+  elif [[ -d "$source_default_problem_data" ]]; then
+    mkdir -p "$target_default_problem_dir"
+    cp -R "$source_default_problem_data" "$target_default_problem_data"
+    log "copied default judge test data to $target_default_problem_data"
+  elif [[ -d "$fallback_default_testdata" && ! -e "$target_default_problem_dir" ]]; then
+    cp -R "$fallback_default_testdata" "$target_default_problem_dir"
+    log "copied fallback judge test data to $target_default_problem_dir"
   else
-    warn "default judge test data not found in $source_default_testdata"
+    warn "default judge test data not found in $source_default_problem_data"
   fi
 
   log "using judge test data directory: $JUDGE_SERVER_TESTDATA_DIR"

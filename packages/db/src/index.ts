@@ -1,4 +1,8 @@
 // 这个文件是项目的数据访问层，负责所有 MongoDB 读写。
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import {
   argon2Sync,
   randomBytes,
@@ -33,6 +37,39 @@ function debugJudge(message: string, details?: Record<string, unknown>) {
 
   const suffix = details ? ` ${JSON.stringify(details)}` : '';
   console.log(`[DEBUG] [db] ${message}${suffix}`);
+}
+
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const defaultProblemsRoot = path.join(packageRoot, 'default_problems');
+
+interface DefaultProblemSeed {
+  pid: string;
+  title: string;
+  statementMarkdown: string;
+  allowLanguages: AppLanguage[];
+}
+
+async function readDefaultProblemSeed(pid: string): Promise<DefaultProblemSeed> {
+  const problemDir = path.join(defaultProblemsRoot, pid);
+  const metadata = JSON.parse(
+    await readFile(path.join(problemDir, 'metadata.json'), 'utf8'),
+  ) as {
+    title?: unknown;
+    allowLanguages?: unknown;
+  };
+  const statementMarkdown = await readFile(path.join(problemDir, 'content.md'), 'utf8');
+  const allowLanguages = Array.isArray(metadata.allowLanguages)
+    ? metadata.allowLanguages.filter((language): language is AppLanguage => (
+      language === 'cpp' || language === 'python'
+    ))
+    : [];
+
+  return {
+    pid,
+    title: typeof metadata.title === 'string' ? metadata.title : pid,
+    statementMarkdown,
+    allowLanguages: allowLanguages.length > 0 ? allowLanguages : ['cpp', 'python'],
+  };
 }
 
 // 抢占待评测 submission 时使用的原子更新。
@@ -203,6 +240,7 @@ export class RojDb {
     const demoUserId = new ObjectId().toHexString();
     const adminUserId = new ObjectId().toHexString();
     const demoProblemId = new ObjectId().toHexString();
+    const defaultProblem1000 = await readDefaultProblemSeed('1000');
 
     await this.grades().updateOne(
       { name: '2024' },
@@ -314,11 +352,11 @@ export class RojDb {
       { pid: '1000' },
       {
         $set: {
-          pid: '1000',
-          title: 'A + B Problem',
-          statementMarkdown: 'Input two integers and print their sum.',
-          statementHtml: renderMarkdown('Input two integers and print their sum.'),
-          allowLanguages: ['cpp', 'python'],
+          pid: defaultProblem1000.pid,
+          title: defaultProblem1000.title,
+          statementMarkdown: defaultProblem1000.statementMarkdown,
+          statementHtml: renderMarkdown(defaultProblem1000.statementMarkdown),
+          allowLanguages: defaultProblem1000.allowLanguages,
           isVisible: true,
           updatedAt: now,
         },

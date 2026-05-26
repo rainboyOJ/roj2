@@ -15,12 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
-    services:
-      mongodb:
-        image: mongodb/mongodb-community-server:latest
-        ports:
-          - 27017:27017
-
     steps:
       - name: Checkout roj2
         uses: actions/checkout@v4
@@ -71,6 +65,7 @@ jobs:
           DEPLOY_DIR: ${{ runner.temp }}/roj-ci
           WORKSPACE_DIR: ${{ runner.temp }}/roj-ci
           JUDGE_SERVER_DIR: ${{ github.workspace }}/judge_server_cpp
+          ROJ_DIR: ${{ github.workspace }}
           IMAGE_NAME: ghcr.io/${{ github.repository }}:ci
           JUDGE_SERVER_IMAGE_NAME: judge_server_cpp:ci
           JUDGE_SERVER_HOST_PORT: 8000

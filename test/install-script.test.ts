@@ -41,6 +41,7 @@ exit 0
           env: {
             ...process.env,
             PATH: `${tempDir}:${process.env.PATH ?? ''}`,
+            CLEAR_MONGODB_DATA: '0',
           },
         }),
       ).resolves.toMatchObject({
@@ -74,9 +75,11 @@ exit 0
     await mkdir(deployDir, { recursive: true });
     await mkdir(join(judgeDir, '.git'), { recursive: true });
     await mkdir(join(judgeDir, 'config'), { recursive: true });
-    await mkdir(join(judgeDir, 'testData', '1000', 'data'), { recursive: true });
     await mkdir(rojDir, { recursive: true });
     await mkdir(join(rojDir, '.git'), { recursive: true });
+    await mkdir(join(rojDir, 'packages', 'db', 'default_problems', '1000', 'data'), {
+      recursive: true,
+    });
 
     await writeFile(
       join(judgeDir, 'config', 'config.json'),
@@ -86,9 +89,15 @@ exit 0
       }, null, 2),
     );
     await writeFile(join(judgeDir, 'Dockerfile'), 'FROM scratch\n');
-    await writeFile(join(judgeDir, 'testData', '1000', 'data', 'problem1.in'), '1 2\n');
-    await writeFile(join(judgeDir, 'testData', '1000', 'data', 'problem1.out'), '3\n');
     await writeFile(join(rojDir, 'Dockerfile'), 'FROM scratch\n');
+    await writeFile(
+      join(rojDir, 'packages', 'db', 'default_problems', '1000', 'data', 'problem1.in'),
+      '1 2\n',
+    );
+    await writeFile(
+      join(rojDir, 'packages', 'db', 'default_problems', '1000', 'data', 'problem1.out'),
+      '3\n',
+    );
     await writeFile(
       join(rojDir, 'docker-compose.yaml'),
       `services:
@@ -167,6 +176,7 @@ exit 0
             JUDGE_SERVER_DIR: judgeDir,
             ROJ_DIR: rojDir,
             GITHUB_PROXY: '',
+            DOCKER_IMAGE_ACCELERATOR_KIND: 'none',
           },
         }),
       ).resolves.toMatchObject({

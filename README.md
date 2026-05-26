@@ -118,6 +118,16 @@ judge_server_testData/   -> /opt/boxtest/testData
 judge_server_testData/<pid>/data
 ```
 
+默认题目放在仓库内：
+
+```text
+packages/db/default_problems/<pid>/content.md
+packages/db/default_problems/<pid>/metadata.json
+packages/db/default_problems/<pid>/data/
+```
+
+执行 `install.sh` 时，会把默认题目的 `data/` 复制到 `judge_server_testData/<pid>/data`。
+
 修改 `judge_server` 配置或测试数据后，建议重启整套服务：
 
 ```bash
