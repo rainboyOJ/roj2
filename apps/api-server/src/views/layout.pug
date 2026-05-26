@@ -71,7 +71,8 @@ html(lang="zh-CN" data-theme="light")
         gap: 1rem;
       }
 
-      .site-header nav ul {
+      .nav-brand,
+      .nav-links {
         margin: 0;
         padding: 0;
         display: flex;
@@ -80,8 +81,17 @@ html(lang="zh-CN" data-theme="light")
         gap: 0.5rem 0.75rem;
       }
 
-      .site-header nav ul li {
+      .nav-links {
+        justify-content: flex-end;
+      }
+
+      .nav-links form {
         margin: 0;
+      }
+
+      .nav-links button {
+        padding: 0.35rem 0.65rem;
+        border-radius: 0.65rem;
       }
 
       .brand-block {
@@ -163,6 +173,28 @@ html(lang="zh-CN" data-theme="light")
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 1rem;
+      }
+
+      .home-overview {
+        margin-top: 0.25rem;
+      }
+
+      .home-overview > header {
+        margin-bottom: 0.75rem;
+      }
+
+      .home-overview > header p {
+        margin-bottom: 0;
+        color: var(--soft-text);
+      }
+
+      .home-overview .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+      }
+
+      .home-overview .metric-card {
+        box-shadow: none;
       }
 
       .hero-grid {
@@ -336,6 +368,32 @@ html(lang="zh-CN" data-theme="light")
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
+      }
+
+      .form-grid > .form-block {
+        grid-column: 1 / -1;
+      }
+
+      .choice-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .choice-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin: 0;
+        padding: 0.7rem 0.95rem;
+        border: 1px solid rgba(217, 225, 234, 0.9);
+        border-radius: 0.75rem;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .choice-chip input {
+        margin: 0;
       }
 
       .form-actions {
@@ -620,6 +678,10 @@ html(lang="zh-CN" data-theme="light")
           grid-template-columns: 1fr;
         }
 
+        .form-grid > .form-block {
+          grid-column: auto;
+        }
+
         .list-panel > header {
           display: block;
         }
@@ -661,57 +723,44 @@ html(lang="zh-CN" data-theme="light")
         }
 
         .site-header nav {
+          flex-direction: column;
           align-items: flex-start;
+          gap: 0.45rem;
         }
 
-        .site-header nav ul {
+        .nav-links {
           justify-content: flex-start;
+          gap: 0.45rem 0.7rem;
         }
       }
   body
     header.site-header
       nav
-        ul
-          li
-            a(href=isAdminArea ? urlWithLang('/admin') : urlWithLang('/'))
-              span.brand-block
-                strong ROJ
-                small= isAdminArea ? t('nav.admin') : t('site.tagline')
-        ul
+        .nav-brand
+          a(href=isAdminArea ? urlWithLang('/admin') : urlWithLang('/'))
+            span.brand-block
+              strong ROJ
+              small= isAdminArea ? t('nav.admin') : t('site.tagline')
+        .nav-links
           if isAdminArea
-            li
-              a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
-            li
-              a(href=urlWithLang('/admin/settings/languages'))= t('nav.admin.languages')
-            li
-              a(href=urlWithLang('/admin/grades'))= t('nav.admin.grades')
-            li
-              a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
-            li
-              a(href=urlWithLang('/admin/users'))= t('nav.admin.users')
-            li
-              a(href=urlWithLang('/'))= t('nav.home')
+            a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
+            a(href=urlWithLang('/admin/settings/languages'))= t('nav.admin.languages')
+            a(href=urlWithLang('/admin/grades'))= t('nav.admin.grades')
+            a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
+            a(href=urlWithLang('/admin/users'))= t('nav.admin.users')
+            a(href=urlWithLang('/'))= t('nav.home')
           else
-            li
-              a(href=urlWithLang('/'))= t('nav.home')
-            li
-              a(href=urlWithLang('/problems'))= t('nav.problems')
-            li
-              a(href=urlWithLang('/submissions'))= t('nav.submissions')
-            li
-              a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
-            li
-              a(href=urlWithLang('/contests'))= t('nav.contests')
+            a(href=urlWithLang('/'))= t('nav.home')
+            a(href=urlWithLang('/problems'))= t('nav.problems')
+            a(href=urlWithLang('/submissions'))= t('nav.submissions')
+            a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
+            a(href=urlWithLang('/contests'))= t('nav.contests')
             if currentUser
-              li
-                a(href=urlWithLang('/profile'))= t('nav.profile')
-              li
-                form(method="post" action=urlWithLang('/logout'))
-                  button(type="submit" class="secondary")= t('nav.logout')
+              a(href=urlWithLang('/profile'))= t('nav.profile')
+              form(method="post" action=urlWithLang('/logout'))
+                button(type="submit" class="secondary")= t('nav.logout')
             else
-              li
-                a(href=urlWithLang('/login'))= t('nav.login')
-              li
-                a(href=urlWithLang('/register'))= t('nav.register')
+              a(href=urlWithLang('/login'))= t('nav.login')
+              a(href=urlWithLang('/register'))= t('nav.register')
     main.container
       block content

@@ -412,7 +412,7 @@ const translations: Record<UiLang, TranslationMap> = {
     'register.password': '密码',
     'register.usernamePlaceholder': 'student_01',
     'register.namePlaceholder': '你的姓名',
-    'register.genderPlaceholder': 'male / female / other',
+    'register.genderPlaceholder': 'male / female',
     'register.gradePlaceholder': '2025',
     'register.classNamePlaceholder': '1 班',
     'register.passwordPlaceholder': '至少 8 个字符',

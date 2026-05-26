@@ -81,7 +81,7 @@ export interface UserDocument {
   _id: string;
   username: string;
   name: string;
-  gender: 'male' | 'female' | 'other';
+  gender: 'male' | 'female';
   className: string;
   grade: string;
   passwordHash: string;

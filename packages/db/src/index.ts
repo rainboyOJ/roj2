@@ -75,7 +75,7 @@ export interface JudgeSnapshotPersistInput {
 export interface RegisterUserInput {
   username: string;
   name: string;
-  gender: 'male' | 'female' | 'other';
+  gender: 'male' | 'female';
   className: string;
   grade: string;
   password: string;
@@ -261,7 +261,7 @@ export class RojDb {
         $set: {
           username: 'admin',
           name: 'Administrator',
-          gender: 'other',
+          gender: 'male',
           className: 'System',
           grade: '2025',
           passwordHash: hashPassword('admin123456'),
@@ -291,7 +291,7 @@ export class RojDb {
         $set: {
           username: 'demo',
           name: 'Demo User',
-          gender: 'other',
+          gender: 'female',
           className: 'Class Demo',
           grade: '2025',
           passwordHash: hashPassword('demo123456'),

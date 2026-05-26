@@ -30,7 +30,7 @@ const createSubmissionSchema = z.object({
 const registerSchema = z.object({
   username: z.string().regex(/^[a-z0-9_]{3,24}$/),
   name: z.string().min(1),
-  gender: z.enum(['male', 'female', 'other']),
+  gender: z.enum(['male', 'female']),
   className: z.string().min(1),
   grade: z.string().min(1),
   password: z.string().min(8),
@@ -162,7 +162,7 @@ export interface ApiServerServices {
   registerUser(input: {
     username: string;
     name: string;
-    gender: 'male' | 'female' | 'other';
+    gender: 'male' | 'female';
     className: string;
     grade: string;
     password: string;

@@ -17,30 +17,26 @@ block content
             div
               label(for="name")= t('register.name')
               input#name(type="text" name="name" placeholder=t('register.namePlaceholder'))
-          .form-grid
-            div
-              fieldset
-                legend= t('register.gender')
-                label
-                  input(type="radio" name="gender" value="male")
-                  | 男
-                label
+            fieldset.form-block
+              legend= t('register.gender')
+              .choice-row
+                label.choice-chip
+                  input(type="radio" name="gender" value="male" checked)
+                  span 男
+                label.choice-chip
                   input(type="radio" name="gender" value="female")
-                  | 女
-                label
-                  input(type="radio" name="gender" value="other" checked)
-                  | 其他
+                  span 女
             div
               label(for="grade")= t('register.grade')
               select#grade(name="grade")
                 each grade in grades
                   option(value=grade.name)= grade.name
-          div
-            label(for="className")= t('register.className')
-            input#className(type="number" name="className" min="1" step="1" placeholder=t('register.classNamePlaceholder'))
-          div
-            label(for="password")= t('register.password')
-            input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))
+            div
+              label(for="className")= t('register.className')
+              input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder'))
+            div
+              label(for="password")= t('register.password')
+              input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))
           .form-actions
             button(type="submit")= t('register.submit')
             a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')

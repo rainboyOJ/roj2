@@ -366,7 +366,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('登录');
   });
 
-  it('renders registration form with gender radios, grade select, and numeric class input', async () => {
+  it('renders registration form with gender radios, grade select, and text class input', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => null,
       listGrades: async () => [
@@ -399,7 +399,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('<select id="grade" name="grade">');
     expect(response.body).toContain('value="2025"');
     expect(response.body).not.toContain('value="2024"');
-    expect(response.body).toContain('input id="className" type="number"');
+    expect(response.body).toContain('input id="className" type="text"');
   });
 
   it('renders profile password change form', async () => {
