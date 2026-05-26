@@ -513,6 +513,26 @@ export class RojDb {
     return this.attachProblemsToSubmissions(await this.listSubmissionsByUser(userId));
   }
 
+  async listProblemProgressByUser(userId: string) {
+    const submissions = await this.submissions()
+      .find({ userId }, { projection: { pid: 1, verdict: 1 } })
+      .toArray();
+    const progressByPid = new Map<string, 'accepted' | 'attempted'>();
+
+    for (const submission of submissions) {
+      if (submission.verdict === SubmissionVerdicts.AC) {
+        progressByPid.set(submission.pid, 'accepted');
+        continue;
+      }
+
+      if (!progressByPid.has(submission.pid)) {
+        progressByPid.set(submission.pid, 'attempted');
+      }
+    }
+
+    return progressByPid;
+  }
+
   async listAllSubmissions() {
     return this.submissions().find({}).sort({ createdAt: -1 }).toArray();
   }

@@ -88,6 +88,12 @@ export interface ProblemViewModel {
   allowLanguages: string[];
 }
 
+export type ProblemProgress = 'accepted' | 'attempted';
+
+export interface ProblemListViewModel extends ProblemViewModel {
+  progress: ProblemProgress | null;
+}
+
 export interface LanguageSettingsViewModel {
   enabledLanguages: AppLanguage[];
 }
@@ -156,6 +162,7 @@ export interface ApiServerServices {
     sourceCode: string;
   }): Promise<CreateSubmissionResult>;
   listProblems(): Promise<ProblemViewModel[]>;
+  listProblemProgressByUser(userId: string): Promise<Map<string, ProblemProgress>>;
   getProblemByPid(pid: string): Promise<ProblemViewModel | null>;
   getSubmissionById(id: string): Promise<SubmissionViewModel | null>;
   listSubmissions(user: SessionUser): Promise<SubmissionViewModel[]>;
@@ -698,15 +705,21 @@ export function buildApp(services: ApiServerServices) {
   });
 
   app.get('/problems', async (request, reply) => {
-    const [problems, enabledLanguages] = await Promise.all([
+    const token = parseSessionToken(request.headers.cookie);
+    const currentUser = await services.getCurrentUser(token);
+    const [problems, enabledLanguages, progressByPid] = await Promise.all([
       services.listProblems(),
       services.getEnabledLanguages(),
+      currentUser
+        ? services.listProblemProgressByUser(currentUser.id)
+        : Promise.resolve(new Map<string, ProblemProgress>()),
     ]);
 
     return renderPage(request, reply, 'problems.pug', {
-      problems: problems.map((problem) => ({
+      problems: problems.map((problem): ProblemListViewModel => ({
         ...problem,
         allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+        progress: progressByPid.get(problem.pid) ?? null,
       })),
     });
   });

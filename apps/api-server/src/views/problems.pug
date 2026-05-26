@@ -15,13 +15,23 @@ block content
         table.data-table
           thead
             tr
+              th.problem-progress-cell 状态
               th= t('problems.pid')
               th= t('problems.problem')
               th= t('problems.languages')
               th= t('problems.action')
           tbody
             each problem in problems
-              tr
+              tr(class=problem.progress === 'accepted' ? 'problem-row-accepted' : '')
+                td.problem-progress-cell
+                  if problem.progress === 'accepted'
+                    span.problem-progress-icon.accepted(title="已通过" aria-label="已通过")
+                      svg(viewBox="0 0 24 24" width="16" height="16" aria-hidden="true")
+                        path(d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round")
+                  else if problem.progress === 'attempted'
+                    span.problem-progress-icon.attempted(title="已尝试" aria-label="已尝试")
+                      svg(viewBox="0 0 24 24" width="16" height="16" aria-hidden="true")
+                        path(d="M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round")
                 td.table-code= problem.pid
                 td
                   strong

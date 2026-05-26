@@ -168,6 +168,7 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const problems = await db.listVisibleProblems();
       return problems.map(mapProblem);
     },
+    listProblemProgressByUser: async (userId: string) => db.listProblemProgressByUser(userId),
     getProblemByPid: async (pid: string) => {
       const problem = await db.getProblemByPid(pid);
       return problem ? mapProblem(problem) : null;

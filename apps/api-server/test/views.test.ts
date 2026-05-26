@@ -23,6 +23,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
         allowLanguages: ['cpp', 'python'],
       },
     ],
+    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
     getProblemByPid: async () => ({
       pid: '1000',
       title: 'A + B Problem',
@@ -250,8 +251,60 @@ describe('rendered views', () => {
     expect(response.body).toContain('<nav');
     expect(response.body).toContain('题目列表');
     expect(response.body).toContain('<table');
+    expect(response.body).toContain('<th class="problem-progress-cell">状态</th>');
     expect(response.body).toContain('A + B Problem');
     expect(response.body).toContain('提交代码');
+    expect(response.body).not.toContain('已通过');
+    expect(response.body).not.toContain('已尝试');
+  });
+
+  it('renders current user problem progress on the problems page', async () => {
+    const app = buildApp(createServices({
+      listProblems: async () => [
+        {
+          pid: '1000',
+          title: 'Accepted Problem',
+          statementMarkdown: 'Solved.',
+          statementHtml: '<p>Solved.</p>',
+          allowLanguages: ['cpp', 'python'],
+        },
+        {
+          pid: '1001',
+          title: 'Attempted Problem',
+          statementMarkdown: 'Tried.',
+          statementHtml: '<p>Tried.</p>',
+          allowLanguages: ['cpp', 'python'],
+        },
+        {
+          pid: '1002',
+          title: 'Fresh Problem',
+          statementMarkdown: 'Fresh.',
+          statementHtml: '<p>Fresh.</p>',
+          allowLanguages: ['cpp', 'python'],
+        },
+      ],
+      listProblemProgressByUser: async () => new Map([
+        ['1000', 'accepted'],
+        ['1001', 'attempted'],
+      ]),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('class="problem-row-accepted"');
+    expect(response.body).toContain('<td class="problem-progress-cell">');
+    expect(response.body).toContain('problem-progress-icon accepted');
+    expect(response.body).toContain('title="已通过"');
+    expect(response.body).toContain('problem-progress-icon attempted');
+    expect(response.body).toContain('title="已尝试"');
+    expect(response.body).toContain('Fresh Problem');
   });
 
   it('renders only globally enabled languages on the problems list page', async () => {

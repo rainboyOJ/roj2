@@ -146,6 +146,7 @@ html(lang="zh-CN" data-theme="light")
         height: 100%;
         background: var(--panel-background);
         border: 1px solid var(--panel-border);
+        border-radius: 0;
         box-shadow: 0 18px 40px rgba(116, 138, 168, 0.12);
       }
 
@@ -156,7 +157,7 @@ html(lang="zh-CN" data-theme="light")
       .auth-panel > header {
         background: var(--hero-surface);
         border: 1px solid rgba(217, 225, 234, 0.7);
-        border-radius: 1rem;
+        border-radius: 0;
         padding: 1.1rem 1.2rem;
       }
 
@@ -217,6 +218,7 @@ html(lang="zh-CN" data-theme="light")
 
       .feature-card {
         padding: 1.2rem;
+        border-radius: 0;
       }
 
       .feature-card h3,
@@ -232,7 +234,7 @@ html(lang="zh-CN" data-theme="light")
       .metric-card {
         padding: 1rem;
         border: 1px solid var(--panel-border);
-        border-radius: 0.85rem;
+        border-radius: 0;
         background: var(--panel-background);
         box-shadow: 0 14px 32px rgba(116, 138, 168, 0.1);
       }
@@ -278,6 +280,7 @@ html(lang="zh-CN" data-theme="light")
 
       .panel-card {
         overflow: hidden;
+        border-radius: 0;
       }
 
       .panel-card > header {
@@ -396,7 +399,7 @@ html(lang="zh-CN" data-theme="light")
         margin: 0;
         padding: 0.7rem 0.95rem;
         border: 1px solid rgba(217, 225, 234, 0.9);
-        border-radius: 0.75rem;
+        border-radius: 0;
         background: #fff;
         cursor: pointer;
       }
@@ -475,13 +478,13 @@ html(lang="zh-CN" data-theme="light")
         overflow-x: auto;
         padding: 0.85rem 0.95rem;
         border: 1px solid rgba(217, 225, 234, 0.95);
-        border-radius: 0.7rem;
+        border-radius: 0;
         background: #f3f6fa;
       }
 
       .markdown-body :not(pre) > code {
         padding: 0.1rem 0.3rem;
-        border-radius: 0.35rem;
+        border-radius: 0;
         background: #edf3f9;
         color: #26384d;
       }
@@ -576,7 +579,7 @@ html(lang="zh-CN" data-theme="light")
       .table-shell {
         overflow-x: auto;
         border: 1px solid var(--panel-border);
-        border-radius: 1rem;
+        border-radius: 0;
         background: rgba(255, 255, 255, 0.88);
         box-shadow: 0 18px 40px rgba(116, 138, 168, 0.12);
       }
@@ -605,6 +608,14 @@ html(lang="zh-CN" data-theme="light")
         background: rgba(248, 251, 255, 0.96);
       }
 
+      .data-table tbody tr.problem-row-accepted {
+        background: #eef9f1;
+      }
+
+      .data-table tbody tr.problem-row-accepted td {
+        border-bottom-color: #cce9d5;
+      }
+
       .data-table td,
       .data-table th {
         padding: 0.8rem 0.95rem;
@@ -628,6 +639,29 @@ html(lang="zh-CN" data-theme="light")
       .table-code {
         font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
         white-space: nowrap;
+      }
+
+      .problem-progress-cell {
+        width: 3.25rem;
+        min-width: 3.25rem;
+        text-align: center;
+      }
+
+      .problem-progress-icon {
+        width: 1.35rem;
+        height: 1.35rem;
+        flex: 0 0 1.35rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #607086;
+        background: #e4e8ee;
+        border-radius: 0.25rem;
+      }
+
+      .problem-progress-icon.accepted {
+        color: #ffffff;
+        background: #2f7d50;
       }
 
       .table-actions {

@@ -16,6 +16,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       score: 0,
     }),
     listProblems: async () => [],
+    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
     getProblemByPid: async () => null,
     getSubmissionById: async () => null,
     listSubmissions: async () => [],

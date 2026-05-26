@@ -13,6 +13,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       verdict: 'PENDING',
     }),
     listProblems: async () => [],
+    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
     getProblemByPid: async () => null,
     getSubmissionById: async () => null,
     registerUser: async () => ({
