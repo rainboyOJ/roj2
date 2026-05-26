@@ -229,6 +229,28 @@ npm test
 npm run typecheck
 ```
 
+### 导入 ROJ 题目
+
+如果要把 `/home/rainboy/mycode/problems/roj` 里的题目批量导入当前 OJ，可以直接运行：
+
+```bash
+npm run import:roj
+```
+
+脚本会交互式询问 OJ 地址、admin 账号、ROJ 题目目录和题号范围。它会：
+
+- 自动检查题目是否已存在，存在则更新，不存在则创建
+- 读取 `content.md`、`readme.md` 或 `statement.md` 作为题面
+- 将测试数据同步到 `ROJ_JUDGE_TESTDATA_ROOT`
+
+默认测试数据目录是：
+
+```text
+/home/rainboy/roj_test_dir/judge_server_testData
+```
+
+更多细节见 [docs/import-roj-problems.md](docs/import-roj-problems.md)。
+
 ## 环境变量
 
 常用环境变量：
