@@ -178,6 +178,32 @@ describe('rendered views', () => {
     expect(response.body).not.toContain('题目管理');
   });
 
+  it('shows one admin entry in the public navigation for admin users', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('href="/admin"');
+    expect(response.body).toContain('role="button"');
+    expect(response.body).toContain('>管理</a>');
+    expect(response.body).not.toContain('href="/admin/problems"');
+    expect(response.body).not.toContain('href="/admin/users"');
+  });
+
   it('serves the site favicon', async () => {
     const app = buildApp(createServices());
 

@@ -756,6 +756,8 @@ html(lang="zh-CN" data-theme="light")
             a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
             a(href=urlWithLang('/contests'))= t('nav.contests')
             if currentUser
+              if currentUser.role === 'admin'
+                a(href=urlWithLang('/admin') role="button" class="secondary")= t('nav.admin')
               a(href=urlWithLang('/profile'))= t('nav.profile')
               form(method="post" action=urlWithLang('/logout'))
                 button(type="submit" class="secondary")= t('nav.logout')
