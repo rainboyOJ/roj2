@@ -1,4 +1,4 @@
-//- 题目详情页：左边读题，右边直接提交代码。
+//- 题目详情页：先阅读题面，再提交代码。
 extends layout.pug
 
 block content
@@ -12,37 +12,29 @@ block content
           span.status-chip(class=index === 0 ? 'ac' : '')= language
           if index !== problem.allowLanguages.length - 1
             |  
-    .detail-grid
-      .detail-main
-        article.panel-card
-          header
-            h2= t('problem.statement')
-          .panel-body.statement-block.markdown-body
-            != problem.statementHtml
-      .detail-sidebar
-        article.panel-card
-          header
-            h2= t('problem.submit')
-            p.soft-note= t('problem.workflow')
-          .panel-body
-            form(method="post" action=urlWithLang('/submissions'))
-              input(type="hidden" name="pid" value=problem.pid)
-              label(for="language")= t('problem.language')
-              select(name="language" id="language")
-                each language in problem.allowLanguages
-                  option(value=language)= language
-              label(for="sourceCode")= t('problem.sourceCode')
-              .editor-shell
-                textarea(name="sourceCode" id="sourceCode" placeholder=t('problem.placeholder'))
-              .form-actions
-                button(type="submit")= t('problem.submit')
-                a(href=urlWithLang('/problems') role="button" class="secondary")= t('problem.backToProblems')
-        article.panel-card
-          header
-            h3= t('problem.language')
-          .panel-body
-            ul.compact-list
+    .problem-layout
+      article.panel-card
+        header
+          h2= t('problem.statement')
+        .panel-body.statement-block.markdown-body
+          != problem.statementHtml
+      article.panel-card.problem-submit-card
+        header
+          h2= t('problem.submit')
+          p.soft-note= t('problem.workflow')
+        .panel-body
+          form(method="post" action=urlWithLang('/submissions'))
+            input(type="hidden" name="pid" value=problem.pid)
+            input(type="hidden" name="sourceCode" id="sourceCode")
+            label(for="language")= t('problem.language')
+            select(name="language" id="language")
               each language in problem.allowLanguages
-                li
-                  strong= language
-                  small= problem.pid
+                option(value=language)= language
+            p.soft-note= t('problem.sourceCode')
+            .editor-shell#sourceCodeEditor(data-initial-language=problem.allowLanguages[0])
+            .form-actions
+              button(type="submit")= t('problem.submit')
+              a(href=urlWithLang('/problems') role="button" class="secondary")= t('problem.backToProblems')
+
+block pageScripts
+  script(type="module" src="/assets/editor/problem-editor.js")

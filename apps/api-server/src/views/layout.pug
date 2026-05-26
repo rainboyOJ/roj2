@@ -267,6 +267,15 @@ html(lang="zh-CN" data-theme="light")
         gap: 1rem;
       }
 
+      .problem-layout {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .problem-submit-card .editor-shell {
+        min-height: 24rem;
+      }
+
       .panel-card {
         overflow: hidden;
       }
@@ -409,21 +418,16 @@ html(lang="zh-CN" data-theme="light")
 
       .editor-shell {
         border: 1px solid rgba(217, 225, 234, 0.9);
-        border-radius: 0.9rem;
+        border-radius: 0;
         background: #fbfdff;
         overflow: hidden;
       }
 
-      .editor-shell textarea,
+      .editor-shell .cm-editor,
       .editor-shell pre {
         margin: 0;
         border: 0;
-        border-radius: 0;
         background: transparent;
-      }
-
-      .editor-shell textarea {
-        min-height: 20rem;
       }
 
       .statement-block {
@@ -567,11 +571,6 @@ html(lang="zh-CN" data-theme="light")
         font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
         white-space: pre-wrap;
         word-break: break-word;
-      }
-
-      textarea[name="sourceCode"] {
-        min-height: 22rem;
-        font-family: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
       }
 
       .table-shell {
@@ -766,3 +765,4 @@ html(lang="zh-CN" data-theme="light")
               a(href=urlWithLang('/register'))= t('nav.register')
     main.container
       block content
+    block pageScripts

@@ -294,6 +294,11 @@ export function buildApp(services: ApiServerServices) {
     return reply.type('text/css').send(css);
   });
 
+  app.get('/assets/editor/problem-editor.js', async (_request, reply) => {
+    const js = await readFile(path.join(__dirname, 'assets', 'editor', 'problem-editor.js'), 'utf-8');
+    return reply.type('application/javascript; charset=utf-8').send(js);
+  });
+
   app.get('/assets/fonts/:file', async (request, reply) => {
     const params = request.params as { file: string };
     if (!/^[A-Za-z0-9_.-]+$/.test(params.file)) {
