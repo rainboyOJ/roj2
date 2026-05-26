@@ -1,0 +1,108 @@
+name: GitHub Smoke Test
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      mongodb:
+        image: mongodb/mongodb-community-server:latest
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout roj2
+        uses: actions/checkout@v4
+
+      - name: Checkout judge_server
+        uses: actions/checkout@v4
+        with:
+          repository: rainboyOJ/judge_server_cpp
+          path: judge_server_cpp
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25'
+          cache: npm
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build application image
+        run: |
+          docker build \
+            -t ghcr.io/${GITHUB_REPOSITORY,,}:ci \
+            -f ./Dockerfile \
+            .
+
+      - name: Build judge_server image
+        run: |
+          docker build \
+            -t judge_server_cpp:ci \
+            ./judge_server_cpp
+
+      - name: Prepare deploy directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/roj-ci"
+          cp ./install.sh "$RUNNER_TEMP/roj-ci/"
+          cp ./docker-compose.yaml "$RUNNER_TEMP/roj-ci/"
+          cp ./.env.example "$RUNNER_TEMP/roj-ci/.env"
+          cp ./judge_server_cpp/config/config.json "$RUNNER_TEMP/roj-ci/judge_server_config.json"
+          mkdir -p "$RUNNER_TEMP/roj-ci/judge_server_testData"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run installer
+        working-directory: ${{ runner.temp }}/roj-ci
+        env:
+          DEPLOY_DIR: ${{ runner.temp }}/roj-ci
+          WORKSPACE_DIR: ${{ runner.temp }}/roj-ci
+          JUDGE_SERVER_DIR: ${{ github.workspace }}/judge_server_cpp
+          IMAGE_NAME: ghcr.io/${{ github.repository }}:ci
+          JUDGE_SERVER_IMAGE_NAME: judge_server_cpp:ci
+          JUDGE_SERVER_HOST_PORT: 8000
+          JUDGE_SERVER_CONFIG_PATH: ./judge_server_config.json
+          JUDGE_SERVER_TESTDATA_DIR: ./judge_server_testData
+          API_HOST_PORT: 3300
+          GITHUB_PROXY: ''
+          DOCKER_IMAGE_ACCELERATOR_KIND: none
+          DOCKER_IMAGE_ACCELERATOR: ''
+          SKIP_RUNTIME_IMAGE_PULL: 1
+        run: |
+          bash ./install.sh
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3300/api/problems >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Run smoke test
+        env:
+          OJ_BASE_URL: http://127.0.0.1:3300
+        run: node --experimental-strip-types ./scripts/github-smoke-test.ts
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          docker ps -a
+          docker logs roj-judge-server || true
+          docker logs roj-api-server || true
+          docker logs roj-judge-dispatcher || true

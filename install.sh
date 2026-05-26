@@ -35,6 +35,7 @@ API_HOST_PORT="${API_HOST_PORT:-3300}"
 # UPDATE_REPOS=1 时会 git fetch/pull。
 UPDATE_REPOS="${UPDATE_REPOS:-0}"
 FORCE_JUDGE_CONFIG_COPY="${FORCE_JUDGE_CONFIG_COPY:-0}"
+SKIP_RUNTIME_IMAGE_PULL="${SKIP_RUNTIME_IMAGE_PULL:-0}"
 
 # judge_server 容器运行时挂载的配置和测试数据目录。
 COMPOSE_FILE_PATH="${COMPOSE_FILE_PATH:-$DEPLOY_DIR/docker-compose.yaml}"
@@ -109,6 +110,8 @@ Environment:
                          Accelerator value shown during install.
   FORCE_JUDGE_CONFIG_COPY=1
                          Overwrite judge_server_config.json from judge_server repo.
+  SKIP_RUNTIME_IMAGE_PULL=1
+                         Skip pulling runtime Docker images; useful for CI with local builds.
 EOF
 }
 
@@ -350,6 +353,11 @@ pull_and_tag_image() {
 }
 
 pull_runtime_images() {
+  if [[ "$SKIP_RUNTIME_IMAGE_PULL" == "1" ]]; then
+    log "skipping runtime Docker image pulls"
+    return
+  fi
+
   pull_and_tag_image "application" "$IMAGE_NAME"
   pull_and_tag_image "judge_server" "$JUDGE_SERVER_IMAGE_NAME"
 }
