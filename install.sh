@@ -13,11 +13,13 @@ WORKSPACE_DIR="${WORKSPACE_DIR:-$DEPLOY_DIR}"
 # GitHub 访问较慢时使用代理。设置 GITHUB_PROXY= 可以关闭代理，直接访问原始 GitHub URL。
 GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.com/}"
 
-# GHCR 镜像访问较慢时使用 Docker 镜像代理。
-# 默认使用 ghcr.nuj.edu.cn，安装时会让用户确认要用哪个加速。
-DOCKER_IMAGE_PROXY_DEFAULT="${DOCKER_IMAGE_PROXY_DEFAULT:-ghcr.nuj.edu.cn}"
-DOCKER_IMAGE_PROXY="${DOCKER_IMAGE_PROXY:-$DOCKER_IMAGE_PROXY_DEFAULT}"
-SELECTED_IMAGE_PROXY="${SELECTED_IMAGE_PROXY:-}"
+# GHCR 镜像访问较慢时使用 Docker 镜像加速。
+# `ghcr.nju.edu.cn` 这类镜像站是“替换 ghcr.io 域名”的用法，
+# `gh-proxy.org/docker` 这类代理是“在原镜像 URL 前加前缀”的用法。
+DOCKER_IMAGE_ACCELERATOR_KIND="${DOCKER_IMAGE_ACCELERATOR_KIND:-}"
+DOCKER_IMAGE_ACCELERATOR="${DOCKER_IMAGE_ACCELERATOR:-ghcr.nju.edu.cn}"
+SELECTED_IMAGE_ACCELERATOR_KIND="${SELECTED_IMAGE_ACCELERATOR_KIND:-}"
+SELECTED_IMAGE_ACCELERATOR="${SELECTED_IMAGE_ACCELERATOR:-}"
 
 # 两个需要拉取的仓库地址：judge_server 负责实际评测，roj2 是本 OJ Web/API 项目。
 JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-https://github.com/rainboyOJ/judge_server_cpp.git}"
@@ -101,53 +103,76 @@ Environment:
   JUDGE_SERVER_IMAGE_NAME=
                          judge_server image, defaults to ${JUDGE_SERVER_IMAGE_NAME}.
   GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
-  DOCKER_IMAGE_PROXY=   Disable the Docker image proxy and pull image names directly.
-  DOCKER_IMAGE_PROXY_DEFAULT=
-                         Default Docker image proxy shown during install.
+  DOCKER_IMAGE_ACCELERATOR_KIND=
+                         Docker image accelerator mode: mirror, proxy, or none.
+  DOCKER_IMAGE_ACCELERATOR=
+                         Accelerator value shown during install.
   FORCE_JUDGE_CONFIG_COPY=1
                          Overwrite judge_server_config.json from judge_server repo.
 EOF
 }
 
 choose_image_proxy() {
-  local default_proxy=${DOCKER_IMAGE_PROXY_DEFAULT%/}
-  local current_proxy=${DOCKER_IMAGE_PROXY%/}
+  local default_accelerator=${DOCKER_IMAGE_ACCELERATOR%/}
+  local current_accelerator=${DOCKER_IMAGE_ACCELERATOR%/}
   local choice
 
-  if [[ -n "${DOCKER_IMAGE_PROXY:-}" && "$DOCKER_IMAGE_PROXY" != "$DOCKER_IMAGE_PROXY_DEFAULT" ]]; then
-    log "using preconfigured Docker image proxy: $current_proxy"
-    SELECTED_IMAGE_PROXY="$current_proxy"
+  if [[ -n "${DOCKER_IMAGE_ACCELERATOR_KIND:-}" ]]; then
+    case "$DOCKER_IMAGE_ACCELERATOR_KIND" in
+      mirror|proxy|none)
+        SELECTED_IMAGE_ACCELERATOR_KIND="$DOCKER_IMAGE_ACCELERATOR_KIND"
+        if [[ "$SELECTED_IMAGE_ACCELERATOR_KIND" == "none" ]]; then
+          SELECTED_IMAGE_ACCELERATOR=""
+        else
+          SELECTED_IMAGE_ACCELERATOR="$current_accelerator"
+        fi
+        ;;
+      *)
+        fail "invalid DOCKER_IMAGE_ACCELERATOR_KIND: $DOCKER_IMAGE_ACCELERATOR_KIND"
+        ;;
+    esac
+
+    if [[ "$SELECTED_IMAGE_ACCELERATOR_KIND" == "none" ]]; then
+      log "using preconfigured Docker image accelerator: none"
+    else
+      log "using preconfigured Docker image accelerator: $SELECTED_IMAGE_ACCELERATOR_KIND $current_accelerator"
+    fi
     return
   fi
 
   cat <<EOF
-[install] Docker image proxy options:
-[install]   1) $default_proxy (default)
-[install]   2) gh-proxy.org/docker
+[install] Docker image accelerator options:
+[install]   1) $default_accelerator (mirror, default)
+[install]   2) gh-proxy.org/docker (proxy)
 [install]   3) no proxy
 EOF
-  read -r -p "[install] Select Docker image proxy [1]: " choice
+  read -r -p "[install] Select Docker image accelerator [1]: " choice
   case "${choice:-1}" in
     1|"")
-      SELECTED_IMAGE_PROXY="$default_proxy"
+      SELECTED_IMAGE_ACCELERATOR_KIND="mirror"
+      SELECTED_IMAGE_ACCELERATOR="$default_accelerator"
       ;;
     2)
-      SELECTED_IMAGE_PROXY="gh-proxy.org/docker"
+      SELECTED_IMAGE_ACCELERATOR_KIND="proxy"
+      SELECTED_IMAGE_ACCELERATOR="gh-proxy.org/docker"
       ;;
     3)
-      SELECTED_IMAGE_PROXY=""
+      SELECTED_IMAGE_ACCELERATOR_KIND="none"
+      SELECTED_IMAGE_ACCELERATOR=""
       ;;
     *)
-      fail "invalid image proxy choice: $choice"
+      fail "invalid image accelerator choice: $choice"
       ;;
   esac
 
-  if [[ -n "$SELECTED_IMAGE_PROXY" ]]; then
-    DOCKER_IMAGE_PROXY="$SELECTED_IMAGE_PROXY"
-    log "selected Docker image proxy: $SELECTED_IMAGE_PROXY"
+  if [[ -n "$SELECTED_IMAGE_ACCELERATOR" ]]; then
+    DOCKER_IMAGE_ACCELERATOR_KIND="$SELECTED_IMAGE_ACCELERATOR_KIND"
+    DOCKER_IMAGE_ACCELERATOR="$SELECTED_IMAGE_ACCELERATOR"
+    log "selected Docker image accelerator: $SELECTED_IMAGE_ACCELERATOR_KIND $SELECTED_IMAGE_ACCELERATOR"
   else
-    DOCKER_IMAGE_PROXY=""
-    log "selected Docker image proxy: none"
+    DOCKER_IMAGE_ACCELERATOR_KIND="none"
+    DOCKER_IMAGE_ACCELERATOR=""
+    log "selected Docker image accelerator: none"
   fi
 }
 
@@ -178,14 +203,32 @@ proxied_git_url() {
 # 拉取后会重新 tag 回原始镜像名，这样 docker-compose.yaml 可以继续使用 ghcr.io/...。
 proxied_docker_image() {
   local image=$1
-  local proxy=${DOCKER_IMAGE_PROXY%/}
+  local accelerator=${DOCKER_IMAGE_ACCELERATOR%/}
 
-  if [[ -z "$proxy" || "$image" != ghcr.io/* ]]; then
-    printf '%s\n' "$image"
-    return
-  fi
+  case "$DOCKER_IMAGE_ACCELERATOR_KIND" in
+    mirror)
+      if [[ -z "$accelerator" || "$image" != ghcr.io/* ]]; then
+        printf '%s\n' "$image"
+        return
+      fi
 
-  printf '%s/%s\n' "$proxy" "$image"
+      printf '%s/%s\n' "$accelerator" "${image#ghcr.io/}"
+      return
+      ;;
+    proxy)
+      if [[ -z "$accelerator" || "$image" != ghcr.io/* ]]; then
+        printf '%s\n' "$image"
+        return
+      fi
+
+      printf '%s/%s\n' "$accelerator" "$image"
+      return
+      ;;
+    none)
+      printf '%s\n' "$image"
+      return
+      ;;
+  esac
 }
 
 # 选择可用的 Docker / Compose 命令。
@@ -295,14 +338,14 @@ pull_and_tag_image() {
     return
   fi
 
-  log "pulling $label image through Docker image proxy: $pull_image"
+  log "pulling $label image through Docker image accelerator: $pull_image"
   if "${DOCKER_CMD[@]}" pull "$pull_image"; then
     log "tagging $pull_image as $image"
     "${DOCKER_CMD[@]}" tag "$pull_image" "$image"
     return
   fi
 
-  warn "failed to pull $pull_image through Docker image proxy; falling back to $image"
+  warn "failed to pull $pull_image through Docker image accelerator; falling back to $image"
   "${DOCKER_CMD[@]}" pull "$image"
 }
 
@@ -398,7 +441,7 @@ main() {
   require_command git
   step "setup Docker permissions and Compose command"
   setup_docker_commands
-  step "choose Docker image proxy"
+  step "choose Docker image accelerator"
   choose_image_proxy
 
   log "This installer may use sudo for Docker, depending on your local Docker permissions."

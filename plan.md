@@ -1,3 +1,9 @@
+## 2026 5 26
+
+我使用install.sh 评测了一个题目 错误:  getaddrinfo ENOTFOUND judge-server
+
+
+
 - [x] install.sh 不再使用 本地build docker ,改成 使用 ghcr pull, /home/rainboy/mycode/boxtest-opencode-dev/ 这个项目(judge_server) 也已经改用的 ghcr
 
 ## 2026 5 25

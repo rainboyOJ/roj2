@@ -69,7 +69,7 @@ judge_server_config.json
 judge_server_testData/
 ```
 
-安装过程中会询问 Docker 镜像加速器，默认使用 `ghcr.nuj.edu.cn`，也可以改成其他加速或关闭代理。
+安装过程中会询问 Docker 镜像加速器，默认使用 `ghcr.nju.edu.cn`，也可以改成其他加速或关闭代理。
 
 更新代码、重建镜像并重启服务：
 
