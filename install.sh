@@ -13,8 +13,11 @@ WORKSPACE_DIR="${WORKSPACE_DIR:-$DEPLOY_DIR}"
 # GitHub 访问较慢时使用代理。设置 GITHUB_PROXY= 可以关闭代理，直接访问原始 GitHub URL。
 GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.com/}"
 
-# GHCR 镜像访问较慢时使用 Docker 镜像代理。设置 DOCKER_IMAGE_PROXY= 可以关闭代理。
-DOCKER_IMAGE_PROXY="${DOCKER_IMAGE_PROXY:-gh-proxy.org/docker}"
+# GHCR 镜像访问较慢时使用 Docker 镜像代理。
+# 默认使用 ghcr.nuj.edu.cn，安装时会让用户确认要用哪个加速。
+DOCKER_IMAGE_PROXY_DEFAULT="${DOCKER_IMAGE_PROXY_DEFAULT:-ghcr.nuj.edu.cn}"
+DOCKER_IMAGE_PROXY="${DOCKER_IMAGE_PROXY:-$DOCKER_IMAGE_PROXY_DEFAULT}"
+SELECTED_IMAGE_PROXY="${SELECTED_IMAGE_PROXY:-}"
 
 # 两个需要拉取的仓库地址：judge_server 负责实际评测，roj2 是本 OJ Web/API 项目。
 JUDGE_SERVER_REPO_URL="${JUDGE_SERVER_REPO_URL:-https://github.com/rainboyOJ/judge_server_cpp.git}"
@@ -99,9 +102,53 @@ Environment:
                          judge_server image, defaults to ${JUDGE_SERVER_IMAGE_NAME}.
   GITHUB_PROXY=         Disable the GitHub proxy and use repository URLs directly.
   DOCKER_IMAGE_PROXY=   Disable the Docker image proxy and pull image names directly.
+  DOCKER_IMAGE_PROXY_DEFAULT=
+                         Default Docker image proxy shown during install.
   FORCE_JUDGE_CONFIG_COPY=1
                          Overwrite judge_server_config.json from judge_server repo.
 EOF
+}
+
+choose_image_proxy() {
+  local default_proxy=${DOCKER_IMAGE_PROXY_DEFAULT%/}
+  local current_proxy=${DOCKER_IMAGE_PROXY%/}
+  local choice
+
+  if [[ -n "${DOCKER_IMAGE_PROXY:-}" && "$DOCKER_IMAGE_PROXY" != "$DOCKER_IMAGE_PROXY_DEFAULT" ]]; then
+    log "using preconfigured Docker image proxy: $current_proxy"
+    SELECTED_IMAGE_PROXY="$current_proxy"
+    return
+  fi
+
+  cat <<EOF
+[install] Docker image proxy options:
+[install]   1) $default_proxy (default)
+[install]   2) gh-proxy.org/docker
+[install]   3) no proxy
+EOF
+  read -r -p "[install] Select Docker image proxy [1]: " choice
+  case "${choice:-1}" in
+    1|"")
+      SELECTED_IMAGE_PROXY="$default_proxy"
+      ;;
+    2)
+      SELECTED_IMAGE_PROXY="gh-proxy.org/docker"
+      ;;
+    3)
+      SELECTED_IMAGE_PROXY=""
+      ;;
+    *)
+      fail "invalid image proxy choice: $choice"
+      ;;
+  esac
+
+  if [[ -n "$SELECTED_IMAGE_PROXY" ]]; then
+    DOCKER_IMAGE_PROXY="$SELECTED_IMAGE_PROXY"
+    log "selected Docker image proxy: $SELECTED_IMAGE_PROXY"
+  else
+    DOCKER_IMAGE_PROXY=""
+    log "selected Docker image proxy: none"
+  fi
 }
 
 require_command() {
@@ -351,6 +398,8 @@ main() {
   require_command git
   step "setup Docker permissions and Compose command"
   setup_docker_commands
+  step "choose Docker image proxy"
+  choose_image_proxy
 
   log "This installer may use sudo for Docker, depending on your local Docker permissions."
 
