@@ -7,26 +7,26 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('admin.users.title')
-        p.page-lead= t('admin.users.lead')
+        h1= "用户管理"
+        p.page-lead= "查看当前账号列表和审核状态。"
     if users.length
       .page-actions
         button(
           type="submit"
           form="bulk-user-review-form"
-          formaction=urlWithLang('/admin/users/bulk-approve')
+          formaction='/admin/users/bulk-approve'
           data-confirm-message="确定要通过选中的用户吗？"
-        )= t('admin.users.bulkApprove')
+        )= "批量通过"
         button(
           type="submit"
           class="secondary"
           form="bulk-user-review-form"
-          formaction=urlWithLang('/admin/users/bulk-reject')
+          formaction='/admin/users/bulk-reject'
           data-confirm-message="确定要拒绝选中的用户吗？"
-        )= t('admin.users.bulkReject')
+        )= "批量拒绝"
       form#bulk-user-review-form(
         method="post"
-        action=urlWithLang('/admin/users/bulk-approve')
+        action='/admin/users/bulk-approve'
         data-require-checked="userIds"
         data-empty-message="请先选择需要处理的用户"
       )
@@ -34,12 +34,12 @@ block content
         table.data-table
           thead
             tr
-              th= t('admin.users.select')
-              th= t('admin.users.username')
-              th= t('admin.users.name')
-              th= t('admin.users.role')
-              th= t('admin.users.approval')
-              th= t('admin.users.actions')
+              th= "选择"
+              th= "用户名"
+              th= "姓名"
+              th= "角色"
+              th= "审核状态"
+              th= "审核操作"
           tbody
             each user in users
               tr
@@ -47,48 +47,48 @@ block content
                   if user.role !== 'admin'
                     input(type="checkbox" name="userIds" value=user.id form="bulk-user-review-form")
                 td.table-code= user.username
-                td= user.name || t('admin.users.noDisplayName')
-                td= localizeRole(user.role)
+                td= user.name || "没有显示姓名"
+                td= formatRoleLabel(user.role)
                 td
                   if user.approvalStatus === 'approved'
-                    span.status-chip.ac= localizeApprovalStatus(user.approvalStatus)
+                    span.status-chip.ac= formatApprovalStatusLabel(user.approvalStatus)
                   else if user.approvalStatus === 'rejected'
-                    span.status-chip.failed= localizeApprovalStatus(user.approvalStatus)
+                    span.status-chip.failed= formatApprovalStatusLabel(user.approvalStatus)
                   else
-                    span.status-chip.pending= localizeApprovalStatus(user.approvalStatus)
+                    span.status-chip.pending= formatApprovalStatusLabel(user.approvalStatus)
                 td
                   if user.role !== 'admin'
                     .table-actions
                       form(
                         method="post"
-                        action=urlWithLang('/admin/users/bulk-approve')
+                        action='/admin/users/bulk-approve'
                         data-confirm-message=`确定要通过用户 ${user.username} 吗？`
                       )
                         input(type="hidden" name="userIds" value=user.id)
-                        button(type="submit" id=`approve-user-${user.id}`)= t('admin.users.approve')
+                        button(type="submit" id=`approve-user-${user.id}`)= "通过"
                       form(
                         method="post"
-                        action=urlWithLang('/admin/users/bulk-reject')
+                        action='/admin/users/bulk-reject'
                         data-confirm-message=`确定要拒绝用户 ${user.username} 吗？`
                       )
                         input(type="hidden" name="userIds" value=user.id)
-                        button(type="submit" class="secondary" id=`reject-user-${user.id}`)= t('admin.users.reject')
+                        button(type="submit" class="secondary" id=`reject-user-${user.id}`)= "拒绝"
                       form(
                         method="post"
-                        action=urlWithLang(`/admin/users/${user.id}/reset-password`)
+                        action=`/admin/users/${user.id}/reset-password`
                         data-confirm-message=`确定要重置用户 ${user.username} 的密码吗？`
                         data-require-password="password"
                         data-password-empty-message="请先输入新密码"
                       )
-                        input(type="password" name="password" placeholder=t('admin.users.newPassword') autocomplete="new-password")
-                        button(type="submit" class="secondary" id=`reset-password-user-${user.id}`)= t('admin.users.resetPassword')
+                        input(type="password" name="password" placeholder="新密码" autocomplete="new-password")
+                        button(type="submit" class="secondary" id=`reset-password-user-${user.id}`)= "重置密码"
                       form(
                         method="post"
-                        action=urlWithLang(`/admin/users/${user.id}/delete`)
+                        action=`/admin/users/${user.id}/delete`
                         data-confirm-message=`确定要删除用户 ${user.username} 吗？删除后不可恢复。`
                       )
-                        button(type="submit" class="contrast" id=`delete-user-${user.id}`)= t('admin.users.delete')
+                        button(type="submit" class="contrast" id=`delete-user-${user.id}`)= "删除用户"
     else
       article
-        p= t('admin.users.empty')
+        p= "没有需要查看的用户。"
     script(src=assetUrl('/assets/admin-users.js'))

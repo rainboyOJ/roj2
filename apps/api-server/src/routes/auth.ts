@@ -7,7 +7,7 @@ export function registerAuthRoutes(app: FastifyInstance, context: RouteContext) 
   const {
     clearSessionCookie,
     parseSessionToken,
-    redirectWithLang,
+    redirectTo,
     renderPage,
     services,
     setSessionCookie,
@@ -25,7 +25,7 @@ export function registerAuthRoutes(app: FastifyInstance, context: RouteContext) 
     }
 
     await services.registerUser(parsed.data);
-    return redirectWithLang(request, reply, '/login');
+    return redirectTo(reply, '/login');
   });
 
   app.get('/login', async (request, reply) => renderPage(request, reply, 'login.pug'));
@@ -45,7 +45,7 @@ export function registerAuthRoutes(app: FastifyInstance, context: RouteContext) 
     }
 
     setSessionCookie(reply, result.token);
-    return redirectWithLang(request, reply, '/');
+    return redirectTo(reply, '/');
   });
 
   app.post('/logout', async (request, reply) => {
@@ -53,7 +53,7 @@ export function registerAuthRoutes(app: FastifyInstance, context: RouteContext) 
     const token = parseSessionToken(request.headers.cookie);
     await services.logoutUser(token);
     clearSessionCookie(reply);
-    return redirectWithLang(request, reply, '/');
+    return redirectTo(reply, '/');
   });
 
   app.post('/api/register', async (request, reply) => {

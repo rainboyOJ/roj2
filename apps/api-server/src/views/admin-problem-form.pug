@@ -4,17 +4,17 @@ include mixins/assets.pug
 
 block content
   - const isCreate = mode === 'create';
-  - const actionPath = isCreate ? urlWithLang('/admin/problems') : urlWithLang(`/admin/problems/${problem.id}`);
+  - const actionPath = isCreate ? '/admin/problems' : `/admin/problems/${problem.id}`;
   section.auth-panel
     header
       if isCreate
         hgroup
-          h1= t('admin.problemForm.createTitle')
-          p.page-lead= t('admin.problemForm.createLead')
+          h1= "创建题目"
+          p.page-lead= "为 OJ 新增一道题目的基础信息。"
       else
         hgroup
-          h1= t('admin.problemForm.editTitle')
-          p.page-lead= t('admin.problemForm.editLead')
+          h1= "编辑题目"
+          p.page-lead= "修改现有题目的标题、题面、语言和可见性。"
     article.panel-card.form-card
       .panel-body
         p#adminProblemAlert.form-alert(role="alert" hidden)
@@ -23,17 +23,17 @@ block content
             input(type="hidden" name="id" value=problem.id)
           .form-grid
             div
-              label(for="pid")= t('admin.problemForm.pid')
+              label(for="pid")= "题号"
               input#pid(type="text" name="pid" value=problem.pid required)
             div
-              label(for="title")= t('admin.problemForm.title')
+              label(for="title")= "标题"
               input#title(type="text" name="title" value=problem.title required)
           div
-            label(for="statementMarkdown")= t('admin.problemForm.statement')
+            label(for="statementMarkdown")= "题面"
             .editor-shell
               textarea#statementMarkdown(name="statementMarkdown" required)= problem.statementMarkdown
           fieldset
-            legend= t('admin.problemForm.languages')
+            legend= "支持语言"
             label
               input(type="checkbox" name="allowLanguages" value="cpp" checked=problem.allowLanguages.includes('cpp'))
               | C++
@@ -41,17 +41,17 @@ block content
               input(type="checkbox" name="allowLanguages" value="python" checked=problem.allowLanguages.includes('python'))
               | Python
           div
-            label(for="isVisible")= t('admin.problemForm.visible')
+            label(for="isVisible")= "可见性"
             select#isVisible(name="isVisible")
-              option(value="false" selected=!problem.isVisible)= t('admin.problemForm.hidden')
-              option(value="true" selected=problem.isVisible)= t('admin.problemForm.visibleOption')
+              option(value="false" selected=!problem.isVisible)= "隐藏"
+              option(value="true" selected=problem.isVisible)= "可见"
           .form-actions
-            button(type="submit")= t('admin.problemForm.save')
-            a(href=urlWithLang('/admin/problems') role="button" class="secondary")= t('admin.problemForm.back')
+            button(type="submit")= "保存题目"
+            a(href='/admin/problems' role="button" class="secondary")= "返回"
         if !isCreate
           hr
-          form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
-            button(type="submit" class="contrast")= t('admin.problemForm.publish')
+          form(method="post" action=`/admin/problems/${problem.id}/publish`)
+            button(type="submit" class="contrast")= "发布题目"
 
 block pageScripts
   +formScripts('admin-problem-form.js', false)

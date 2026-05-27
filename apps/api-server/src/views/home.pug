@@ -7,23 +7,23 @@ block content
       .hero-panel
         article
           hgroup
-            h1= t('home.title')
-            p.page-lead= t('home.lead')
-          p= t('home.description')
+            h1= "学校 OJ 练习平台"
+            p.page-lead= "一个适合教学场景的简洁在线评测工作区，用来读题、交题和查看结果。"
+          p= "这个站点面向学习使用：导航简单、页面清晰，常见 OJ 操作可以直接进入。"
           .page-actions
-            a(href=urlWithLang('/problems') role="button")= t('home.start.cta')
-            a(href=urlWithLang('/submissions') role="button" class="secondary")= t('home.results.cta')
-            a(href=urlWithLang('/ranklist') role="button" class="contrast")= t('home.rankings.cta')
+            a(href='/problems' role="button")= "进入题目列表"
+            a(href='/submissions' role="button" class="secondary")= "查看提交记录"
+            a(href='/ranklist' role="button" class="contrast")= "打开排行榜"
       .feature-grid
         article.feature-card
-          h3= t('home.start.title')
-          p= t('home.start.body')
+          h3= "开始做题"
+          p= "打开题目列表，选择一道题，然后提交 Python 或 C++ 代码。"
         article.feature-card
-          h3= t('home.results.title')
-          p= t('home.results.body')
+          h3= "查看结果"
+          p= "回到提交记录页面，持续跟踪评测，直到出现最终结果。"
         article.feature-card
-          h3= t('home.rankings.title')
-          p= t('home.rankings.body')
+          h3= "查看排行"
+          p= "打开一个经典 OJ 风格的简洁排行榜页面。"
       section.home-overview
         header
           h3 当前可用
@@ -44,41 +44,41 @@ block content
     aside.stack-panel
       article.panel-card
         header
-          h3= t('home.quickLinks')
+          h3= "常用入口"
         .panel-body
           ul.compact-list
             li
-              a(href=urlWithLang('/problems'))= t('problems.title')
+              a(href='/problems')= "题目列表"
               small 01
             li
-              a(href=urlWithLang('/submissions'))= t('submissions.title')
+              a(href='/submissions')= "提交列表"
               small 02
             li
-              a(href=urlWithLang('/ranklist'))= t('ranklist.title')
+              a(href='/ranklist')= "排行榜"
               small 03
             li
-              a(href=urlWithLang('/contests'))= t('contests.title')
+              a(href='/contests')= "比赛列表"
               small 04
             li
-              a(href=urlWithLang('/login'))= t('login.title')
+              a(href='/login')= "账号登录"
               small 05
             li
-              a(href=urlWithLang('/register'))= t('register.title')
+              a(href='/register')= "学生注册"
               small 06
       article.panel-card
         header
-          h3= t('home.learningFlow')
+          h3= "学习流程"
         .panel-body
           ol.compact-list
             li
               strong 1
-              span= t('home.flow.step1')
+              span= "先阅读题面。"
             li
               strong 2
-              span= t('home.flow.step2')
+              span= "先写出一个小而正确的程序。"
             li
               strong 3
-              span= t('home.flow.step3')
+              span= "提交后查看评测结果。"
             li
               strong 4
-              span= t('home.flow.step4')
+              span= "根据结果继续修改重试。"

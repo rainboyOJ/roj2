@@ -11,22 +11,22 @@ block content
       .detail-main
         article.panel-card
           header
-            h2= t('contest.aboutTitle')
+            h2= "关于这个页面"
           .panel-body
-            p= t('contest.aboutBody')
+            p= "这是第一阶段的比赛页面外壳。现在先把 OJ 的比赛导航结构补齐，之后再继续加入规则、榜单和更多比赛行为。"
       .detail-sidebar
         article.panel-card
           header
-            h3= t('contest.status')
+            h3= "状态"
           .panel-body
             .info-stack
               .info-item
-                strong= t('contest.status')
+                strong= "状态"
                 p
-                  span.status-chip.pending= localizeContestStatus(contest.status)
+                  span.status-chip.pending= formatContestStatusLabel(contest.status)
               .info-item
-                strong= t('contest.start')
+                strong= "开始时间"
                 p= contest.startAtText
               .info-item
-                strong= t('contest.end')
+                strong= "结束时间"
                 p= contest.endAtText

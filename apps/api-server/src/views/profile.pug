@@ -6,43 +6,43 @@ block content
   section.detail-panel
     header
       hgroup
-        h1= t('profile.title')
-        p.page-lead= t('profile.lead')
+        h1= "个人中心"
+        p.page-lead= "当前用户的基础账号信息。"
     .detail-grid
       .detail-main
         article.panel-card
           header
-            h2= t('profile.title')
+            h2= "个人中心"
           .panel-body
             .info-stack
               .info-item
-                strong= t('profile.username')
+                strong= "用户名"
                 p.table-code= user.username
               .info-item
-                strong= t('profile.role')
-                p= localizeRole(user.role)
+                strong= "角色"
+                p= formatRoleLabel(user.role)
       .detail-sidebar
         article.panel-card
           header
-            h3= t('profile.approval')
+            h3= "审核状态"
           .panel-body
             if user.approvalStatus === 'approved'
-              span.status-chip.ac= localizeApprovalStatus(user.approvalStatus)
+              span.status-chip.ac= formatApprovalStatusLabel(user.approvalStatus)
             else if user.approvalStatus === 'rejected'
-              span.status-chip.failed= localizeApprovalStatus(user.approvalStatus)
+              span.status-chip.failed= formatApprovalStatusLabel(user.approvalStatus)
             else
-              span.status-chip.pending= localizeApprovalStatus(user.approvalStatus)
+              span.status-chip.pending= formatApprovalStatusLabel(user.approvalStatus)
         article.panel-card
           header
-            h3= t('profile.password')
+            h3= "修改密码"
           .panel-body
             p#profilePasswordAlert.form-alert(role="alert" hidden)
-            form#profilePasswordForm(method="post" action=urlWithLang('/profile/password'))
-              label(for="currentPassword")= t('profile.currentPassword')
+            form#profilePasswordForm(method="post" action='/profile/password')
+              label(for="currentPassword")= "当前密码"
               input#currentPassword(type="password" name="currentPassword" required autocomplete="current-password")
-              label(for="newPassword")= t('profile.newPassword')
+              label(for="newPassword")= "新密码"
               input#newPassword(type="password" name="newPassword" required minlength="8" autocomplete="new-password")
-              button(type="submit")= t('profile.updatePassword')
+              button(type="submit")= "更新密码"
 
 block pageScripts
   +formScripts('profile-password.js', true)

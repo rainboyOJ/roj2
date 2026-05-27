@@ -5,32 +5,32 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('admin.dashboard.title')
-        p.page-lead= t('admin.dashboard.lead')
+        h1= "管理后台"
+        p.page-lead= "集中进入题目、用户和提交管理，不需要记住各个后台 URL。"
     .feature-grid
       article.feature-card
-        h3= t('admin.dashboard.problemsTitle')
-        p= t('admin.dashboard.problemsBody')
+        h3= "题目管理"
+        p= "创建、编辑、发布题目，并维护题面和支持语言。"
         .page-actions
-          a(href=urlWithLang('/admin/problems') role="button")= t('admin.dashboard.openProblems')
-          a(href=urlWithLang('/admin/problems/new') role="button" class="secondary")= t('admin.dashboard.createProblem')
+          a(href='/admin/problems' role="button")= "打开题目管理"
+          a(href='/admin/problems/new' role="button" class="secondary")= "创建题目"
       article.feature-card
-        h3= t('admin.dashboard.usersTitle')
-        p= t('admin.dashboard.usersBody')
+        h3= "用户审核"
+        p= "查看注册用户，批量通过或拒绝学生账号。"
         .page-actions
-          a(href=urlWithLang('/admin/users') role="button")= t('admin.dashboard.openUsers')
+          a(href='/admin/users' role="button")= "打开用户管理"
       article.feature-card
-        h3= t('admin.dashboard.submissionsTitle')
-        p= t('admin.dashboard.submissionsBody')
+        h3= "提交管理"
+        p= "查看全站提交记录，追踪评测状态和最终结果。"
         .page-actions
-          a(href=urlWithLang('/admin/submissions') role="button")= t('admin.dashboard.openSubmissions')
+          a(href='/admin/submissions' role="button")= "打开提交管理"
       article.feature-card
-        h3= t('admin.dashboard.languagesTitle')
-        p= t('admin.dashboard.languagesBody')
+        h3= "语言开关"
+        p= "控制整个 OJ 当前允许用户提交的编程语言集合。"
         .page-actions
-          a(href=urlWithLang('/admin/settings/languages') role="button")= t('admin.dashboard.openLanguages')
+          a(href='/admin/settings/languages' role="button")= "打开语言设置"
       article.feature-card
-        h3= t('admin.dashboard.gradesTitle')
-        p= t('admin.dashboard.gradesBody')
+        h3= "年级管理"
+        p= "维护注册页中学生可以选择的年级范围。"
         .page-actions
-          a(href=urlWithLang('/admin/grades') role="button")= t('admin.dashboard.openGrades')
+          a(href='/admin/grades' role="button")= "打开年级管理"

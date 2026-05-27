@@ -6,7 +6,7 @@ import type { AppLanguage } from '@roj/shared';
 
 import type { ApiServerServices, SessionUser } from '../app.ts';
 import { assetUrl, getAssetCacheControl } from './assets.ts';
-import { createViewContext } from '../view-i18n.ts';
+import { createViewHelpers } from '../view-helpers.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,8 +30,7 @@ export interface RouteContext {
     template: string,
     data?: Record<string, unknown>,
   ): Promise<unknown>;
-  redirectWithLang(
-    request: { query?: unknown },
+  redirectTo(
     reply: { redirect(location: string): unknown },
     pathname: string,
   ): unknown;
@@ -105,13 +104,13 @@ export function createRouteContext(services: ApiServerServices): RouteContext {
     data: Record<string, unknown> = {},
   ) {
     // 所有 Pug 页面都走这个统一入口，
-    // 这样模板天然就能拿到 i18n helper、当前用户和 admin 区域标记。
+    // 这样模板天然就能拿到静态资源 helper、当前用户和 admin 区域标记。
     const currentPath = request.url || '/';
     const sessionToken = parseSessionToken(request.headers?.cookie);
     const currentUser = sessionToken ? await services.getCurrentUser(sessionToken) : null;
     const pathname = currentPath.split('?')[0] || '/';
     return reply.view(template, {
-      ...createViewContext(),
+      ...createViewHelpers(),
       assetUrl,
       currentUser,
       isAdminArea: pathname === '/admin' || pathname.startsWith('/admin/'),
@@ -119,8 +118,7 @@ export function createRouteContext(services: ApiServerServices): RouteContext {
     });
   }
 
-  function redirectWithLang(
-    _request: { query?: unknown },
+  function redirectTo(
     reply: { redirect(location: string): unknown },
     pathname: string,
   ) {
@@ -135,7 +133,7 @@ export function createRouteContext(services: ApiServerServices): RouteContext {
   async function requireHtmlUser(request: FastifyRequest, reply: FastifyReply) {
     const user = await getRequestUser(request);
     if (!user) {
-      redirectWithLang(request, reply, '/login');
+      redirectTo(reply, '/login');
       return null;
     }
     return user;
@@ -183,7 +181,7 @@ export function createRouteContext(services: ApiServerServices): RouteContext {
     filterAllowedLanguages,
     parsePage,
     renderPage,
-    redirectWithLang,
+    redirectTo,
     getRequestUser,
     requireHtmlUser,
     requireHtmlAdmin,

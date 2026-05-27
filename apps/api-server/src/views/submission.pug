@@ -8,73 +8,73 @@ block content
   )
     header
       hgroup
-        h1= `${t('submission.title')} ${submission.publicId}`
-        p.page-lead= t('submission.lead')
+        h1= `${"提交"} ${submission.publicId}`
+        p.page-lead= "评测尚未结束时，这个页面会自动刷新。"
     .detail-grid
       .detail-main
         article.panel-card
           header
-            h2= t('submission.info')
+            h2= "提交信息"
           .panel-body
             ul.compact-list
               li
-                strong= t('submission.user')
+                strong= "提交用户"
                 span= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
               li
-                strong= t('submission.problem')
+                strong= "题目"
                 span
-                  a(href=urlWithLang(`/problem/${submission.pid}`))= submission.problemLabel
+                  a(href=`/problem/${submission.pid}`)= submission.problemLabel
               li
-                strong= t('submission.language')
+                strong= "语言"
                 span.table-code= submission.language
         .metric-grid
           div.metric-card
-            span.soft-note= t('submission.status')
-            strong#submissionStatus= localizeStatus(submission.status)
+            span.soft-note= "状态"
+            strong#submissionStatus= formatStatusLabel(submission.status)
           div.metric-card
-            span.soft-note= t('submission.verdict')
-            strong#submissionVerdict= localizeVerdict(submission.verdict)
+            span.soft-note= "结果"
+            strong#submissionVerdict= formatVerdictLabel(submission.verdict)
           div.metric-card
-            span.soft-note= t('submission.score')
+            span.soft-note= "分数"
             strong#submissionScore= submission.score
           div.metric-card
-            span.soft-note= t('submission.judgeStatus')
-            strong#submissionJudgeStatus= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : t('submission.waiting')
+            span.soft-note= "评测机状态"
+            strong#submissionJudgeStatus= submission.judgeStatus ? formatJudgeStatusLabel(submission.judgeStatus) : "等待中"
         article.panel-card#submissionMessagePanel(hidden=!submission.message)
           header
-            h2= t('submission.judgeMessage')
+            h2= "评测信息"
           .panel-body.statement-block
             pre.mono-block#submissionMessage= submission.message || ''
         article.panel-card
           header
-            h2= t('submission.sourceCode')
+            h2= "提交代码"
           .panel-body.statement-block
             pre.mono-block= submission.sourceCode
         article.panel-card
           header
-            h2= t('submission.caseResults')
-            p= t('submission.caseResultsLead')
+            h2= "测试点结果"
+            p= "逐个测试点查看判定、耗时、内存和退出信息。"
           .panel-body#submissionCaseResults
             if submission.caseResults && submission.caseResults.length
               .table-shell
                 table.data-table
                   thead
                     tr
-                      th= t('submission.caseSeq')
-                      th= t('submission.caseVerdict')
-                      th= t('submission.caseCpu')
-                      th= t('submission.caseReal')
-                      th= t('submission.caseMemory')
-                      th= t('submission.caseExit')
-                      th= t('submission.caseSignal')
-                      th= t('submission.caseError')
+                      th= "测试点"
+                      th= "结果"
+                      th= "CPU"
+                      th= "实际时间"
+                      th= "内存"
+                      th= "退出码"
+                      th= "信号"
+                      th= "错误码"
                   tbody
                     each item in submission.caseResults
                       tr
                         td.table-code= `#${item.seq_id}`
                         td
                           - const verdictClass = item.verdict === 'AC' ? 'ac' : (item.verdict === 'PENDING' ? 'pending' : 'failed')
-                          span(class=`status-chip ${verdictClass}`)= localizeVerdict(item.verdict)
+                          span(class=`status-chip ${verdictClass}`)= formatVerdictLabel(item.verdict)
                         td.table-code= `${item.cpu_time_ms} ms`
                         td.table-code= `${item.real_time_ms} ms`
                         td.table-code= `${item.memory_kb} KB`
@@ -82,13 +82,13 @@ block content
                         td.table-code= item.signal
                         td.table-code= item.error_code
             else
-              p.soft-note= t('submission.noCaseResults')
+              p.soft-note= "评测机还没有返回测试点结果。"
       .detail-sidebar
         article.panel-card
           header
-            h3= t('submissions.action')
+            h3= "操作"
           .panel-body
             .form-actions
-              a(href=urlWithLang('/submissions') role="button" class="secondary")= t('submission.backToSubmissions')
-              a(href=urlWithLang('/problems') role="button" class="contrast")= t('submission.openProblems')
+              a(href='/submissions' role="button" class="secondary")= "返回提交列表"
+              a(href='/problems' role="button" class="contrast")= "打开题目列表"
     script(src=assetUrl('/assets/submission-detail.js'))

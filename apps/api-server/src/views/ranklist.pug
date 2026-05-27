@@ -5,18 +5,18 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('ranklist.title')
-        p.page-lead= t('ranklist.lead')
+        h1= "排行榜"
+        p.page-lead= "一个简化的学校 OJ 排行榜，按通过题数和最近通过时间展示。"
     if entries.length
       .table-shell
         table.data-table
           thead
             tr
-              th= t('ranklist.rank')
-              th= t('ranklist.user')
-              th= t('ranklist.accepted')
-              th= t('ranklist.totalSubmissions')
-              th= t('ranklist.lastAc')
+              th= "排名"
+              th= "用户"
+              th= "通过题数"
+              th= "总提交数"
+              th= "最近 AC"
           tbody
             each entry in entries
               tr
@@ -24,7 +24,7 @@ block content
                 td= entry.username
                 td= entry.acceptedCount
                 td= entry.submissionCount
-                td= entry.lastAcceptedAt || t('ranklist.na')
+                td= entry.lastAcceptedAt || "暂无"
     else
       article
-        p= t('ranklist.noData')
+        p= "暂无排行数据。"

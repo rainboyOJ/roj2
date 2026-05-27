@@ -5,32 +5,32 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('contests.title')
-        p.page-lead= t('contests.lead')
+        h1= "比赛列表"
+        p.page-lead= "常见 OJ 一般都会有比赛入口，所以这里先提供一个结构化的比赛页。"
     if contests.length
       .table-shell
         table.data-table
           thead
             tr
-              th= t('contests.name')
-              th= t('contests.status')
-              th= t('contests.start')
-              th= t('contests.end')
-              th= t('contests.action')
+              th= "比赛名称"
+              th= "状态"
+              th= "开始"
+              th= "结束"
+              th= "操作"
           tbody
             each contest in contests
               tr
                 td
                   strong
-                    a(href=urlWithLang(`/contests/${contest.id}`))= contest.title
+                    a(href=`/contests/${contest.id}`)= contest.title
                   br
                   small.soft-note= contest.description
                 td
-                  span.status-chip.pending= localizeContestStatus(contest.status)
+                  span.status-chip.pending= formatContestStatusLabel(contest.status)
                 td= contest.startAtText
                 td= contest.endAtText
                 td
-                  a(href=urlWithLang(`/contests/${contest.id}`))= t('contests.open')
+                  a(href=`/contests/${contest.id}`)= "打开比赛页面"
     else
       article
-        p= t('contests.empty')
+        p= "暂时还没有比赛。"

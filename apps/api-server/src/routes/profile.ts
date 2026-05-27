@@ -5,7 +5,7 @@ import { updateClassNameSchema, updateMyPasswordSchema } from '../http/schemas.t
 
 export function registerProfileRoutes(app: FastifyInstance, context: RouteContext) {
   const {
-    redirectWithLang,
+    redirectTo,
     renderPage,
     requireApiUser,
     requireHtmlUser,
@@ -47,7 +47,7 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
       return reply.code(400).send(message);
     }
 
-    return redirectWithLang(request, reply, '/profile');
+    return redirectTo(reply, '/profile');
   });
 
   app.post('/api/me/class-name', async (request, reply) => {

@@ -803,33 +803,33 @@ html(lang="zh-CN" data-theme="light")
     header.site-header
       nav
         .nav-brand
-          a(href=isAdminArea ? urlWithLang('/admin') : urlWithLang('/'))
+          a(href=isAdminArea ? '/admin' : '/')
             span.brand-block
               strong ROJ
-              small= isAdminArea ? t('nav.admin') : t('site.tagline')
+              small= isAdminArea ? "管理" : "简单学校 OJ"
         .nav-links
           if isAdminArea
-            a(href=urlWithLang('/admin/problems'))= t('nav.admin.problems')
-            a(href=urlWithLang('/admin/settings/languages'))= t('nav.admin.languages')
-            a(href=urlWithLang('/admin/grades'))= t('nav.admin.grades')
-            a(href=urlWithLang('/admin/submissions'))= t('nav.admin.submissions')
-            a(href=urlWithLang('/admin/users'))= t('nav.admin.users')
-            a(href=urlWithLang('/'))= t('nav.home')
+            a(href='/admin/problems')= "题目管理"
+            a(href='/admin/settings/languages')= "语言设置"
+            a(href='/admin/grades')= "年级管理"
+            a(href='/admin/submissions')= "提交管理"
+            a(href='/admin/users')= "用户"
+            a(href='/')= "首页"
           else
-            a(href=urlWithLang('/'))= t('nav.home')
-            a(href=urlWithLang('/problems'))= t('nav.problems')
-            a(href=urlWithLang('/submissions'))= t('nav.submissions')
-            a(href=urlWithLang('/ranklist'))= t('nav.ranklist')
-            a(href=urlWithLang('/contests'))= t('nav.contests')
+            a(href='/')= "首页"
+            a(href='/problems')= "题目"
+            a(href='/submissions')= "提交"
+            a(href='/ranklist')= "排行榜"
+            a(href='/contests')= "比赛"
             if currentUser
               if currentUser.role === 'admin'
-                a(href=urlWithLang('/admin') role="button" class="secondary")= t('nav.admin')
-              a(href=urlWithLang('/profile'))= t('nav.profile')
-              form(method="post" action=urlWithLang('/logout'))
-                button(type="submit" class="secondary")= t('nav.logout')
+                a(href='/admin' role="button" class="secondary")= "管理"
+              a(href='/profile')= "个人中心"
+              form(method="post" action='/logout')
+                button(type="submit" class="secondary")= "登出"
             else
-              a(href=urlWithLang('/login'))= t('nav.login')
-              a(href=urlWithLang('/register'))= t('nav.register')
+              a(href='/login')= "登录"
+              a(href='/register')= "注册"
     main.container
       block content
     block pageScripts

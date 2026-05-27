@@ -8,7 +8,7 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
   const {
     filterAllowedLanguages,
     parseSessionToken,
-    redirectWithLang,
+    redirectTo,
     renderPage,
     requireHtmlUser,
     services,
@@ -99,6 +99,6 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
       userId: user.id,
       ...parsed.data,
     });
-    return redirectWithLang(request, reply, `/submissions/${created.publicId}`);
+    return redirectTo(reply, `/submissions/${created.publicId}`);
   });
 }

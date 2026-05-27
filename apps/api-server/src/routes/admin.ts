@@ -11,7 +11,7 @@ import {
 export function registerAdminRoutes(app: FastifyInstance, context: RouteContext) {
   const {
     parsePage,
-    redirectWithLang,
+    redirectTo,
     renderPage,
     requireApiAdmin,
     requireHtmlAdmin,
@@ -63,7 +63,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const params = request.params as { id: string };
     await services.resetUserPassword(params.id, parsed.data.password);
-    return redirectWithLang(request, reply, '/admin/users');
+    return redirectTo(reply, '/admin/users');
   });
 
   app.post('/admin/users/:id/delete', async (request, reply) => {
@@ -74,7 +74,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const params = request.params as { id: string };
     await services.deleteUser(params.id);
-    return redirectWithLang(request, reply, '/admin/users');
+    return redirectTo(reply, '/admin/users');
   });
 
   app.get('/admin/grades', async (request, reply) => {
@@ -104,7 +104,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     await services.createGrade(parsed.data);
-    return redirectWithLang(request, reply, '/admin/grades');
+    return redirectTo(reply, '/admin/grades');
   });
 
   app.post('/admin/grades/:id', async (request, reply) => {
@@ -125,7 +125,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     await services.updateGrade(params.id, parsed.data);
-    return redirectWithLang(request, reply, '/admin/grades');
+    return redirectTo(reply, '/admin/grades');
   });
 
   app.post('/admin/users/bulk-approve', async (request, reply) => {
@@ -146,7 +146,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       await services.approveUser(userId, user.id);
     }
 
-    return redirectWithLang(request, reply, '/admin/users');
+    return redirectTo(reply, '/admin/users');
   });
 
   app.post('/admin/users/bulk-reject', async (request, reply) => {
@@ -166,7 +166,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       await services.rejectUser(userId, user.id);
     }
 
-    return redirectWithLang(request, reply, '/admin/users');
+    return redirectTo(reply, '/admin/users');
   });
 
   app.get('/admin/problems', async (request, reply) => {
@@ -446,7 +446,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     await services.createProblem(parsed.data);
-    return redirectWithLang(request, reply, '/admin/problems');
+    return redirectTo(reply, '/admin/problems');
   });
 
   app.put('/api/admin/problems/:id', async (request, reply) => {
@@ -494,7 +494,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     await services.updateProblem(params.id, parsed.data);
-    return redirectWithLang(request, reply, '/admin/problems');
+    return redirectTo(reply, '/admin/problems');
   });
 
   app.post('/api/admin/problems/:id/publish', async (request, reply) => {
@@ -516,7 +516,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const params = request.params as { id: string };
     await services.publishProblem(params.id);
-    return redirectWithLang(request, reply, '/admin/problems');
+    return redirectTo(reply, '/admin/problems');
   });
 
   app.post('/admin/settings/languages', async (request, reply) => {
@@ -538,6 +538,6 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     await services.updateEnabledLanguages(parsed.data.enabledLanguages);
-    return redirectWithLang(request, reply, '/admin/settings/languages');
+    return redirectTo(reply, '/admin/settings/languages');
   });
 }

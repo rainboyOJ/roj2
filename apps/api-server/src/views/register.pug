@@ -6,22 +6,22 @@ block content
   section.auth-panel
     header
       hgroup
-        h1= t('register.title')
-        p.page-lead= t('register.lead')
+        h1= "学生注册"
+        p.page-lead= "创建一个供班级使用的基础账号，必要时等待管理员审核。"
     article.panel-card.form-card
       .panel-body
         p#registerAlert.form-alert(role="alert" hidden)
-        form#registerForm(method="post" action=urlWithLang('/register'))
+        form#registerForm(method="post" action='/register')
           .form-grid
             div
-              label(for="username")= t('register.username')
-              input#username(type="text" name="username" placeholder=t('register.usernamePlaceholder') required minlength="3" maxlength="24" pattern="^[a-z0-9_]{3,24}$" autocomplete="username")
+              label(for="username")= "用户名"
+              input#username(type="text" name="username" placeholder="student_01" required minlength="3" maxlength="24" pattern="^[a-z0-9_]{3,24}$" autocomplete="username")
               small.soft-note 只能使用小写字母、数字、下划线，长度 3-24。
             div
-              label(for="name")= t('register.name')
-              input#name(type="text" name="name" placeholder=t('register.namePlaceholder') required autocomplete="name")
+              label(for="name")= "姓名"
+              input#name(type="text" name="name" placeholder="你的姓名" required autocomplete="name")
             fieldset.form-block
-              legend= t('register.gender')
+              legend= "性别"
               .choice-row
                 label.choice-chip
                   input(type="radio" name="gender" value="male" checked required)
@@ -30,20 +30,20 @@ block content
                   input(type="radio" name="gender" value="female")
                   span 女
             div
-              label(for="grade")= t('register.grade')
+              label(for="grade")= "年级"
               select#grade(name="grade" required)
                 each grade in grades
                   option(value=grade.name)= grade.name
             div
-              label(for="className")= t('register.className')
-              input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder') required autocomplete="organization-title")
+              label(for="className")= "班级"
+              input#className(type="text" name="className" placeholder="1 班" required autocomplete="organization-title")
             div
-              label(for="password")= t('register.password')
-              input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder') required minlength="8" autocomplete="new-password")
+              label(for="password")= "密码"
+              input#password(type="password" name="password" placeholder="至少 8 个字符" required minlength="8" autocomplete="new-password")
               small.soft-note 密码至少 8 个字符。
           .form-actions
-            button(type="submit")= t('register.submit')
-            a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')
+            button(type="submit")= "注册"
+            a(href='/login' role="button" class="secondary")= "返回登录"
 
 block pageScripts
   +formScripts('register.js', true)

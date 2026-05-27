@@ -7,7 +7,7 @@ block content
     header
       hgroup
         h1= `${problem.pid} - ${problem.title}`
-        p.page-lead= t('problem.lead')
+        p.page-lead= "阅读题面，选择支持的语言，并在下方提交解答。"
       p
         each language, index in problem.allowLanguages
           span.status-chip(class=index === 0 ? 'ac' : '')= language
@@ -16,27 +16,27 @@ block content
     .problem-layout
       article.panel-card
         header
-          h2= t('problem.statement')
+          h2= "题面"
         .panel-body.statement-block.markdown-body
           != problem.statementHtml
       article.panel-card.problem-submit-card
         header
-          h2= t('problem.submit')
-          p.soft-note= t('problem.workflow')
+          h2= "提交代码"
+          p.soft-note= "这里保持常见 OJ 的交题流程。"
         .panel-body
           p#submissionAlert.form-alert(role="alert" hidden)
-          form#submissionForm(method="post" action=urlWithLang('/submissions'))
+          form#submissionForm(method="post" action='/submissions')
             input(type="hidden" name="pid" value=problem.pid)
             input(type="hidden" name="sourceCode" id="sourceCode")
-            label(for="language")= t('problem.language')
+            label(for="language")= "语言"
             select(name="language" id="language" required disabled=problem.allowLanguages.length === 0)
               each language in problem.allowLanguages
                 option(value=language)= language
-            p.soft-note= t('problem.sourceCode')
+            p.soft-note= "源代码"
             .editor-shell#sourceCodeEditor(data-initial-language=problem.allowLanguages[0])
             .form-actions
-              button(type="submit" disabled=problem.allowLanguages.length === 0)= t('problem.submit')
-              a(href=urlWithLang('/problems') role="button" class="secondary")= t('problem.backToProblems')
+              button(type="submit" disabled=problem.allowLanguages.length === 0)= "提交代码"
+              a(href='/problems' role="button" class="secondary")= "返回题目列表"
 
 block pageScripts
   +pageScript('/assets/editor/problem-editor.js', 'module')

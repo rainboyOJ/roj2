@@ -5,20 +5,20 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('admin.problems.title')
-        p.page-lead= t('admin.problems.lead')
+        h1= "题目管理"
+        p.page-lead= "按 OJ 管理员常见的方式浏览和维护题目目录。"
       .page-actions
-        a(href=urlWithLang('/admin/problems/new') role="button")= t('admin.problems.create')
+        a(href='/admin/problems/new' role="button")= "创建题目"
     if problems.length
       .table-shell
         table.data-table
           thead
             tr
-              th= t('admin.problems.pid')
-              th= t('admin.problems.titleColumn')
-              th= t('admin.problems.languages')
-              th= t('admin.problems.visibility')
-              th= t('admin.problems.action')
+              th= "题号"
+              th= "标题"
+              th= "支持语言"
+              th= "可见性"
+              th= "操作"
           tbody
             each problem in problems
               tr
@@ -27,15 +27,15 @@ block content
                 td= problem.allowLanguages.join(', ')
                 td
                   if problem.isVisible
-                    span.status-chip.ac= t('status.visible')
+                    span.status-chip.ac= "可见"
                   else
-                    span.status-chip.pending= t('status.hidden')
+                    span.status-chip.pending= "隐藏"
                 td
                   .table-actions
-                    a(href=urlWithLang(`/admin/problems/${problem.id}/edit`))= t('admin.problems.edit')
+                    a(href=`/admin/problems/${problem.id}/edit`)= "编辑"
                     if !problem.isVisible
-                      form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
-                        button(type="submit" class="secondary")= t('admin.problems.publish')
+                      form(method="post" action=`/admin/problems/${problem.id}/publish`)
+                        button(type="submit" class="secondary")= "发布"
     else
       article
-        p= t('admin.problems.empty')
+        p= "当前还没有题目。"

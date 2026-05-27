@@ -5,22 +5,22 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('problems.title')
-        p.page-lead= t('problems.lead')
+        h1= "题目列表"
+        p.page-lead= "浏览公开题目，打开题面，并在详情页提交代码。"
       .page-actions
-        a(href=urlWithLang('/submissions') role="button" class="secondary")= t('problems.openSubmissionList')
+        a(href='/submissions' role="button" class="secondary")= "提交列表"
         if !currentUser
-          a(href=urlWithLang('/login') role="button" class="contrast")= t('problems.login')
+          a(href='/login' role="button" class="contrast")= "登录"
     if problems.length
       .table-shell
         table.data-table
           thead
             tr
               th.problem-progress-cell 状态
-              th= t('problems.pid')
-              th= t('problems.problem')
-              th= t('problems.languages')
-              th= t('problems.action')
+              th= "题号"
+              th= "题目"
+              th= "支持语言"
+              th= "操作"
           tbody
             each problem in problems
               tr(class=problem.progress === 'accepted' ? 'problem-row-accepted' : '')
@@ -36,10 +36,10 @@ block content
                 td.table-code= problem.pid
                 td
                   strong
-                    a(href=urlWithLang(`/problem/${problem.pid}`))= problem.title
+                    a(href=`/problem/${problem.pid}`)= problem.title
                 td= problem.allowLanguages.join(', ')
                 td
-                  a(href=urlWithLang(`/problem/${problem.pid}`))= t('problems.submit')
+                  a(href=`/problem/${problem.pid}`)= "提交代码"
     else
       article
-        p= t('problems.empty')
+        p= "目前还没有可见题目。"

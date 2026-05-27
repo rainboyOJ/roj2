@@ -6,22 +6,22 @@ block content
   section.auth-panel
     header
       hgroup
-        h1= t('login.title')
-        p.page-lead= t('login.lead')
+        h1= "账号登录"
+        p.page-lead= "登录后可以提交代码、查看历史记录，并访问常用 OJ 页面。"
     article.panel-card.form-card
       .panel-body
         p#loginAlert.form-alert(role="alert" hidden)
-        form#loginForm(method="post" action=urlWithLang('/login'))
+        form#loginForm(method="post" action='/login')
           div
-            label(for="username")= t('login.username')
-            input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder') required minlength="3" maxlength="24" pattern="^[a-z0-9_]{3,24}$" autocomplete="username")
+            label(for="username")= "用户名"
+            input#username(type="text" name="username" placeholder="demo" required minlength="3" maxlength="24" pattern="^[a-z0-9_]{3,24}$" autocomplete="username")
             small.soft-note 只能使用小写字母、数字、下划线，长度 3-24。
           div
-            label(for="password")= t('login.password')
-            input#password(type="password" name="password" placeholder=t('login.passwordPlaceholder') required autocomplete="current-password")
+            label(for="password")= "密码"
+            input#password(type="password" name="password" placeholder="输入你的密码" required autocomplete="current-password")
           .form-actions
-            button(type="submit")= t('login.submit')
-            a(href=urlWithLang('/register') role="button" class="secondary")= t('login.createAccount')
+            button(type="submit")= "登录"
+            a(href='/register' role="button" class="secondary")= "创建账号"
 
 block pageScripts
   +formScripts('login.js', true)

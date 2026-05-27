@@ -6,44 +6,44 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('admin.submissions.title')
-        p.page-lead= t('admin.submissions.lead')
+        h1= "提交管理"
+        p.page-lead= "用标准列表视图查看所有提交的评测活动。"
     if submissions.length
       .table-shell
         table.data-table
           thead
             tr
-              th= t('admin.submissions.submissionId')
-              th= t('admin.submissions.user')
-              th= t('admin.submissions.problem')
-              th= t('admin.submissions.language')
-              th= t('admin.submissions.score')
-              th= t('admin.submissions.status')
-              th= t('admin.submissions.judge')
-              th= t('admin.submissions.verdict')
-              th= t('admin.submissions.action')
+              th= "提交号"
+              th= "用户"
+              th= "题目"
+              th= "语言"
+              th= "分数"
+              th= "状态"
+              th= "评测机"
+              th= "结果"
+              th= "操作"
           tbody
             each submission in submissions
               tr
                 td.table-code
-                  a(href=urlWithLang(`/submissions/${submission.publicId}`))= submission.publicId
+                  a(href=`/submissions/${submission.publicId}`)= submission.publicId
                 td= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
                 td
-                  a(href=urlWithLang(`/problem/${submission.pid}`))= submission.problemLabel
+                  a(href=`/problem/${submission.pid}`)= submission.problemLabel
                 td.table-code= submission.language
                 td.table-code= submission.score
-                td= localizeStatus(submission.status)
-                td= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : '-'
+                td= formatStatusLabel(submission.status)
+                td= submission.judgeStatus ? formatJudgeStatusLabel(submission.judgeStatus) : '-'
                 td
                   if submission.verdict === 'AC'
-                    span.status-chip.ac= localizeVerdict(submission.verdict)
+                    span.status-chip.ac= formatVerdictLabel(submission.verdict)
                   else if submission.verdict === 'PENDING'
-                    span.status-chip.pending= localizeVerdict(submission.verdict)
+                    span.status-chip.pending= formatVerdictLabel(submission.verdict)
                   else
-                    span.status-chip.failed= localizeVerdict(submission.verdict)
+                    span.status-chip.failed= formatVerdictLabel(submission.verdict)
                 td
-                  a(href=urlWithLang(`/submissions/${submission.publicId}`))= t('submissions.details')
+                  a(href=`/submissions/${submission.publicId}`)= "查看详情"
       +paginationBar('/admin/submissions', pagination, '提交管理分页')
     else
       article
-        p= t('admin.submissions.empty')
+        p= "还没有提交记录。"

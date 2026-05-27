@@ -5,45 +5,45 @@ block content
   section.list-panel
     header
       hgroup
-        h1= t('admin.grades.title')
-        p.page-lead= t('admin.grades.lead')
+        h1= "年级管理"
+        p.page-lead= "维护注册页面可选年级，并控制哪些年级启用。"
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=urlWithLang('/admin/grades'))
+        form(method="post" action='/admin/grades')
           .form-grid
             div
-              label(for="new-grade-name")= t('admin.grades.name')
+              label(for="new-grade-name")= "年级"
               input#new-grade-name(type="text" name="name" required)
             div
-              label(for="new-grade-order")= t('admin.grades.order')
+              label(for="new-grade-order")= "排序"
               input#new-grade-order(type="number" name="order" value="0" required min="0" step="1")
           label
             input(type="checkbox" name="isActive" value="true" checked)
-            = t('admin.grades.active')
-          button(type="submit")= t('admin.grades.create')
+            = "启用"
+          button(type="submit")= "创建年级"
     if grades.length
       .table-shell
         table.data-table
           thead
             tr
-              th= t('admin.grades.name')
-              th= t('admin.grades.active')
-              th= t('admin.grades.order')
-              th= t('admin.grades.actions')
+              th= "年级"
+              th= "启用"
+              th= "排序"
+              th= "操作"
           tbody
             each grade in grades
               tr
                 td
-                  form(method="post" action=urlWithLang(`/admin/grades/${grade.id}`) id=`grade-form-${grade.id}`)
+                  form(method="post" action=`/admin/grades/${grade.id}` id=`grade-form-${grade.id}`)
                     input(type="text" name="name" value=grade.name required)
                 td
                   label
                     input(type="checkbox" name="isActive" value="true" checked=grade.isActive form=`grade-form-${grade.id}`)
-                    = t('admin.grades.active')
+                    = "启用"
                 td
                   input(type="number" name="order" value=grade.order form=`grade-form-${grade.id}` required min="0" step="1")
                 td
-                  button(type="submit" form=`grade-form-${grade.id}`)= t('admin.grades.save')
+                  button(type="submit" form=`grade-form-${grade.id}`)= "保存"
     else
       article
-        p= t('admin.grades.empty')
+        p= "当前还没有年级。"

@@ -5,14 +5,14 @@ block content
   section.auth-panel
     header
       hgroup
-        h1= t('admin.languages.title')
-        p.page-lead= t('admin.languages.lead')
+        h1= "语言设置"
+        p.page-lead= "控制全站哪些编程语言对用户可见且允许提交。"
     article.panel-card.form-card
       .panel-body
         p#adminLanguageAlert.form-alert(role="alert" hidden)
-        form#adminLanguageForm(method="post" action=urlWithLang('/admin/settings/languages'))
+        form#adminLanguageForm(method="post" action='/admin/settings/languages')
           fieldset
-            legend= t('admin.languages.enabled')
+            legend= "启用语言"
             label
               input(
                 type="checkbox"
@@ -30,8 +30,8 @@ block content
               )
               | Python
           .form-actions
-            button(type="submit")= t('admin.languages.save')
-            a(href=urlWithLang('/admin') role="button" class="secondary")= t('admin.languages.back')
+            button(type="submit")= "保存设置"
+            a(href='/admin' role="button" class="secondary")= "返回管理后台"
 
 block pageScripts
   +formScripts('admin-language-settings.js', false)
