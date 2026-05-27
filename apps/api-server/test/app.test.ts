@@ -1,96 +1,15 @@
 // 这组测试主要覆盖“最小 JSON API 行为”。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SessionUser, type SubmissionViewModel } from '../src/app.ts';
+import { buildApp, type SessionUser } from '../src/app.ts';
 import { buildProductionServices } from '../src/index.ts';
-
-function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
-  return {
-    submissions,
-    pagination: {
-      page: 1,
-      pageSize: 20,
-      total,
-      totalPages: Math.max(1, Math.ceil(total / 20)),
-      previousPage: null,
-      nextPage: total > 20 ? 2 : null,
-    },
-  };
-}
-
-function createServices(overrides: Record<string, unknown> = {}) {
-  // 统一构造假的 service，避免测试直接依赖数据库或外部 judge。
-  return {
-    createSubmission: async () => ({
-      id: 'sub-1',
-      publicId: '42',
-      submissionNo: 42,
-      status: 'PENDING_DISPATCH',
-      verdict: 'PENDING',
-      score: 0,
-    }),
-    listProblems: async () => [],
-    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
-    getProblemByPid: async () => null,
-    getSubmissionById: async () => null,
-    listSubmissions: async () => paginated(),
-    registerUser: async () => ({
-      id: 'user-1',
-      username: 'alice',
-      approvalStatus: 'pending' as const,
-    }),
-    loginUser: async () => ({
-      token: 'token-1',
-      user: {
-        id: 'user-1',
-        username: 'alice',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      },
-    }),
-    logoutUser: async () => undefined,
-    getCurrentUser: async () => ({
-      id: 'user-1',
-      username: 'alice',
-      role: 'admin' as const,
-      approvalStatus: 'approved' as const,
-    }),
-    listAdminUsers: async () => [],
-    approveUser: async () => undefined,
-    rejectUser: async () => undefined,
-    listAdminSubmissions: async () => paginated(),
-    listRanklist: async () => [],
-    listContests: async () => [],
-    getContestById: async () => null,
-    listGrades: async () => [],
-    createGrade: async () => ({
-      id: 'grade-1',
-      name: '2027',
-      isActive: true,
-      order: 4,
-    }),
-    updateGrade: async () => undefined,
-    listAdminProblems: async () => [],
-    getAdminProblemById: async () => null,
-    createProblem: async () => ({
-      id: 'problem-1',
-      pid: '1001',
-    }),
-    updateProblem: async () => undefined,
-    publishProblem: async () => undefined,
-    getEnabledLanguages: async () => ['cpp', 'python'] as const,
-    updateEnabledLanguages: async () => undefined,
-    updateProfileClassName: async () => undefined,
-    resetUserPassword: async () => undefined,
-    deleteUser: async () => undefined,
-    updateMyPassword: async () => undefined,
-    ...overrides,
-  };
-}
+import { adminUser, createTestServices, paginated, sessionCookie } from './helpers.ts';
 
 describe('POST /api/submissions', () => {
   it('creates a pending submission', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser({ id: 'user-1', username: 'alice' }),
+    }));
 
     const response = await app.inject({
       method: 'POST',
@@ -112,7 +31,9 @@ describe('POST /api/submissions', () => {
   });
 
   it('rejects an unsupported language', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser({ id: 'user-1', username: 'alice' }),
+    }));
 
     const response = await app.inject({
       method: 'POST',
@@ -128,7 +49,8 @@ describe('POST /api/submissions', () => {
   });
 
   it('rejects a language disabled by admin settings', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser({ id: 'user-1', username: 'alice' }),
       getEnabledLanguages: async () => ['python'] as const,
     }));
 
@@ -148,7 +70,7 @@ describe('POST /api/submissions', () => {
 
 describe('GET /api/problems', () => {
   it('filters problem languages by admin enabled settings', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createTestServices({
       listProblems: async () => [
         {
           pid: '1000',
@@ -179,7 +101,8 @@ describe('GET /api/problems', () => {
 describe('GET /api/submissions', () => {
   it('passes the requested page to services and returns pagination metadata', async () => {
     let receivedPagination: { page: number; pageSize: number } | null = null;
-    const app = buildApp(createServices({
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser({ id: 'user-1', username: 'alice' }),
       listSubmissions: async (_user: SessionUser, pagination: { page: number; pageSize: number }) => {
         receivedPagination = pagination;
         return {
@@ -220,7 +143,7 @@ describe('GET /api/submissions', () => {
       method: 'GET',
       url: '/api/submissions?page=2',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 

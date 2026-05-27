@@ -1,33 +1,19 @@
 // 这组测试专门看“渲染出来的 HTML 长什么样”。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SessionUser, type SubmissionViewModel } from '../src/app.ts';
+import { buildApp, type SessionUser } from '../src/app.ts';
+import {
+  adminSessionCookie,
+  adminUser,
+  createTestServices,
+  paginated,
+  sessionCookie,
+  studentUser,
+} from './helpers.ts';
 
-function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
-  return {
-    submissions,
-    pagination: {
-      page: 1,
-      pageSize: 20,
-      total,
-      totalPages: Math.max(1, Math.ceil(total / 20)),
-      previousPage: null,
-      nextPage: total > 20 ? 2 : null,
-    },
-  };
-}
-
-function createServices(overrides: Record<string, unknown> = {}) {
+function createServices(overrides = {}) {
   // 用固定的假数据把页面渲染稳定下来，方便直接断言 HTML 内容。
-  return {
-    createSubmission: async () => ({
-      id: 'sub-1',
-      publicId: '42',
-      submissionNo: 42,
-      status: 'PENDING_DISPATCH',
-      verdict: 'PENDING',
-      score: 0,
-    }),
+  return createTestServices({
     listProblems: async () => [
       {
         pid: '1000',
@@ -37,7 +23,6 @@ function createServices(overrides: Record<string, unknown> = {}) {
         allowLanguages: ['cpp', 'python'],
       },
     ],
-    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
     getProblemByPid: async () => ({
       pid: '1000',
       title: 'A + B Problem',
@@ -76,30 +61,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
       ],
     }),
     listSubmissions: async () => paginated(),
-    registerUser: async () => ({
-      id: 'user-1',
-      username: 'alice',
-      approvalStatus: 'pending' as const,
-    }),
-    loginUser: async () => ({
-      token: 'token-1',
-      user: {
-        id: 'user-1',
-        username: 'alice',
-        role: 'student' as const,
-        approvalStatus: 'approved' as const,
-      },
-    }),
-    logoutUser: async () => undefined,
-    getCurrentUser: async () => ({
-      id: 'user-1',
-      username: 'demo',
-      role: 'student' as const,
-      approvalStatus: 'approved' as const,
-    }),
-    listAdminUsers: async () => [],
-    approveUser: async () => undefined,
-    rejectUser: async () => undefined,
+    getCurrentUser: async () => studentUser({ username: 'demo' }),
     listAdminSubmissions: async () => paginated(),
     listRanklist: async () => [
       {
@@ -137,14 +99,6 @@ function createServices(overrides: Record<string, unknown> = {}) {
       description: 'A simple training contest for class practice.',
     }),
     listGrades: async () => [],
-    createGrade: async () => ({
-      id: 'grade-1',
-      name: '2027',
-      isActive: true,
-      order: 4,
-    }),
-    updateGrade: async () => undefined,
-    listAdminProblems: async () => [],
     getAdminProblemById: async () => ({
       id: 'problem-1',
       pid: '1000',
@@ -154,20 +108,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
       allowLanguages: ['cpp', 'python'],
       isVisible: true,
     }),
-    createProblem: async () => ({
-      id: 'problem-1',
-      pid: '1001',
-    }),
-    updateProblem: async () => undefined,
-    publishProblem: async () => undefined,
-    getEnabledLanguages: async () => ['cpp', 'python'] as const,
-    updateEnabledLanguages: async () => undefined,
-    updateProfileClassName: async () => undefined,
-    resetUserPassword: async () => undefined,
-    deleteUser: async () => undefined,
-    updateMyPassword: async () => undefined,
     ...overrides,
-  };
+  });
 }
 
 describe('rendered views', () => {
@@ -195,19 +137,14 @@ describe('rendered views', () => {
 
   it('shows one admin entry in the public navigation for admin users', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'GET',
       url: '/',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -354,7 +291,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/problems',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -398,7 +335,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/problems',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -497,7 +434,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/submissions',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -561,7 +498,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/submissions?page=2',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -583,7 +520,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/submissions/42',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -665,7 +602,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/profile',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -715,19 +652,14 @@ describe('rendered views', () => {
 
   it('renders the admin problem creation page for admins', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'GET',
       url: '/admin/problems/new',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -749,19 +681,14 @@ describe('rendered views', () => {
 
   it('renders the admin dashboard for admins', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'GET',
       url: '/admin',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -774,19 +701,14 @@ describe('rendered views', () => {
 
   it('renders the admin problem edit page for admins', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'GET',
       url: '/admin/problems/problem-1/edit',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -799,12 +721,7 @@ describe('rendered views', () => {
 
   it('renders approval actions on the admin users page', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
       listAdminUsers: async () => [
         {
           id: 'user-2',
@@ -820,7 +737,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/admin/users',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -850,12 +767,7 @@ describe('rendered views', () => {
 
   it('renders admin grade management page', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
       listGrades: async () => [
         {
           id: 'grade-1',
@@ -870,7 +782,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/admin/grades',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -884,12 +796,7 @@ describe('rendered views', () => {
 
   it('renders admin language settings validation hooks', async () => {
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
       getEnabledLanguages: async () => ['python'] as const,
     }));
 
@@ -897,7 +804,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/admin/settings/languages',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -911,12 +818,7 @@ describe('rendered views', () => {
   it('renders pagination on the admin submissions page and requests the selected page', async () => {
     let receivedPagination: { page: number; pageSize: number } | null = null;
     const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
       listAdminSubmissions: async (pagination: { page: number; pageSize: number }) => {
         receivedPagination = pagination;
         return {
@@ -957,7 +859,7 @@ describe('rendered views', () => {
       method: 'GET',
       url: '/admin/submissions?page=2',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 

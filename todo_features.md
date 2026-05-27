@@ -96,7 +96,7 @@ db.user_problem_progress.createIndex({ userId: 1, status: 1 })
 - 生产环境使用带版本号的资源路径，例如 query version 或构建时 hash 文件名。
 - 保持所有前端依赖本地化，不引入 CDN。
 
-- [ ] **7. 测试工具抽取**
+- [x] **7. 测试工具抽取**
 
 当前测试里有一些重复的 mock services、分页对象、登录 cookie 构造逻辑。测试数量继续增加后会影响维护。
 

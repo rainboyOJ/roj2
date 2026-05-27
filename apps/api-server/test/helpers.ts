@@ -1,0 +1,115 @@
+import type {
+  ApiServerServices,
+  PaginatedSubmissionsViewModel,
+  SessionUser,
+  SubmissionViewModel,
+} from '../src/app.ts';
+
+export const USER_SESSION_TOKEN = 'token-1';
+export const ADMIN_SESSION_TOKEN = 'admin-token';
+
+export function sessionCookie(token = USER_SESSION_TOKEN) {
+  return `roj_session=${token}`;
+}
+
+export function adminSessionCookie(token = ADMIN_SESSION_TOKEN) {
+  return sessionCookie(token);
+}
+
+export function studentUser(overrides: Partial<SessionUser> = {}): SessionUser {
+  return {
+    id: 'user-1',
+    username: 'alice',
+    role: 'student',
+    approvalStatus: 'approved',
+    ...overrides,
+  };
+}
+
+export function adminUser(overrides: Partial<SessionUser> = {}): SessionUser {
+  return {
+    id: 'admin-1',
+    username: 'admin',
+    role: 'admin',
+    approvalStatus: 'approved',
+    ...overrides,
+  };
+}
+
+export function paginated(
+  submissions: SubmissionViewModel[] = [],
+  total = submissions.length,
+): PaginatedSubmissionsViewModel {
+  return {
+    submissions,
+    pagination: {
+      page: 1,
+      pageSize: 20,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / 20)),
+      previousPage: null,
+      nextPage: total > 20 ? 2 : null,
+    },
+  };
+}
+
+export function createTestServices(
+  overrides: Partial<ApiServerServices> = {},
+): ApiServerServices {
+  return {
+    createSubmission: async () => ({
+      id: 'sub-1',
+      publicId: '42',
+      submissionNo: 42,
+      status: 'PENDING_DISPATCH',
+      verdict: 'PENDING',
+      score: 0,
+    }),
+    listProblems: async () => [],
+    listProblemProgressByUser: async () => new Map(),
+    getProblemByPid: async () => null,
+    getSubmissionById: async () => null,
+    listSubmissions: async () => paginated(),
+    registerUser: async () => ({
+      id: 'user-1',
+      username: 'alice',
+      approvalStatus: 'pending',
+    }),
+    loginUser: async () => ({
+      token: USER_SESSION_TOKEN,
+      user: studentUser(),
+    }),
+    logoutUser: async () => undefined,
+    getCurrentUser: async () => studentUser(),
+    listAdminUsers: async () => [],
+    approveUser: async () => undefined,
+    rejectUser: async () => undefined,
+    listAdminSubmissions: async () => paginated(),
+    listRanklist: async () => [],
+    listContests: async () => [],
+    getContestById: async () => null,
+    listGrades: async () => [],
+    createGrade: async () => ({
+      id: 'grade-1',
+      name: '2027',
+      isActive: true,
+      order: 4,
+    }),
+    updateGrade: async () => undefined,
+    getEnabledLanguages: async () => ['cpp', 'python'],
+    updateEnabledLanguages: async () => undefined,
+    listAdminProblems: async () => [],
+    getAdminProblemById: async () => null,
+    createProblem: async () => ({
+      id: 'problem-1',
+      pid: '1001',
+    }),
+    updateProblem: async () => undefined,
+    publishProblem: async () => undefined,
+    updateProfileClassName: async () => undefined,
+    resetUserPassword: async () => undefined,
+    deleteUser: async () => undefined,
+    updateMyPassword: async () => undefined,
+    ...overrides,
+  };
+}

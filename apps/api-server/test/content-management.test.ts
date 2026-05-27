@@ -1,100 +1,14 @@
 // 这组测试偏后台管理和内容维护流程。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SubmissionViewModel } from '../src/app.ts';
-
-function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
-  return {
-    submissions,
-    pagination: {
-      page: 1,
-      pageSize: 20,
-      total,
-      totalPages: Math.max(1, Math.ceil(total / 20)),
-      previousPage: null,
-      nextPage: total > 20 ? 2 : null,
-    },
-  };
-}
-
-function createServices(overrides: Record<string, unknown> = {}) {
-  return {
-    createSubmission: async () => ({
-      id: 'sub-1',
-      publicId: '42',
-      submissionNo: 42,
-      status: 'PENDING_DISPATCH',
-      verdict: 'PENDING',
-    }),
-    listProblems: async () => [],
-    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
-    getProblemByPid: async () => null,
-    getSubmissionById: async () => null,
-    registerUser: async () => ({
-      id: 'user-1',
-      username: 'alice',
-      approvalStatus: 'pending' as const,
-    }),
-    loginUser: async () => ({
-      token: 'token-1',
-      user: {
-        id: 'user-1',
-        username: 'alice',
-        role: 'student' as const,
-        approvalStatus: 'approved' as const,
-      },
-    }),
-    logoutUser: async () => undefined,
-    getCurrentUser: async () => ({
-      id: 'user-1',
-      username: 'alice',
-      role: 'student' as const,
-      approvalStatus: 'approved' as const,
-    }),
-    listAdminUsers: async () => [],
-    approveUser: async () => undefined,
-    rejectUser: async () => undefined,
-    listSubmissions: async () => paginated(),
-    listAdminSubmissions: async () => paginated(),
-    listRanklist: async () => [],
-    listContests: async () => [],
-    getContestById: async () => null,
-    listGrades: async () => [],
-    createGrade: async () => ({
-      id: 'grade-1',
-      name: '2027',
-      isActive: true,
-      order: 4,
-    }),
-    updateGrade: async () => undefined,
-    listAdminProblems: async () => [],
-    getAdminProblemById: async () => null,
-    createProblem: async () => ({
-      id: 'problem-1',
-      pid: '1001',
-    }),
-    updateProblem: async () => undefined,
-    publishProblem: async () => undefined,
-    getEnabledLanguages: async () => ['cpp', 'python'] as const,
-    updateEnabledLanguages: async () => undefined,
-    updateProfileClassName: async () => undefined,
-    resetUserPassword: async () => undefined,
-    deleteUser: async () => undefined,
-    updateMyPassword: async () => undefined,
-    ...overrides,
-  };
-}
+import { buildApp } from '../src/app.ts';
+import { adminSessionCookie, adminUser, createTestServices, paginated, sessionCookie } from './helpers.ts';
 
 describe('content management routes', () => {
   it('approves selected users from the admin HTML page flow', async () => {
     const approved: Array<{ userId: string; adminUserId: string }> = [];
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
       approveUser: async (userId: string, adminUserId: string) => {
         approved.push({ userId, adminUserId });
       },
@@ -104,7 +18,7 @@ describe('content management routes', () => {
       method: 'POST',
       url: '/admin/users/bulk-approve',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         userIds: ['user-2', 'user-3'],
@@ -121,13 +35,8 @@ describe('content management routes', () => {
 
   it('rejects selected users from the admin HTML page flow', async () => {
     const rejected: Array<{ userId: string; adminUserId: string }> = [];
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
       rejectUser: async (userId: string, adminUserId: string) => {
         rejected.push({ userId, adminUserId });
       },
@@ -137,7 +46,7 @@ describe('content management routes', () => {
       method: 'POST',
       url: '/admin/users/bulk-reject',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         userIds: ['user-2', 'user-3'],
@@ -153,7 +62,7 @@ describe('content management routes', () => {
   });
 
   it('returns a logged-in user submission list', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createTestServices({
       listSubmissions: async () => paginated([
         {
           id: 'sub-1',
@@ -181,7 +90,7 @@ describe('content management routes', () => {
       method: 'GET',
       url: '/api/submissions',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -200,12 +109,12 @@ describe('content management routes', () => {
   });
 
   it('rejects admin submissions for non-admin users', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createTestServices());
     const response = await app.inject({
       method: 'GET',
       url: '/api/admin/submissions',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -213,20 +122,15 @@ describe('content management routes', () => {
   });
 
   it('creates a grade for admin users', async () => {
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/grades',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         name: '2027',
@@ -243,20 +147,15 @@ describe('content management routes', () => {
   });
 
   it('creates a problem for admin users', async () => {
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/problems',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         pid: '1001',
@@ -275,12 +174,12 @@ describe('content management routes', () => {
   });
 
   it('updates a class name for the current student', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createTestServices());
     const response = await app.inject({
       method: 'POST',
       url: '/api/me/class-name',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
       payload: {
         className: 'Class 2',
@@ -291,20 +190,15 @@ describe('content management routes', () => {
   });
 
   it('updates a grade for admin users', async () => {
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'PUT',
       url: '/api/admin/grades/grade-1',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         name: '2027',
@@ -317,20 +211,15 @@ describe('content management routes', () => {
   });
 
   it('publishes a problem for admin users', async () => {
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/problems/problem-1/publish',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -339,13 +228,8 @@ describe('content management routes', () => {
 
   it('updates enabled languages for admin users', async () => {
     let receivedLanguages: string[] = [];
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
       updateEnabledLanguages: async (languages: Array<'cpp' | 'python'>) => {
         receivedLanguages = languages;
       },
@@ -355,7 +239,7 @@ describe('content management routes', () => {
       method: 'POST',
       url: '/api/admin/settings/languages',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         enabledLanguages: ['python'],
@@ -368,13 +252,8 @@ describe('content management routes', () => {
 
   it('deletes a user for admin users', async () => {
     let deletedUserId = '';
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
       deleteUser: async (userId: string) => {
         deletedUserId = userId;
       },
@@ -384,7 +263,7 @@ describe('content management routes', () => {
       method: 'DELETE',
       url: '/api/admin/users/user-2',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
     });
 
@@ -394,13 +273,8 @@ describe('content management routes', () => {
 
   it('updates grades from the admin HTML page flow', async () => {
     const updated: Array<{ id: string; name: string; isActive: boolean; order: number }> = [];
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
       updateGrade: async (id: string, input: { name: string; isActive: boolean; order: number }) => {
         updated.push({ id, ...input });
       },
@@ -410,7 +284,7 @@ describe('content management routes', () => {
       method: 'POST',
       url: '/admin/grades/grade-1',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         name: '2025',

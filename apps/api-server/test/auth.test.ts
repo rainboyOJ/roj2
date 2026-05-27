@@ -1,97 +1,22 @@
 // 这组测试覆盖认证、登录态和学生审核约束。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SubmissionViewModel } from '../src/app.ts';
+import { buildApp } from '../src/app.ts';
+import { adminSessionCookie, adminUser, createTestServices, sessionCookie, studentUser } from './helpers.ts';
 
-function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
-  return {
-    submissions,
-    pagination: {
-      page: 1,
-      pageSize: 20,
-      total,
-      totalPages: Math.max(1, Math.ceil(total / 20)),
-      previousPage: null,
-      nextPage: total > 20 ? 2 : null,
-    },
-  };
-}
-
-function createServices(overrides: Record<string, unknown> = {}) {
-  // 每个测试只改自己关心的 service，其余都走默认假实现。
-  return {
-    createSubmission: async () => ({
-      id: 'sub-1',
-      publicId: '42',
-      submissionNo: 42,
-      status: 'PENDING_DISPATCH',
-      verdict: 'PENDING',
-    }),
-    listProblems: async () => [],
-    listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
-    getProblemByPid: async () => null,
-    getSubmissionById: async () => null,
-    listSubmissions: async () => paginated(),
-    registerUser: async () => ({
-      id: 'user-1',
-      username: 'alice',
-      approvalStatus: 'pending' as const,
-    }),
-    loginUser: async () => ({
-      token: 'token-1',
-      user: {
-        id: 'user-1',
-        username: 'alice',
-        role: 'student' as const,
-        approvalStatus: 'pending' as const,
-      },
-    }),
-    logoutUser: async () => undefined,
+function createAnonymousServices(overrides = {}) {
+  return createTestServices({
     getCurrentUser: async () => null,
-    listAdminUsers: async () => [],
-    approveUser: async () => undefined,
-    rejectUser: async () => undefined,
-    listAdminSubmissions: async () => paginated(),
-    listRanklist: async () => [],
-    listContests: async () => [],
-    getContestById: async () => null,
-    listGrades: async () => [],
-    createGrade: async () => ({
-      id: 'grade-1',
-      name: '2027',
-      isActive: true,
-      order: 4,
-    }),
-    updateGrade: async () => undefined,
-    listAdminProblems: async () => [],
-    getAdminProblemById: async () => null,
-    createProblem: async () => ({
-      id: 'problem-1',
-      pid: '1001',
-    }),
-    updateProblem: async () => undefined,
-    publishProblem: async () => undefined,
-    getEnabledLanguages: async () => ['cpp', 'python'] as const,
-    updateEnabledLanguages: async () => undefined,
-    updateProfileClassName: async () => undefined,
-    resetUserPassword: async () => undefined,
-    deleteUser: async () => undefined,
-    updateMyPassword: async () => undefined,
     ...overrides,
-  };
+  });
 }
 
 describe('auth routes', () => {
   it('logs in from the HTML form flow and redirects to the home page', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createAnonymousServices({
       loginUser: async () => ({
         token: 'token-1',
-        user: {
-          id: 'user-1',
-          username: 'alice',
-          role: 'student' as const,
-          approvalStatus: 'approved' as const,
-        },
+        user: studentUser(),
       }),
     }));
 
@@ -110,7 +35,7 @@ describe('auth routes', () => {
   });
 
   it('registers from the HTML form flow and redirects to the login page', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createAnonymousServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -130,7 +55,7 @@ describe('auth routes', () => {
   });
 
   it('registers a student account', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createAnonymousServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -153,7 +78,7 @@ describe('auth routes', () => {
   });
 
   it('returns a Chinese-friendly JSON error source when registration fails', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createAnonymousServices({
       registerUser: async () => {
         throw new Error('username already exists');
       },
@@ -179,7 +104,7 @@ describe('auth routes', () => {
   });
 
   it('logs in and sets a session cookie', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createAnonymousServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -195,13 +120,13 @@ describe('auth routes', () => {
   });
 
   it('logs out from the HTML flow, clears the session cookie, and redirects home', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createAnonymousServices());
 
     const response = await app.inject({
       method: 'POST',
       url: '/logout',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
@@ -212,7 +137,7 @@ describe('auth routes', () => {
   });
 
   it('returns 401 for invalid login credentials', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createAnonymousServices({
       loginUser: async () => {
         throw new Error('invalid username or password');
       },
@@ -231,7 +156,7 @@ describe('auth routes', () => {
   });
 
   it('rejects submission creation for anonymous users', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createAnonymousServices());
 
     const response = await app.inject({
       method: 'POST',
@@ -247,7 +172,7 @@ describe('auth routes', () => {
   });
 
   it('rejects submission detail for anonymous users', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createAnonymousServices({
       getSubmissionById: async () => ({
         id: 'sub-1',
         publicId: '42',
@@ -277,13 +202,8 @@ describe('auth routes', () => {
   });
 
   it('rejects submission creation for pending students', async () => {
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        role: 'student' as const,
-        approvalStatus: 'pending' as const,
-      }),
+    const app = buildApp(createAnonymousServices({
+      getCurrentUser: async () => studentUser({ approvalStatus: 'pending' }),
     }));
 
     const response = await app.inject({
@@ -300,13 +220,8 @@ describe('auth routes', () => {
   });
 
   it('rejects admin approval for non-admin users', async () => {
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        role: 'student' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createAnonymousServices({
+      getCurrentUser: async () => studentUser(),
     }));
 
     const response = await app.inject({
@@ -318,29 +233,19 @@ describe('auth routes', () => {
   });
 
   it('allows admin users to reset a student password', async () => {
-    const app = buildApp(createServices({
+    const app = buildApp(createAnonymousServices({
       loginUser: async () => ({
         token: 'token-1',
-        user: {
-          id: 'admin-1',
-          username: 'admin',
-          role: 'admin' as const,
-          approvalStatus: 'approved' as const,
-        },
+        user: adminUser(),
       }),
-      getCurrentUser: async () => ({
-        id: 'admin-1',
-        username: 'admin',
-        role: 'admin' as const,
-        approvalStatus: 'approved' as const,
-      }),
+      getCurrentUser: async () => adminUser(),
     }));
 
     const response = await app.inject({
       method: 'POST',
       url: '/api/admin/users/user-2/reset-password',
       headers: {
-        cookie: 'roj_session=admin-token',
+        cookie: adminSessionCookie(),
       },
       payload: {
         password: 'newpassword123',
@@ -352,13 +257,8 @@ describe('auth routes', () => {
 
   it('allows a logged-in user to update their own password', async () => {
     let receivedInput: { userId: string; currentPassword: string; newPassword: string } | null = null;
-    const app = buildApp(createServices({
-      getCurrentUser: async () => ({
-        id: 'user-1',
-        username: 'alice',
-        role: 'student' as const,
-        approvalStatus: 'approved' as const,
-      }),
+    const app = buildApp(createAnonymousServices({
+      getCurrentUser: async () => studentUser(),
       updateMyPassword: async (userId: string, currentPassword: string, newPassword: string) => {
         receivedInput = { userId, currentPassword, newPassword };
       },
@@ -368,7 +268,7 @@ describe('auth routes', () => {
       method: 'POST',
       url: '/api/me/password',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
       payload: {
         currentPassword: 'oldpassword123',

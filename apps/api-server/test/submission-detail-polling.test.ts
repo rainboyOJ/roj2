@@ -1,17 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type ApiServerServices, type SessionUser } from '../src/app.ts';
+import { buildApp } from '../src/app.ts';
+import { createTestServices, sessionCookie, studentUser } from './helpers.ts';
 
-const currentUser: SessionUser = {
-  id: 'user-1',
-  username: 'demo',
-  role: 'student',
-  approvalStatus: 'approved',
-};
-
-function createServices(): ApiServerServices {
-  return {
-    getCurrentUser: async () => currentUser,
+function createServices() {
+  return createTestServices({
+    getCurrentUser: async () => studentUser({ username: 'demo' }),
     getSubmissionById: async () => ({
       id: 'sub-1',
       publicId: '42',
@@ -31,7 +25,7 @@ function createServices(): ApiServerServices {
       message: '',
       caseResults: [],
     }),
-  } as unknown as ApiServerServices;
+  });
 }
 
 describe('submission detail polling', () => {
@@ -42,7 +36,7 @@ describe('submission detail polling', () => {
       method: 'GET',
       url: '/submissions/42',
       headers: {
-        cookie: 'roj_session=token-1',
+        cookie: sessionCookie(),
       },
     });
 
