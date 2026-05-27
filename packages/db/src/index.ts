@@ -1,5 +1,5 @@
 // 这个文件是项目的数据访问层，负责所有 MongoDB 读写。
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,8 +52,8 @@ interface DefaultProblemSeed {
   allowLanguages: AppLanguage[];
 }
 
-async function readDefaultProblemSeed(pid: string): Promise<DefaultProblemSeed> {
-  const problemDir = path.join(defaultProblemsRoot, pid);
+async function readDefaultProblemSeed(pid: string, rootDir = defaultProblemsRoot): Promise<DefaultProblemSeed> {
+  const problemDir = path.join(rootDir, pid);
   const metadata = JSON.parse(
     await readFile(path.join(problemDir, 'metadata.json'), 'utf8'),
   ) as {
@@ -73,6 +73,20 @@ async function readDefaultProblemSeed(pid: string): Promise<DefaultProblemSeed> 
     statementMarkdown,
     allowLanguages: allowLanguages.length > 0 ? allowLanguages : ['cpp', 'python'],
   };
+}
+
+export function isDefaultProblemDirectoryName(name: string) {
+  return /^[0-9]+$/.test(name);
+}
+
+export async function readDefaultProblemSeeds(rootDir = defaultProblemsRoot): Promise<DefaultProblemSeed[]> {
+  const entries = await readdir(rootDir, { withFileTypes: true });
+  const pids = entries
+    .filter((entry) => entry.isDirectory() && isDefaultProblemDirectoryName(entry.name))
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  return Promise.all(pids.map((pid) => readDefaultProblemSeed(pid, rootDir)));
 }
 
 // 抢占待评测 submission 时使用的原子更新。
@@ -390,8 +404,7 @@ export class RojDb {
     const now = new Date();
     const demoUserId = new ObjectId().toHexString();
     const adminUserId = new ObjectId().toHexString();
-    const demoProblemId = new ObjectId().toHexString();
-    const defaultProblem1000 = await readDefaultProblemSeed('1000');
+    const defaultProblems = await readDefaultProblemSeeds();
 
     await this.grades().updateOne(
       { name: '2024' },
@@ -499,25 +512,27 @@ export class RojDb {
       { upsert: true },
     );
 
-    await this.problems().updateOne(
-      { pid: '1000' },
-      {
-        $set: {
-          pid: defaultProblem1000.pid,
-          title: defaultProblem1000.title,
-          statementMarkdown: defaultProblem1000.statementMarkdown,
-          statementHtml: renderMarkdown(defaultProblem1000.statementMarkdown),
-          allowLanguages: defaultProblem1000.allowLanguages,
-          isVisible: true,
-          updatedAt: now,
+    for (const problem of defaultProblems) {
+      await this.problems().updateOne(
+        { pid: problem.pid },
+        {
+          $set: {
+            pid: problem.pid,
+            title: problem.title,
+            statementMarkdown: problem.statementMarkdown,
+            statementHtml: renderMarkdown(problem.statementMarkdown),
+            allowLanguages: problem.allowLanguages,
+            isVisible: true,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            _id: new ObjectId().toHexString(),
+            createdAt: now,
+          },
         },
-        $setOnInsert: {
-          _id: demoProblemId,
-          createdAt: now,
-        },
-      },
-      { upsert: true },
-    );
+        { upsert: true },
+      );
+    }
 
     await this.settings().updateOne(
       { _id: 'site_settings' },

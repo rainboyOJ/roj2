@@ -98,7 +98,7 @@
 - 脚本退出时默认恢复被停止的 Docker 容器。
 - 设置 `RESTORE_DOCKER_SERVICES=0` 时不恢复容器。
 
-- [ ] **7. 默认题目 seed 改为扫描目录**
+- [x] **7. 默认题目 seed 改为扫描目录**
 
 当前默认题目初始化固定读取 `packages/db/default_problems/1000`。但目录结构已经是 `default_problems/<pid>/`，天然支持多个默认题目。
 

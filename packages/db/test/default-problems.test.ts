@@ -1,0 +1,62 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+import { isDefaultProblemDirectoryName, readDefaultProblemSeeds } from '../src/index.ts';
+
+describe('default problem seeds', () => {
+  it('accepts numeric directory names only', () => {
+    expect(isDefaultProblemDirectoryName('1000')).toBe(true);
+    expect(isDefaultProblemDirectoryName('0010')).toBe(true);
+    expect(isDefaultProblemDirectoryName('abc')).toBe(false);
+    expect(isDefaultProblemDirectoryName('1000-backup')).toBe(false);
+  });
+
+  it('reads all default problem directories in pid order', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'roj-default-problems-'));
+
+    try {
+      await mkdir(join(tempDir, '1001'), { recursive: true });
+      await mkdir(join(tempDir, '1000'), { recursive: true });
+      await mkdir(join(tempDir, 'draft'), { recursive: true });
+
+      await writeFile(
+        join(tempDir, '1001', 'metadata.json'),
+        JSON.stringify({
+          title: 'Second Problem',
+          allowLanguages: ['python', 'javascript'],
+        }),
+      );
+      await writeFile(join(tempDir, '1001', 'content.md'), '# Second\n');
+      await writeFile(
+        join(tempDir, '1000', 'metadata.json'),
+        JSON.stringify({
+          title: 'First Problem',
+          allowLanguages: [],
+        }),
+      );
+      await writeFile(join(tempDir, '1000', 'content.md'), '# First\n');
+
+      const seeds = await readDefaultProblemSeeds(tempDir);
+
+      expect(seeds).toEqual([
+        {
+          pid: '1000',
+          title: 'First Problem',
+          statementMarkdown: '# First\n',
+          allowLanguages: ['cpp', 'python'],
+        },
+        {
+          pid: '1001',
+          title: 'Second Problem',
+          statementMarkdown: '# Second\n',
+          allowLanguages: ['python'],
+        },
+      ]);
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+});

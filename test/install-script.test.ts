@@ -80,6 +80,9 @@ exit 0
     await mkdir(join(rojDir, 'packages', 'db', 'default_problems', '1000', 'data'), {
       recursive: true,
     });
+    await mkdir(join(rojDir, 'packages', 'db', 'default_problems', '1001', 'data'), {
+      recursive: true,
+    });
 
     await writeFile(
       join(judgeDir, 'config', 'config.json'),
@@ -97,6 +100,14 @@ exit 0
     await writeFile(
       join(rojDir, 'packages', 'db', 'default_problems', '1000', 'data', 'problem1.out'),
       '3\n',
+    );
+    await writeFile(
+      join(rojDir, 'packages', 'db', 'default_problems', '1001', 'data', 'problem1.in'),
+      '2 3\n',
+    );
+    await writeFile(
+      join(rojDir, 'packages', 'db', 'default_problems', '1001', 'data', 'problem1.out'),
+      '5\n',
     );
     await writeFile(
       join(rojDir, 'docker-compose.yaml'),
@@ -209,6 +220,11 @@ exit 0
         'utf8',
       );
       expect(defaultProblemInput).toBe('1 2\n');
+      const secondDefaultProblemInput = await readFile(
+        join(deployDir, 'judge_server_testData', '1001', 'data', 'problem1.in'),
+        'utf8',
+      );
+      expect(secondDefaultProblemInput).toBe('2 3\n');
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
