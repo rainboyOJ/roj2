@@ -12,6 +12,7 @@ import {
 import { ObjectId } from 'mongodb';
 import {
   OJSubmissionStatuses,
+  ProblemProgressStatuses,
   SubmissionVerdicts,
   createEmptyJudgeState,
   createEmptyResultState,
@@ -26,6 +27,8 @@ import {
   type SiteSettingsDocument,
   type SubmissionDocument,
   type UserDocument,
+  type ProblemProgressStatus,
+  type UserProblemProgressDocument,
 } from '@roj/shared';
 import { renderMarkdown } from '@roj/markdown-renderer';
 import { MongoClient } from 'mongodb';
@@ -170,6 +173,75 @@ export function calculateSubmissionScore(
   return Math.round((acceptedCount / caseResults.length) * 100);
 }
 
+interface ProblemProgressSourceSubmission {
+  userId: string;
+  pid: string;
+  verdict: string;
+  updatedAt: Date;
+}
+
+export function buildAttemptedProblemProgressUpdate(userId: string, pid: string, now: Date) {
+  return {
+    $setOnInsert: {
+      _id: new ObjectId().toHexString(),
+      userId,
+      pid,
+      status: ProblemProgressStatuses.ATTEMPTED,
+      updatedAt: now,
+    },
+  };
+}
+
+export function buildAcceptedProblemProgressUpdate(userId: string, pid: string, now: Date) {
+  return {
+    $set: {
+      status: ProblemProgressStatuses.ACCEPTED,
+      updatedAt: now,
+    },
+    $setOnInsert: {
+      _id: new ObjectId().toHexString(),
+      userId,
+      pid,
+    },
+  };
+}
+
+export function buildUserProblemProgressRows(
+  submissions: Iterable<ProblemProgressSourceSubmission>,
+) {
+  const progressByKey = new Map<string, {
+    userId: string;
+    pid: string;
+    status: ProblemProgressStatus;
+    updatedAt: Date;
+  }>();
+
+  for (const submission of submissions) {
+    const key = `${submission.userId}:${submission.pid}`;
+    const existing = progressByKey.get(key);
+    const status = submission.verdict === SubmissionVerdicts.AC
+      ? ProblemProgressStatuses.ACCEPTED
+      : ProblemProgressStatuses.ATTEMPTED;
+
+    if (!existing) {
+      progressByKey.set(key, {
+        userId: submission.userId,
+        pid: submission.pid,
+        status,
+        updatedAt: submission.updatedAt,
+      });
+      continue;
+    }
+
+    existing.updatedAt = submission.updatedAt;
+    if (status === ProblemProgressStatuses.ACCEPTED) {
+      existing.status = ProblemProgressStatuses.ACCEPTED;
+    }
+  }
+
+  return Array.from(progressByKey.values());
+}
+
 export class RojDb {
   readonly client: MongoClient;
   readonly dbName: string;
@@ -220,6 +292,10 @@ export class RojDb {
     return this.db.collection<SubmissionDocument>('submissions');
   }
 
+  userProblemProgress() {
+    return this.db.collection<UserProblemProgressDocument>('user_problem_progress');
+  }
+
   // 初始化项目需要的索引。
   async ensureIndexes() {
     await this.users().createIndex({ username: 1 }, { unique: true });
@@ -232,6 +308,8 @@ export class RojDb {
     await this.submissions().createIndex({ submissionNo: 1 }, { unique: true, sparse: true });
     await this.submissions().createIndex({ status: 1, 'judge.leaseExpireAt': 1 });
     await this.submissions().createIndex({ 'judge.submissionId': 1 });
+    await this.userProblemProgress().createIndex({ userId: 1, pid: 1 }, { unique: true });
+    await this.userProblemProgress().createIndex({ userId: 1, status: 1 });
   }
 
   // 初始化演示数据。
@@ -453,6 +531,7 @@ export class RojDb {
     };
 
     await this.submissions().insertOne(submission);
+    await this.markProblemAttempted(submission.userId, submission.pid, now);
     debugJudge('submission created', {
       localSubmissionId: submission._id,
       submissionNo: submission.submissionNo,
@@ -535,23 +614,32 @@ export class RojDb {
   }
 
   async listProblemProgressByUser(userId: string) {
-    const submissions = await this.submissions()
-      .find({ userId }, { projection: { pid: 1, verdict: 1 } })
+    const progressRows = await this.userProblemProgress()
+      .find({ userId }, { projection: { pid: 1, status: 1 } })
       .toArray();
     const progressByPid = new Map<string, 'accepted' | 'attempted'>();
 
-    for (const submission of submissions) {
-      if (submission.verdict === SubmissionVerdicts.AC) {
-        progressByPid.set(submission.pid, 'accepted');
-        continue;
-      }
-
-      if (!progressByPid.has(submission.pid)) {
-        progressByPid.set(submission.pid, 'attempted');
-      }
+    for (const progress of progressRows) {
+      progressByPid.set(progress.pid, progress.status);
     }
 
     return progressByPid;
+  }
+
+  async markProblemAttempted(userId: string, pid: string, now = new Date()) {
+    await this.userProblemProgress().updateOne(
+      { userId, pid },
+      buildAttemptedProblemProgressUpdate(userId, pid, now),
+      { upsert: true },
+    );
+  }
+
+  async markProblemAccepted(userId: string, pid: string, now = new Date()) {
+    await this.userProblemProgress().updateOne(
+      { userId, pid },
+      buildAcceptedProblemProgressUpdate(userId, pid, now),
+      { upsert: true },
+    );
   }
 
   async listAllSubmissions() {
@@ -694,6 +782,10 @@ export class RojDb {
     const now = new Date();
     const mapped = mapJudgeSnapshotToSubmissionState(snapshot);
     const score = calculateSubmissionScore(snapshot.case_results);
+    const submission = await this.submissions().findOne(
+      { _id: localSubmissionId },
+      { projection: { userId: 1, pid: 1 } },
+    );
     debugJudge('save judge snapshot', {
       localSubmissionId,
       judgeSubmissionId: snapshot.submissionId,
@@ -740,6 +832,10 @@ export class RojDb {
         },
       );
     }
+
+    if (mapped.verdict === SubmissionVerdicts.AC && submission) {
+      await this.markProblemAccepted(submission.userId, submission.pid, now);
+    }
   }
 
   // 记录系统级失败，例如 judge 通信或 dispatcher 自身异常。
@@ -770,6 +866,37 @@ export class RojDb {
         },
       },
     );
+  }
+
+  async rebuildUserProblemProgress() {
+    const submissions: ProblemProgressSourceSubmission[] = [];
+
+    const cursor = this.submissions()
+      .find({}, { projection: { userId: 1, pid: 1, verdict: 1, updatedAt: 1 } })
+      .sort({ createdAt: 1 });
+
+    for await (const submission of cursor) {
+      submissions.push(submission);
+    }
+
+    const progressRows = buildUserProblemProgressRows(submissions);
+    await this.userProblemProgress().deleteMany({});
+    if (progressRows.length === 0) {
+      return { rebuilt: 0 };
+    }
+
+    await this.userProblemProgress().bulkWrite(
+      progressRows.map((progress) => ({
+        insertOne: {
+          document: {
+            _id: new ObjectId().toHexString(),
+            ...progress,
+          },
+        },
+      })),
+    );
+
+    return { rebuilt: progressRows.length };
   }
 
   // 学生注册后默认进入待审核状态。

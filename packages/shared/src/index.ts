@@ -64,6 +64,23 @@ export interface SiteSettingsDocument {
   updatedAt: Date;
 }
 
+export const ProblemProgressStatuses = {
+  ATTEMPTED: 'attempted',
+  ACCEPTED: 'accepted',
+} as const;
+
+export type ProblemProgressStatus =
+  (typeof ProblemProgressStatuses)[keyof typeof ProblemProgressStatuses];
+
+// user_problem_progress 集合保存用户在每道题上的当前做题状态。
+export interface UserProblemProgressDocument {
+  _id: string;
+  userId: string;
+  pid: string;
+  status: ProblemProgressStatus;
+  updatedAt: Date;
+}
+
 // 单个测试点结果，字段基本对齐 judge_server 的 case_results。
 export interface SubmissionCaseResult {
   seq_id: number;

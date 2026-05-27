@@ -14,6 +14,7 @@
     "dev:dispatcher": "node --experimental-strip-types ./apps/judge-dispatcher/src/index.ts",
     "seed": "node --experimental-strip-types ./apps/api-server/src/seed.ts",
     "import:roj": "node --experimental-strip-types ./scripts/import_roj_problems.ts",
+    "rebuild:problem-progress": "node --experimental-strip-types ./scripts/rebuild_user_problem_progress.ts",
     "build:problem-editor": "node --experimental-strip-types ./apps/api-server/scripts/build-problem-editor.ts"
   },
   "devDependencies": {
