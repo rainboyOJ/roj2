@@ -264,6 +264,7 @@ describe('rendered views', () => {
     const profilePassword = await app.inject({ method: 'GET', url: '/assets/profile-password.js' });
     const adminProblem = await app.inject({ method: 'GET', url: '/assets/admin-problem-form.js' });
     const adminLanguages = await app.inject({ method: 'GET', url: '/assets/admin-language-settings.js' });
+    const adminUsers = await app.inject({ method: 'GET', url: '/assets/admin-users.js' });
 
     expect(axios.statusCode).toBe(200);
     expect(axios.headers['content-type']).toContain('application/javascript');
@@ -289,6 +290,10 @@ describe('rendered views', () => {
     expect(adminProblem.body).toContain('至少选择一种允许提交的语言');
     expect(adminLanguages.statusCode).toBe(200);
     expect(adminLanguages.body).toContain('至少选择一种可用语言');
+    expect(adminUsers.statusCode).toBe(200);
+    expect(adminUsers.headers['content-type']).toContain('application/javascript');
+    expect(adminUsers.body).toContain('confirmMessage');
+    expect(adminUsers.body).toContain('window.confirm');
     const missing = await app.inject({ method: 'GET', url: '/assets/missing.js' });
     expect(missing.statusCode).toBe(404);
     expect(missing.headers['cache-control']).toBeUndefined();
@@ -827,10 +832,20 @@ describe('rendered views', () => {
     expect(response.body).toContain('type="checkbox"');
     expect(response.body).toContain('id="bulk-user-review-form"');
     expect(response.body).toContain('form="bulk-user-review-form"');
+    expect(response.body).toContain('data-require-checked="userIds"');
+    expect(response.body).toContain('请先选择需要处理的用户');
+    expect(response.body).toContain('确定要通过选中的用户吗？');
+    expect(response.body).toContain('确定要拒绝选中的用户吗？');
     expect(response.body).toContain('id="approve-user-user-2"');
     expect(response.body).toContain('id="reject-user-user-2"');
     expect(response.body).toContain('id="reset-password-user-user-2"');
     expect(response.body).toContain('id="delete-user-user-2"');
+    expect(response.body).toContain('确定要通过用户 alice 吗？');
+    expect(response.body).toContain('确定要拒绝用户 alice 吗？');
+    expect(response.body).toContain('确定要重置用户 alice 的密码吗？');
+    expect(response.body).toContain('确定要删除用户 alice 吗？删除后不可恢复。');
+    expect(response.body).toContain('data-require-password="password"');
+    expect(response.body).toContain('src="/assets/admin-users.js"');
   });
 
   it('renders admin grade management page', async () => {
