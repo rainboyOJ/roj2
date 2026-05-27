@@ -1,5 +1,6 @@
 //- 注册页：当前面向学生账号注册，注册后默认待审核。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.auth-panel
@@ -45,5 +46,4 @@ block content
             a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')
 
 block pageScripts
-  script(src="/assets/axios.min.js")
-  script(src="/assets/register.js")
+  +formScripts('register.js', true)

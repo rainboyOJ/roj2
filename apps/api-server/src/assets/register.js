@@ -2,9 +2,10 @@
   const form = document.querySelector('#registerForm');
   const alertBox = document.querySelector('#registerAlert');
 
-  if (!form || !alertBox || !window.axios) {
+  if (!form || !alertBox || !window.axios || !window.RojFormUtils) {
     return;
   }
+  const formUtils = window.RojFormUtils;
 
   const fieldLabels = {
     username: '用户名',
@@ -24,30 +25,8 @@
     password: '密码至少 8 个字符。',
   };
 
-  function showError(message) {
-    alertBox.textContent = message;
-    alertBox.hidden = false;
-  }
-
-  function showFieldError(field) {
-    if (!field) {
-      return false;
-    }
-
-    const message = fieldMessages[field.name] || `${fieldLabels[field.name] || '表单'}填写不正确。`;
-    showError(message);
-    field.focus();
-    return true;
-  }
-
   function validateForm() {
-    if (form.checkValidity()) {
-      return true;
-    }
-
-    const invalidField = form.querySelector(':invalid');
-    showFieldError(invalidField);
-    return false;
+    return formUtils.validateForm(form, alertBox, fieldMessages, '表单填写不正确。');
   }
 
   function issueToMessage(issue) {
@@ -83,7 +62,7 @@
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    alertBox.hidden = true;
+    formUtils.hideAlert(alertBox);
     if (!validateForm()) {
       return;
     }
@@ -102,7 +81,7 @@
       await window.axios.post('/api/register', payload);
       window.location.href = '/login';
     } catch (error) {
-      showError(errorToMessage(error));
+      formUtils.showAlert(alertBox, errorToMessage(error));
     }
   });
 })();

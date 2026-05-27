@@ -1,5 +1,6 @@
 //- 登录页：默认由本地 login.js 拦截后提交到 /api/login。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.auth-panel
@@ -23,5 +24,4 @@ block content
             a(href=urlWithLang('/register') role="button" class="secondary")= t('login.createAccount')
 
 block pageScripts
-  script(src="/assets/axios.min.js")
-  script(src="/assets/login.js")
+  +formScripts('login.js', true)

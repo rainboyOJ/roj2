@@ -1,4 +1,5 @@
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.auth-panel
@@ -8,7 +9,8 @@ block content
         p.page-lead= t('admin.languages.lead')
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=urlWithLang('/admin/settings/languages'))
+        p#adminLanguageAlert.form-alert(role="alert" hidden)
+        form#adminLanguageForm(method="post" action=urlWithLang('/admin/settings/languages'))
           fieldset
             legend= t('admin.languages.enabled')
             label
@@ -30,3 +32,6 @@ block content
           .form-actions
             button(type="submit")= t('admin.languages.save')
             a(href=urlWithLang('/admin') role="button" class="secondary")= t('admin.languages.back')
+
+block pageScripts
+  +formScripts('admin-language-settings.js', false)

@@ -1,0 +1,11 @@
+mixin pageScript(src, type)
+  if type
+    script(type=type src=src)
+  else
+    script(src=src)
+
+mixin formScripts(pageScriptSrc, needsAxios)
+  if needsAxios
+    +pageScript('/assets/axios.min.js')
+  +pageScript('/assets/form-utils.js')
+  +pageScript(`/assets/${pageScriptSrc}`)

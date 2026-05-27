@@ -1,5 +1,6 @@
 //- 题目编辑表单页：创建和编辑共用同一套模板。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   - const isCreate = mode === 'create';
@@ -16,20 +17,21 @@ block content
           p.page-lead= t('admin.problemForm.editLead')
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=actionPath)
+        p#adminProblemAlert.form-alert(role="alert" hidden)
+        form#adminProblemForm(method="post" action=actionPath)
           if !isCreate
             input(type="hidden" name="id" value=problem.id)
           .form-grid
             div
               label(for="pid")= t('admin.problemForm.pid')
-              input#pid(type="text" name="pid" value=problem.pid)
+              input#pid(type="text" name="pid" value=problem.pid required)
             div
               label(for="title")= t('admin.problemForm.title')
-              input#title(type="text" name="title" value=problem.title)
+              input#title(type="text" name="title" value=problem.title required)
           div
             label(for="statementMarkdown")= t('admin.problemForm.statement')
             .editor-shell
-              textarea#statementMarkdown(name="statementMarkdown")= problem.statementMarkdown
+              textarea#statementMarkdown(name="statementMarkdown" required)= problem.statementMarkdown
           fieldset
             legend= t('admin.problemForm.languages')
             label
@@ -50,3 +52,6 @@ block content
           hr
           form(method="post" action=urlWithLang(`/admin/problems/${problem.id}/publish`))
             button(type="submit" class="contrast")= t('admin.problemForm.publish')
+
+block pageScripts
+  +formScripts('admin-problem-form.js', false)

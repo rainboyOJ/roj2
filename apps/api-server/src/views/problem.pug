@@ -1,5 +1,6 @@
 //- 题目详情页：先阅读题面，再提交代码。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.detail-panel
@@ -23,18 +24,19 @@ block content
           h2= t('problem.submit')
           p.soft-note= t('problem.workflow')
         .panel-body
-          form(method="post" action=urlWithLang('/submissions'))
+          p#submissionAlert.form-alert(role="alert" hidden)
+          form#submissionForm(method="post" action=urlWithLang('/submissions'))
             input(type="hidden" name="pid" value=problem.pid)
             input(type="hidden" name="sourceCode" id="sourceCode")
             label(for="language")= t('problem.language')
-            select(name="language" id="language")
+            select(name="language" id="language" required disabled=problem.allowLanguages.length === 0)
               each language in problem.allowLanguages
                 option(value=language)= language
             p.soft-note= t('problem.sourceCode')
             .editor-shell#sourceCodeEditor(data-initial-language=problem.allowLanguages[0])
             .form-actions
-              button(type="submit")= t('problem.submit')
+              button(type="submit" disabled=problem.allowLanguages.length === 0)= t('problem.submit')
               a(href=urlWithLang('/problems') role="button" class="secondary")= t('problem.backToProblems')
 
 block pageScripts
-  script(type="module" src="/assets/editor/problem-editor.js")
+  +pageScript('/assets/editor/problem-editor.js', 'module')

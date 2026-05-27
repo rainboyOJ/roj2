@@ -13,10 +13,10 @@ block content
           .form-grid
             div
               label(for="new-grade-name")= t('admin.grades.name')
-              input#new-grade-name(type="text" name="name")
+              input#new-grade-name(type="text" name="name" required)
             div
               label(for="new-grade-order")= t('admin.grades.order')
-              input#new-grade-order(type="number" name="order" value="0")
+              input#new-grade-order(type="number" name="order" value="0" required min="0" step="1")
           label
             input(type="checkbox" name="isActive" value="true" checked)
             = t('admin.grades.active')
@@ -35,13 +35,13 @@ block content
               tr
                 td
                   form(method="post" action=urlWithLang(`/admin/grades/${grade.id}`) id=`grade-form-${grade.id}`)
-                    input(type="text" name="name" value=grade.name)
+                    input(type="text" name="name" value=grade.name required)
                 td
                   label
                     input(type="checkbox" name="isActive" value="true" checked=grade.isActive form=`grade-form-${grade.id}`)
                     = t('admin.grades.active')
                 td
-                  input(type="number" name="order" value=grade.order form=`grade-form-${grade.id}`)
+                  input(type="number" name="order" value=grade.order form=`grade-form-${grade.id}` required min="0" step="1")
                 td
                   button(type="submit" form=`grade-form-${grade.id}`)= t('admin.grades.save')
     else

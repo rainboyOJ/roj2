@@ -16,6 +16,8 @@ function getLanguageExtension(language: string) {
 function initProblemEditor() {
   const container = document.querySelector<HTMLElement>('#sourceCodeEditor');
   const hiddenInput = document.querySelector<HTMLInputElement>('#sourceCode');
+  const form = document.querySelector<HTMLFormElement>('#submissionForm');
+  const alertBox = document.querySelector<HTMLElement>('#submissionAlert');
   if (!container || !hiddenInput) {
     return;
   }
@@ -70,8 +72,29 @@ function initProblemEditor() {
     });
   }
 
-  container.closest('form')?.addEventListener('submit', () => {
+  form?.addEventListener('submit', (event) => {
     hiddenInput.value = editor.state.doc.toString();
+    if (alertBox) {
+      alertBox.hidden = true;
+    }
+
+    if (!languageSelect || languageSelect.disabled || !languageSelect.value) {
+      event.preventDefault();
+      if (alertBox) {
+        alertBox.textContent = '当前题目没有可用的提交语言。';
+        alertBox.hidden = false;
+      }
+      return;
+    }
+
+    if (!hiddenInput.value.trim()) {
+      event.preventDefault();
+      if (alertBox) {
+        alertBox.textContent = '请填写代码。';
+        alertBox.hidden = false;
+      }
+      editor.focus();
+    }
   });
 }
 

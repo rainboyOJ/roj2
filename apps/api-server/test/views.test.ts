@@ -250,24 +250,20 @@ describe('rendered views', () => {
     expect(pico.body).toContain('--pico');
     expect(katex.statusCode).toBe(200);
     expect(katex.headers['content-type']).toContain('text/css');
+    expect(katex.headers['cache-control']).toContain('max-age=31536000');
     expect(katex.body).toContain('katex');
   });
 
-  it('serves local registration javascript assets', async () => {
+  it('serves local page javascript assets', async () => {
     const app = buildApp(createServices());
 
-    const axios = await app.inject({
-      method: 'GET',
-      url: '/assets/axios.min.js',
-    });
-    const register = await app.inject({
-      method: 'GET',
-      url: '/assets/register.js',
-    });
-    const login = await app.inject({
-      method: 'GET',
-      url: '/assets/login.js',
-    });
+    const axios = await app.inject({ method: 'GET', url: '/assets/axios.min.js' });
+    const register = await app.inject({ method: 'GET', url: '/assets/register.js' });
+    const login = await app.inject({ method: 'GET', url: '/assets/login.js' });
+    const formUtils = await app.inject({ method: 'GET', url: '/assets/form-utils.js' });
+    const profilePassword = await app.inject({ method: 'GET', url: '/assets/profile-password.js' });
+    const adminProblem = await app.inject({ method: 'GET', url: '/assets/admin-problem-form.js' });
+    const adminLanguages = await app.inject({ method: 'GET', url: '/assets/admin-language-settings.js' });
 
     expect(axios.statusCode).toBe(200);
     expect(axios.headers['content-type']).toContain('application/javascript');
@@ -276,12 +272,26 @@ describe('rendered views', () => {
     expect(register.headers['content-type']).toContain('application/javascript');
     expect(register.body).toContain('/api/register');
     expect(register.body).toContain('用户名已存在');
-    expect(register.body).toContain('checkValidity');
+    expect(register.body).toContain('RojFormUtils');
     expect(login.statusCode).toBe(200);
     expect(login.headers['content-type']).toContain('application/javascript');
     expect(login.body).toContain('/api/login');
     expect(login.body).toContain('用户名或密码错误');
-    expect(login.body).toContain('checkValidity');
+    expect(login.body).toContain('RojFormUtils');
+    expect(formUtils.statusCode).toBe(200);
+    expect(formUtils.headers['cache-control']).toContain('max-age=31536000');
+    expect(formUtils.body).toContain('RojFormUtils');
+    expect(formUtils.body).toContain('checkValidity');
+    expect(profilePassword.statusCode).toBe(200);
+    expect(profilePassword.body).toContain('/api/me/password');
+    expect(profilePassword.body).toContain('当前密码错误');
+    expect(adminProblem.statusCode).toBe(200);
+    expect(adminProblem.body).toContain('至少选择一种允许提交的语言');
+    expect(adminLanguages.statusCode).toBe(200);
+    expect(adminLanguages.body).toContain('至少选择一种可用语言');
+    const missing = await app.inject({ method: 'GET', url: '/assets/missing.js' });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.headers['cache-control']).toBeUndefined();
   });
 
   it('renders registration page with local axios and inline Chinese validation hints', async () => {
@@ -305,12 +315,15 @@ describe('rendered views', () => {
     expect(response.body).toContain('只能使用小写字母、数字、下划线，长度 3-24');
     expect(response.body).toContain('密码至少 8 个字符');
     expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/register.js"');
     expect(response.body).not.toContain('https://cdn');
   });
 
   it('renders problems page as a table view', async () => {
-    const app = buildApp(createServices());
+    const app = buildApp(createServices({
+      getCurrentUser: async () => null,
+    }));
 
     const response = await app.inject({
       method: 'GET',
@@ -324,8 +337,25 @@ describe('rendered views', () => {
     expect(response.body).toContain('<th class="problem-progress-cell">状态</th>');
     expect(response.body).toContain('A + B Problem');
     expect(response.body).toContain('提交代码');
+    expect(response.body).toContain('href="/login"');
     expect(response.body).not.toContain('已通过');
     expect(response.body).not.toContain('已尝试');
+  });
+
+  it('does not show the login button on the problems page for logged-in users', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('题目列表');
+    expect(response.body).not.toContain('href="/login"');
   });
 
   it('renders current user problem progress on the problems page', async () => {
@@ -403,6 +433,11 @@ describe('rendered views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('<h2>Statement</h2>');
+    expect(response.body).toContain('id="submissionAlert"');
+    expect(response.body).toContain('id="submissionForm"');
+    expect(response.body).toContain('name="sourceCode"');
+    expect(response.body).toContain('select name="language" id="language" required');
+    expect(response.body).toContain('src="/assets/editor/problem-editor.js"');
     expect(response.body).not.toContain('<pre class="mono-block">');
   });
 
@@ -577,6 +612,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('autocomplete="current-password"');
     expect(response.body).toContain('只能使用小写字母、数字、下划线，长度 3-24');
     expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/login.js"');
     expect(response.body).toContain('登录');
   });
@@ -630,8 +666,13 @@ describe('rendered views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('action="/profile/password"');
+    expect(response.body).toContain('id="profilePasswordAlert"');
+    expect(response.body).toContain('id="profilePasswordForm"');
     expect(response.body).toContain('name="currentPassword"');
     expect(response.body).toContain('name="newPassword"');
+    expect(response.body).toContain('required minlength="8"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/profile-password.js"');
   });
 
   it('renders the ranklist page', async () => {
@@ -688,6 +729,12 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('创建题目');
     expect(response.body).toContain('题面');
+    expect(response.body).toContain('id="adminProblemAlert"');
+    expect(response.body).toContain('id="adminProblemForm"');
+    expect(response.body).toContain('name="pid"');
+    expect(response.body).toContain('name="statementMarkdown" required');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/admin-problem-form.js"');
     expect(response.body).toContain('题目管理');
     expect(response.body).toContain('提交管理');
     expect(response.body).toContain('用户');
@@ -741,6 +788,8 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('编辑题目');
     expect(response.body).toContain('A + B Problem');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/admin-problem-form.js"');
   });
 
   it('renders approval actions on the admin users page', async () => {
@@ -813,7 +862,35 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('年级管理');
     expect(response.body).toContain('2025');
+    expect(response.body).toContain('id="new-grade-name" type="text" name="name" required');
+    expect(response.body).toContain('id="new-grade-order" type="number" name="order" value="0" required min="0" step="1"');
     expect(response.body).toContain('name="isActive"');
+  });
+
+  it('renders admin language settings validation hooks', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      getEnabledLanguages: async () => ['python'] as const,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/settings/languages',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('id="adminLanguageAlert"');
+    expect(response.body).toContain('id="adminLanguageForm"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/admin-language-settings.js"');
   });
 
   it('renders pagination on the admin submissions page and requests the selected page', async () => {

@@ -9,7 +9,8 @@ block content
         p.page-lead= t('problems.lead')
       .page-actions
         a(href=urlWithLang('/submissions') role="button" class="secondary")= t('problems.openSubmissionList')
-        a(href=urlWithLang('/login') role="button" class="contrast")= t('problems.login')
+        if !currentUser
+          a(href=urlWithLang('/login') role="button" class="contrast")= t('problems.login')
     if problems.length
       .table-shell
         table.data-table

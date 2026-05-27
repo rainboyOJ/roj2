@@ -1,5 +1,6 @@
 //- 个人中心页：展示最基础的账号信息。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.detail-panel
@@ -35,9 +36,13 @@ block content
           header
             h3= t('profile.password')
           .panel-body
-            form(method="post" action=urlWithLang('/profile/password'))
+            p#profilePasswordAlert.form-alert(role="alert" hidden)
+            form#profilePasswordForm(method="post" action=urlWithLang('/profile/password'))
               label(for="currentPassword")= t('profile.currentPassword')
-              input#currentPassword(type="password" name="currentPassword")
+              input#currentPassword(type="password" name="currentPassword" required autocomplete="current-password")
               label(for="newPassword")= t('profile.newPassword')
-              input#newPassword(type="password" name="newPassword")
+              input#newPassword(type="password" name="newPassword" required minlength="8" autocomplete="new-password")
               button(type="submit")= t('profile.updatePassword')
+
+block pageScripts
+  +formScripts('profile-password.js', true)
