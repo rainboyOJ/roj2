@@ -27,7 +27,7 @@ services:
     expose:
       - "8000"
     ports:
-      - "${JUDGE_SERVER_HOST_PORT:-8000}:8000"
+      - "${JUDGE_SERVER_HOST_PORT:-18000}:8000"
     volumes:
       - type: bind
         source: ${JUDGE_SERVER_CONFIG_PATH:-./judge_server_config.json}
