@@ -49,7 +49,7 @@ db.user_problem_progress.createIndex({ userId: 1, status: 1 })
 - 为排行榜查询补充必要索引，例如按 `username`、`userId`、`verdict`、`updatedAt` 组合查询的索引。
 - 如果排行榜访问频繁，可以增加定时刷新或提交完成后增量更新的排行榜缓存集合。
 
-- [ ] **3. 提交详情页轮询体验**
+- [x] **3. 提交详情页轮询体验**
 
 当前提交详情页在评测未结束时使用 `setTimeout` 整页刷新。这个方式容易实现，但用户体验不够平滑，也会重复加载整页 HTML。
 

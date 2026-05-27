@@ -2,7 +2,10 @@
 extends layout.pug
 
 block content
-  section.detail-panel
+  section.detail-panel#submissionDetail(
+    data-submission-id=submission.publicId
+    data-terminal=(submission.status === 'FINISHED' || submission.status === 'FAILED' ? 'true' : 'false')
+  )
     header
       hgroup
         h1= `${t('submission.title')} ${submission.publicId}`
@@ -27,22 +30,21 @@ block content
         .metric-grid
           div.metric-card
             span.soft-note= t('submission.status')
-            strong= localizeStatus(submission.status)
+            strong#submissionStatus= localizeStatus(submission.status)
           div.metric-card
             span.soft-note= t('submission.verdict')
-            strong= localizeVerdict(submission.verdict)
+            strong#submissionVerdict= localizeVerdict(submission.verdict)
           div.metric-card
             span.soft-note= t('submission.score')
-            strong= submission.score
+            strong#submissionScore= submission.score
           div.metric-card
             span.soft-note= t('submission.judgeStatus')
-            strong= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : t('submission.waiting')
-        if submission.message
-          article.panel-card
-            header
-              h2= t('submission.judgeMessage')
-            .panel-body.statement-block
-              pre.mono-block= submission.message
+            strong#submissionJudgeStatus= submission.judgeStatus ? localizeJudgeStatus(submission.judgeStatus) : t('submission.waiting')
+        article.panel-card#submissionMessagePanel(hidden=!submission.message)
+          header
+            h2= t('submission.judgeMessage')
+          .panel-body.statement-block
+            pre.mono-block#submissionMessage= submission.message || ''
         article.panel-card
           header
             h2= t('submission.sourceCode')
@@ -52,7 +54,7 @@ block content
           header
             h2= t('submission.caseResults')
             p= t('submission.caseResultsLead')
-          .panel-body
+          .panel-body#submissionCaseResults
             if submission.caseResults && submission.caseResults.length
               .table-shell
                 table.data-table
@@ -89,10 +91,4 @@ block content
             .form-actions
               a(href=urlWithLang('/submissions') role="button" class="secondary")= t('submission.backToSubmissions')
               a(href=urlWithLang('/problems') role="button" class="contrast")= t('submission.openProblems')
-    script.
-      const terminal = ['FINISHED', 'FAILED'];
-      if (!terminal.includes('#{submission.status}')) {
-        setTimeout(() => {
-          window.location.href = '#{urlWithLang(`/submissions/${submission.publicId}`)}';
-        }, 2000);
-      }
+    script(src="/assets/submission-detail.js")
