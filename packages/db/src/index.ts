@@ -513,6 +513,27 @@ export class RojDb {
     return this.attachProblemsToSubmissions(await this.listSubmissionsByUser(userId));
   }
 
+  async listSubmissionsByUserPaginated(userId: string, input: {
+    page: number;
+    pageSize: number;
+  }) {
+    const skip = (input.page - 1) * input.pageSize;
+    const [items, total] = await Promise.all([
+      this.submissions()
+        .find({ userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(input.pageSize)
+        .toArray(),
+      this.submissions().countDocuments({ userId }),
+    ]);
+
+    return {
+      items: await this.attachProblemsToSubmissions(items),
+      total,
+    };
+  }
+
   async listProblemProgressByUser(userId: string) {
     const submissions = await this.submissions()
       .find({ userId }, { projection: { pid: 1, verdict: 1 } })
@@ -539,6 +560,27 @@ export class RojDb {
 
   async listAllSubmissionsWithProblems() {
     return this.attachProblemsToSubmissions(await this.listAllSubmissions());
+  }
+
+  async listAllSubmissionsWithProblemsPaginated(input: {
+    page: number;
+    pageSize: number;
+  }) {
+    const skip = (input.page - 1) * input.pageSize;
+    const [items, total] = await Promise.all([
+      this.submissions()
+        .find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(input.pageSize)
+        .toArray(),
+      this.submissions().countDocuments({}),
+    ]);
+
+    return {
+      items: await this.attachProblemsToSubmissions(items),
+      total,
+    };
   }
 
   // 简化版排行榜，直接基于 submissions 汇总。

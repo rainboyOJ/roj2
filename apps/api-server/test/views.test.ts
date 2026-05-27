@@ -1,7 +1,21 @@
 // 这组测试专门看“渲染出来的 HTML 长什么样”。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp } from '../src/app.ts';
+import { buildApp, type SessionUser, type SubmissionViewModel } from '../src/app.ts';
+
+function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
+  return {
+    submissions,
+    pagination: {
+      page: 1,
+      pageSize: 20,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / 20)),
+      previousPage: null,
+      nextPage: total > 20 ? 2 : null,
+    },
+  };
+}
 
 function createServices(overrides: Record<string, unknown> = {}) {
   // 用固定的假数据把页面渲染稳定下来，方便直接断言 HTML 内容。
@@ -61,7 +75,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
         },
       ],
     }),
-    listSubmissions: async () => [],
+    listSubmissions: async () => paginated(),
     registerUser: async () => ({
       id: 'user-1',
       username: 'alice',
@@ -86,7 +100,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
     listAdminUsers: async () => [],
     approveUser: async () => undefined,
     rejectUser: async () => undefined,
-    listAdminSubmissions: async () => [],
+    listAdminSubmissions: async () => paginated(),
     listRanklist: async () => [
       {
         rank: 1,
@@ -239,6 +253,62 @@ describe('rendered views', () => {
     expect(katex.body).toContain('katex');
   });
 
+  it('serves local registration javascript assets', async () => {
+    const app = buildApp(createServices());
+
+    const axios = await app.inject({
+      method: 'GET',
+      url: '/assets/axios.min.js',
+    });
+    const register = await app.inject({
+      method: 'GET',
+      url: '/assets/register.js',
+    });
+    const login = await app.inject({
+      method: 'GET',
+      url: '/assets/login.js',
+    });
+
+    expect(axios.statusCode).toBe(200);
+    expect(axios.headers['content-type']).toContain('application/javascript');
+    expect(axios.body).toContain('axios');
+    expect(register.statusCode).toBe(200);
+    expect(register.headers['content-type']).toContain('application/javascript');
+    expect(register.body).toContain('/api/register');
+    expect(register.body).toContain('用户名已存在');
+    expect(register.body).toContain('checkValidity');
+    expect(login.statusCode).toBe(200);
+    expect(login.headers['content-type']).toContain('application/javascript');
+    expect(login.body).toContain('/api/login');
+    expect(login.body).toContain('用户名或密码错误');
+    expect(login.body).toContain('checkValidity');
+  });
+
+  it('renders registration page with local axios and inline Chinese validation hints', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => null,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/register',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('id="registerForm"');
+    expect(response.body).toContain('id="registerAlert"');
+    expect(response.body).toContain('required');
+    expect(response.body).toContain('pattern="^[a-z0-9_]{3,24}$"');
+    expect(response.body).toContain('minlength="3"');
+    expect(response.body).toContain('maxlength="24"');
+    expect(response.body).toContain('minlength="8"');
+    expect(response.body).toContain('只能使用小写字母、数字、下划线，长度 3-24');
+    expect(response.body).toContain('密码至少 8 个字符');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/register.js"');
+    expect(response.body).not.toContain('https://cdn');
+  });
+
   it('renders problems page as a table view', async () => {
     const app = buildApp(createServices());
 
@@ -360,7 +430,7 @@ describe('rendered views', () => {
 
   it('renders submissions page as a table view for logged-in users', async () => {
     const app = buildApp(createServices({
-      listSubmissions: async () => [
+      listSubmissions: async () => paginated([
         {
           id: 'sub-1',
           publicId: '42',
@@ -380,7 +450,7 @@ describe('rendered views', () => {
           message: 'ok',
           caseResults: [],
         },
-      ],
+      ]),
     }));
 
     const response = await app.inject({
@@ -406,6 +476,64 @@ describe('rendered views', () => {
     expect(response.body).toContain('登出');
     expect(response.body).not.toContain('登录');
     expect(response.body).not.toContain('注册');
+  });
+
+  it('renders pagination on the submissions page and requests the selected page', async () => {
+    let receivedPagination: { page: number; pageSize: number } | null = null;
+    const app = buildApp(createServices({
+      listSubmissions: async (_user: SessionUser, pagination: { page: number; pageSize: number }) => {
+        receivedPagination = pagination;
+        return {
+          submissions: [
+            {
+              id: 'sub-21',
+              publicId: '21',
+              submissionNo: 21,
+              userId: 'user-1',
+              pid: '1000',
+              problemTitle: 'A + B Problem',
+              problemLabel: '1000 A + B Problem',
+              username: 'demo',
+              displayName: 'Demo User',
+              language: 'python',
+              sourceCode: 'print(1)',
+              status: 'FINISHED',
+              verdict: 'AC',
+              score: 100,
+              judgeStatus: 'FINISHED',
+              message: 'ok',
+              caseResults: [],
+            },
+          ],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 41,
+            totalPages: 3,
+            previousPage: 1,
+            nextPage: 3,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/submissions?page=2',
+      headers: {
+        cookie: 'roj_session=token-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPagination).toEqual({
+      page: 2,
+      pageSize: 20,
+    });
+    expect(response.body).toContain('提交列表分页');
+    expect(response.body).toContain('第 2 / 3 页，共 41 条');
+    expect(response.body).toContain('/submissions?page=1');
+    expect(response.body).toContain('/submissions?page=3');
   });
 
   it('renders case results on the submission detail page', async () => {
@@ -442,6 +570,14 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('账号登录');
     expect(response.body).toContain('用户名');
+    expect(response.body).toContain('id="loginForm"');
+    expect(response.body).toContain('id="loginAlert"');
+    expect(response.body).toContain('required');
+    expect(response.body).toContain('pattern="^[a-z0-9_]{3,24}$"');
+    expect(response.body).toContain('autocomplete="current-password"');
+    expect(response.body).toContain('只能使用小写字母、数字、下划线，长度 3-24');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/login.js"');
     expect(response.body).toContain('登录');
   });
 
@@ -475,7 +611,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('value="female"');
     expect(response.body).toContain('男');
     expect(response.body).toContain('女');
-    expect(response.body).toContain('<select id="grade" name="grade">');
+    expect(response.body).toContain('<select id="grade" name="grade" required>');
     expect(response.body).toContain('value="2025"');
     expect(response.body).not.toContain('value="2024"');
     expect(response.body).toContain('input id="className" type="text"');
@@ -678,5 +814,69 @@ describe('rendered views', () => {
     expect(response.body).toContain('年级管理');
     expect(response.body).toContain('2025');
     expect(response.body).toContain('name="isActive"');
+  });
+
+  it('renders pagination on the admin submissions page and requests the selected page', async () => {
+    let receivedPagination: { page: number; pageSize: number } | null = null;
+    const app = buildApp(createServices({
+      getCurrentUser: async () => ({
+        id: 'admin-1',
+        username: 'admin',
+        role: 'admin' as const,
+        approvalStatus: 'approved' as const,
+      }),
+      listAdminSubmissions: async (pagination: { page: number; pageSize: number }) => {
+        receivedPagination = pagination;
+        return {
+          submissions: [
+            {
+              id: 'sub-21',
+              publicId: '21',
+              submissionNo: 21,
+              userId: 'user-1',
+              pid: '1000',
+              problemTitle: 'A + B Problem',
+              problemLabel: '1000 A + B Problem',
+              username: 'demo',
+              displayName: 'Demo User',
+              language: 'python',
+              sourceCode: 'print(1)',
+              status: 'FINISHED',
+              verdict: 'AC',
+              score: 100,
+              judgeStatus: 'FINISHED',
+              message: 'ok',
+              caseResults: [],
+            },
+          ],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 41,
+            totalPages: 3,
+            previousPage: 1,
+            nextPage: 3,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/submissions?page=2',
+      headers: {
+        cookie: 'roj_session=admin-token',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPagination).toEqual({
+      page: 2,
+      pageSize: 20,
+    });
+    expect(response.body).toContain('提交管理分页');
+    expect(response.body).toContain('第 2 / 3 页，共 41 条');
+    expect(response.body).toContain('/admin/submissions?page=1');
+    expect(response.body).toContain('/admin/submissions?page=3');
   });
 });

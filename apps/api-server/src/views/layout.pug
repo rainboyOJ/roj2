@@ -533,6 +533,18 @@ html(lang="zh-CN" data-theme="light")
         color: var(--soft-text);
       }
 
+      .form-alert {
+        padding: 0.75rem 0.9rem;
+        border: 1px solid #efcbd1;
+        border-radius: 0;
+        background: #fdeef0;
+        color: #9a2332;
+      }
+
+      .form-alert[hidden] {
+        display: none;
+      }
+
       .compact-meta {
         display: flex;
         flex-wrap: wrap;
@@ -674,6 +686,27 @@ html(lang="zh-CN" data-theme="light")
       .table-actions button,
       .table-actions [role="button"] {
         margin-bottom: 0;
+      }
+
+      .pagination-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 0.85rem 0;
+      }
+
+      .pagination-summary,
+      .pagination-disabled {
+        color: var(--soft-text);
+        font-size: 0.92rem;
+      }
+
+      .pagination-disabled {
+        padding: 0.45rem 0.85rem;
+        border: 1px solid var(--panel-border);
+        background: rgba(248, 251, 255, 0.8);
       }
 
       article h1,

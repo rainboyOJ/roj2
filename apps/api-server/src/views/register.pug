@@ -9,34 +9,41 @@ block content
         p.page-lead= t('register.lead')
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=urlWithLang('/register'))
+        p#registerAlert.form-alert(role="alert" hidden)
+        form#registerForm(method="post" action=urlWithLang('/register'))
           .form-grid
             div
               label(for="username")= t('register.username')
-              input#username(type="text" name="username" placeholder=t('register.usernamePlaceholder'))
+              input#username(type="text" name="username" placeholder=t('register.usernamePlaceholder') required minlength="3" maxlength="24" pattern="^[a-z0-9_]{3,24}$" autocomplete="username")
+              small.soft-note 只能使用小写字母、数字、下划线，长度 3-24。
             div
               label(for="name")= t('register.name')
-              input#name(type="text" name="name" placeholder=t('register.namePlaceholder'))
+              input#name(type="text" name="name" placeholder=t('register.namePlaceholder') required autocomplete="name")
             fieldset.form-block
               legend= t('register.gender')
               .choice-row
                 label.choice-chip
-                  input(type="radio" name="gender" value="male" checked)
+                  input(type="radio" name="gender" value="male" checked required)
                   span 男
                 label.choice-chip
                   input(type="radio" name="gender" value="female")
                   span 女
             div
               label(for="grade")= t('register.grade')
-              select#grade(name="grade")
+              select#grade(name="grade" required)
                 each grade in grades
                   option(value=grade.name)= grade.name
             div
               label(for="className")= t('register.className')
-              input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder'))
+              input#className(type="text" name="className" placeholder=t('register.classNamePlaceholder') required autocomplete="organization-title")
             div
               label(for="password")= t('register.password')
-              input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder'))
+              input#password(type="password" name="password" placeholder=t('register.passwordPlaceholder') required minlength="8" autocomplete="new-password")
+              small.soft-note 密码至少 8 个字符。
           .form-actions
             button(type="submit")= t('register.submit')
             a(href=urlWithLang('/login') role="button" class="secondary")= t('register.backToLogin')
+
+block pageScripts
+  script(src="/assets/axios.min.js")
+  script(src="/assets/register.js")

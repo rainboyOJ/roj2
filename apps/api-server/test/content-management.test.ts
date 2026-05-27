@@ -1,7 +1,21 @@
 // 这组测试偏后台管理和内容维护流程。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp } from '../src/app.ts';
+import { buildApp, type SubmissionViewModel } from '../src/app.ts';
+
+function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
+  return {
+    submissions,
+    pagination: {
+      page: 1,
+      pageSize: 20,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / 20)),
+      previousPage: null,
+      nextPage: total > 20 ? 2 : null,
+    },
+  };
+}
 
 function createServices(overrides: Record<string, unknown> = {}) {
   return {
@@ -40,8 +54,8 @@ function createServices(overrides: Record<string, unknown> = {}) {
     listAdminUsers: async () => [],
     approveUser: async () => undefined,
     rejectUser: async () => undefined,
-    listSubmissions: async () => [],
-    listAdminSubmissions: async () => [],
+    listSubmissions: async () => paginated(),
+    listAdminSubmissions: async () => paginated(),
     listRanklist: async () => [],
     listContests: async () => [],
     getContestById: async () => null,
@@ -140,7 +154,7 @@ describe('content management routes', () => {
 
   it('returns a logged-in user submission list', async () => {
     const app = buildApp(createServices({
-      listSubmissions: async () => [
+      listSubmissions: async () => paginated([
         {
           id: 'sub-1',
           publicId: '42',
@@ -155,11 +169,12 @@ describe('content management routes', () => {
           sourceCode: 'print(1)',
           status: 'FINISHED',
           verdict: 'AC',
+          score: 100,
           judgeStatus: 'FINISHED',
           message: 'ok',
           caseResults: [],
         },
-      ],
+      ]),
     }));
 
     const response = await app.inject({

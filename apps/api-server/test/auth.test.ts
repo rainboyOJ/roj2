@@ -1,7 +1,21 @@
 // 这组测试覆盖认证、登录态和学生审核约束。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp } from '../src/app.ts';
+import { buildApp, type SubmissionViewModel } from '../src/app.ts';
+
+function paginated(submissions: SubmissionViewModel[] = [], total = submissions.length) {
+  return {
+    submissions,
+    pagination: {
+      page: 1,
+      pageSize: 20,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / 20)),
+      previousPage: null,
+      nextPage: total > 20 ? 2 : null,
+    },
+  };
+}
 
 function createServices(overrides: Record<string, unknown> = {}) {
   // 每个测试只改自己关心的 service，其余都走默认假实现。
@@ -17,7 +31,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
     listProblemProgressByUser: async () => new Map<string, 'accepted' | 'attempted'>(),
     getProblemByPid: async () => null,
     getSubmissionById: async () => null,
-    listSubmissions: async () => [],
+    listSubmissions: async () => paginated(),
     registerUser: async () => ({
       id: 'user-1',
       username: 'alice',
@@ -37,7 +51,7 @@ function createServices(overrides: Record<string, unknown> = {}) {
     listAdminUsers: async () => [],
     approveUser: async () => undefined,
     rejectUser: async () => undefined,
-    listAdminSubmissions: async () => [],
+    listAdminSubmissions: async () => paginated(),
     listRanklist: async () => [],
     listContests: async () => [],
     getContestById: async () => null,
@@ -135,6 +149,32 @@ describe('auth routes', () => {
     expect(response.json()).toMatchObject({
       userId: 'user-1',
       approvalStatus: 'pending',
+    });
+  });
+
+  it('returns a Chinese-friendly JSON error source when registration fails', async () => {
+    const app = buildApp(createServices({
+      registerUser: async () => {
+        throw new Error('username already exists');
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/register',
+      payload: {
+        username: 'alice',
+        name: 'Alice',
+        gender: 'female',
+        className: 'Class 1',
+        grade: '2025',
+        password: 'secret123',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({
+      message: 'username already exists',
     });
   });
 

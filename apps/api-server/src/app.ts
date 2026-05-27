@@ -72,6 +72,8 @@ const updateMyPasswordSchema = z.object({
   newPassword: z.string().min(8),
 });
 
+const DEFAULT_PAGE_SIZE = 20;
+
 export interface CreateSubmissionResult {
   id: string;
   publicId: string;
@@ -125,6 +127,20 @@ export interface SubmissionViewModel {
   caseResults: SubmissionCaseResult[];
 }
 
+export interface PaginationViewModel {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  previousPage: number | null;
+  nextPage: number | null;
+}
+
+export interface PaginatedSubmissionsViewModel {
+  submissions: SubmissionViewModel[];
+  pagination: PaginationViewModel;
+}
+
 export interface GradeViewModel {
   id: string;
   name: string;
@@ -165,7 +181,10 @@ export interface ApiServerServices {
   listProblemProgressByUser(userId: string): Promise<Map<string, ProblemProgress>>;
   getProblemByPid(pid: string): Promise<ProblemViewModel | null>;
   getSubmissionById(id: string): Promise<SubmissionViewModel | null>;
-  listSubmissions(user: SessionUser): Promise<SubmissionViewModel[]>;
+  listSubmissions(user: SessionUser, pagination: {
+    page: number;
+    pageSize: number;
+  }): Promise<PaginatedSubmissionsViewModel>;
   registerUser(input: {
     username: string;
     name: string;
@@ -190,7 +209,10 @@ export interface ApiServerServices {
   listAdminUsers(): Promise<Array<SessionUser & { name?: string }>>;
   approveUser(userId: string, adminUserId: string): Promise<void>;
   rejectUser(userId: string, adminUserId: string, reason?: string): Promise<void>;
-  listAdminSubmissions(): Promise<SubmissionViewModel[]>;
+  listAdminSubmissions(pagination: {
+    page: number;
+    pageSize: number;
+  }): Promise<PaginatedSubmissionsViewModel>;
   listRanklist(): Promise<RanklistEntryViewModel[]>;
   listContests(): Promise<ContestViewModel[]>;
   getContestById(id: string): Promise<ContestViewModel | null>;
@@ -275,6 +297,34 @@ function filterAllowedLanguages(
   );
 }
 
+function parsePage(query: unknown): number {
+  const rawPage =
+    typeof query === 'object' && query !== null && 'page' in query
+      ? (query as { page?: unknown }).page
+      : undefined;
+  const pageText = Array.isArray(rawPage) ? rawPage[0] : rawPage;
+  const page = Number(pageText ?? 1);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+export function buildPaginationViewModel(input: {
+  page: number;
+  pageSize: number;
+  total: number;
+}): PaginationViewModel {
+  const totalPages = Math.max(1, Math.ceil(input.total / input.pageSize));
+  const page = Math.min(Math.max(input.page, 1), totalPages);
+
+  return {
+    page,
+    pageSize: input.pageSize,
+    total: input.total,
+    totalPages,
+    previousPage: page > 1 ? page - 1 : null,
+    nextPage: page < totalPages ? page + 1 : null,
+  };
+}
+
 export function buildApp(services: ApiServerServices) {
   const app = Fastify();
 
@@ -291,14 +341,22 @@ export function buildApp(services: ApiServerServices) {
     return reply.type('image/svg+xml').send(favicon);
   });
 
-  app.get('/assets/pico.classless.min.css', async (_request, reply) => {
-    const css = await readFile(path.join(__dirname, 'assets', 'pico.classless.min.css'), 'utf-8');
-    return reply.type('text/css').send(css);
-  });
+  app.get('/assets/:file', async (request, reply) => {
+    const params = request.params as { file: string };
+    const allowedAssets = new Map([
+      ['pico.classless.min.css', 'text/css'],
+      ['katex.min.css', 'text/css'],
+      ['axios.min.js', 'application/javascript; charset=utf-8'],
+      ['register.js', 'application/javascript; charset=utf-8'],
+      ['login.js', 'application/javascript; charset=utf-8'],
+    ]);
+    const contentType = allowedAssets.get(params.file);
+    if (!contentType) {
+      return reply.code(404).send('Asset not found');
+    }
 
-  app.get('/assets/katex.min.css', async (_request, reply) => {
-    const css = await readFile(path.join(__dirname, 'assets', 'katex.min.css'), 'utf-8');
-    return reply.type('text/css').send(css);
+    const asset = await readFile(path.join(__dirname, 'assets', params.file), 'utf-8');
+    return reply.type(contentType).send(asset);
   });
 
   app.get('/assets/editor/problem-editor.js', async (_request, reply) => {
@@ -700,8 +758,11 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(403).send('Forbidden');
     }
 
-    const submissions = await services.listAdminSubmissions();
-    return renderPage(request, reply, 'admin-submissions.pug', { submissions });
+    const result = await services.listAdminSubmissions({
+      page: parsePage(request.query),
+      pageSize: DEFAULT_PAGE_SIZE,
+    });
+    return renderPage(request, reply, 'admin-submissions.pug', { ...result });
   });
 
   app.get('/problems', async (request, reply) => {
@@ -786,8 +847,11 @@ export function buildApp(services: ApiServerServices) {
       return redirectWithLang(request, reply, '/login');
     }
 
-    const submissions = await services.listSubmissions(user);
-    return renderPage(request, reply, 'submissions.pug', { submissions });
+    const result = await services.listSubmissions(user, {
+      page: parsePage(request.query),
+      pageSize: DEFAULT_PAGE_SIZE,
+    });
+    return renderPage(request, reply, 'submissions.pug', { ...result });
   });
 
   app.get('/api/problems', async () => {
@@ -840,9 +904,10 @@ export function buildApp(services: ApiServerServices) {
       return reply.code(401).send({ message: 'Login required' });
     }
 
-    return {
-      submissions: await services.listSubmissions(user),
-    };
+    return services.listSubmissions(user, {
+      page: parsePage(request.query),
+      pageSize: DEFAULT_PAGE_SIZE,
+    });
   });
 
   app.post('/api/submissions', async (request, reply) => {
@@ -892,7 +957,14 @@ export function buildApp(services: ApiServerServices) {
       });
     }
 
-    const created = await services.registerUser(parsed.data);
+    let created;
+    try {
+      created = await services.registerUser(parsed.data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'registration failed';
+      return reply.code(400).send({ message });
+    }
+
     return reply.code(201).send({
       userId: created.id,
       username: created.username,
@@ -1079,7 +1151,10 @@ export function buildApp(services: ApiServerServices) {
     }
 
     return {
-      submissions: await services.listAdminSubmissions(),
+      ...(await services.listAdminSubmissions({
+        page: parsePage(request.query),
+        pageSize: DEFAULT_PAGE_SIZE,
+      })),
     };
   });
 

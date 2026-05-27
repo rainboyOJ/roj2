@@ -9,10 +9,12 @@ import {
   type AdminProblemViewModel,
   type ApiServerServices,
   type ContestViewModel,
+  type PaginatedSubmissionsViewModel,
   type ProblemViewModel,
   type RanklistEntryViewModel,
   type SessionUser,
   type SubmissionViewModel,
+  buildPaginationViewModel,
 } from './app.ts';
 import type { CreateSubmissionInput, SubmissionCaseResult } from '@roj/shared';
 import type { AppLanguage } from '@roj/shared';
@@ -151,6 +153,20 @@ function buildPlaceholderContests(): ContestViewModel[] {
   ];
 }
 
+function mapPaginatedSubmissions(input: {
+  items: Array<Parameters<typeof mapSubmission>[0]>;
+  total: number;
+}, page: number, pageSize: number): PaginatedSubmissionsViewModel {
+  return {
+    submissions: input.items.map(mapSubmission),
+    pagination: buildPaginationViewModel({
+      page,
+      pageSize,
+      total: input.total,
+    }),
+  };
+}
+
 export async function buildProductionServices(db: RojDb): Promise<ApiServerServices> {
   return {
     createSubmission: async (input: CreateSubmissionInput) => {
@@ -177,13 +193,13 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const submission = await db.getSubmissionWithProblemByPublicId(id);
       return submission ? mapSubmission(submission) : null;
     },
-    listSubmissions: async (user) => {
+    listSubmissions: async (user, pagination) => {
       // 管理员看全站提交，学生只看自己的提交。
-      const submissions =
+      const result =
         user.role === 'admin'
-          ? await db.listAllSubmissionsWithProblems()
-          : await db.listSubmissionsWithProblemsByUser(user.id);
-      return submissions.map(mapSubmission);
+          ? await db.listAllSubmissionsWithProblemsPaginated(pagination)
+          : await db.listSubmissionsByUserPaginated(user.id, pagination);
+      return mapPaginatedSubmissions(result, pagination.page, pagination.pageSize);
     },
     registerUser: async (input) => {
       const user = await db.registerUser(input);
@@ -228,9 +244,9 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     rejectUser: async (userId, adminUserId, reason) => {
       await db.rejectUser(userId, adminUserId, reason);
     },
-    listAdminSubmissions: async () => {
-      const submissions = await db.listAllSubmissionsWithProblems();
-      return submissions.map(mapSubmission);
+    listAdminSubmissions: async (pagination) => {
+      const result = await db.listAllSubmissionsWithProblemsPaginated(pagination);
+      return mapPaginatedSubmissions(result, pagination.page, pagination.pageSize);
     },
     listRanklist: async () => {
       const rows = await db.buildSimpleRanklist();

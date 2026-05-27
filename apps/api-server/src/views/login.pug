@@ -1,4 +1,4 @@
-//- 登录页：HTML 表单会提交到 /login，而不是 JSON API。
+//- 登录页：默认由本地 login.js 拦截后提交到 /api/login。
 extends layout.pug
 
 block content
@@ -9,13 +9,19 @@ block content
         p.page-lead= t('login.lead')
     article.panel-card.form-card
       .panel-body
-        form(method="post" action=urlWithLang('/login'))
+        p#loginAlert.form-alert(role="alert" hidden)
+        form#loginForm(method="post" action=urlWithLang('/login'))
           div
             label(for="username")= t('login.username')
-            input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder'))
+            input#username(type="text" name="username" placeholder=t('login.usernamePlaceholder') required minlength="3" maxlength="24" pattern="^[a-z0-9_]{3,24}$" autocomplete="username")
+            small.soft-note 只能使用小写字母、数字、下划线，长度 3-24。
           div
             label(for="password")= t('login.password')
-            input#password(type="password" name="password" placeholder=t('login.passwordPlaceholder'))
+            input#password(type="password" name="password" placeholder=t('login.passwordPlaceholder') required autocomplete="current-password")
           .form-actions
             button(type="submit")= t('login.submit')
             a(href=urlWithLang('/register') role="button" class="secondary")= t('login.createAccount')
+
+block pageScripts
+  script(src="/assets/axios.min.js")
+  script(src="/assets/login.js")

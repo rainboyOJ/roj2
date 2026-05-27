@@ -44,6 +44,16 @@ block content
                     span.status-chip.failed= localizeVerdict(submission.verdict)
                 td
                   a(href=urlWithLang(`/submissions/${submission.publicId}`))= t('submissions.details')
+      nav.pagination-bar(aria-label="提交列表分页")
+        if pagination.previousPage
+          a(href=urlWithLang(`/submissions?page=${pagination.previousPage}`) role="button" class="secondary") 上一页
+        else
+          span.pagination-disabled 上一页
+        span.pagination-summary= `第 ${pagination.page} / ${pagination.totalPages} 页，共 ${pagination.total} 条`
+        if pagination.nextPage
+          a(href=urlWithLang(`/submissions?page=${pagination.nextPage}`) role="button" class="secondary") 下一页
+        else
+          span.pagination-disabled 下一页
     else
       article
         p= t('submissions.empty')
