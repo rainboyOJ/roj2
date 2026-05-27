@@ -62,7 +62,7 @@ db.user_problem_progress.createIndex({ userId: 1, status: 1 })
 
 ## 中优先级
 
-- [ ] **4. API Server 路由拆分**
+- [x] **4. API Server 路由拆分**
 
 当前 `apps/api-server/src/app.ts` 承担了认证、静态资源、题目、提交、后台管理等多个职责，文件会越来越大。
 
