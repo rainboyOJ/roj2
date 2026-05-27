@@ -36,7 +36,7 @@ block content
           header
             h3= "修改密码"
           .panel-body
-            p#profilePasswordAlert.form-alert(role="alert" hidden)
+            p#profilePasswordAlert.form-alert(role="alert" hidden=!formError)= formError || ''
             form#profilePasswordForm(method="post" action='/profile/password')
               label(for="currentPassword")= "当前密码"
               input#currentPassword(type="password" name="currentPassword" required autocomplete="current-password")

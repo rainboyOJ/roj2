@@ -155,6 +155,33 @@ describe('auth routes', () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it('renders profile password errors on the profile page for HTML flow', async () => {
+    const app = buildApp(createAnonymousServices({
+      getCurrentUser: async () => studentUser(),
+      updateMyPassword: async () => {
+        throw new Error('invalid current password');
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/profile/password',
+      headers: {
+        cookie: sessionCookie(),
+      },
+      payload: {
+        currentPassword: 'oldpassword123',
+        newPassword: 'newpassword123',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toContain('个人中心');
+    expect(response.body).toContain('当前密码错误。');
+    expect(response.body).not.toContain('oldpassword123');
+    expect(response.body).not.toContain('newpassword123');
+  });
+
   it('rejects submission creation for anonymous users', async () => {
     const app = buildApp(createAnonymousServices());
 

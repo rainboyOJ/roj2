@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
 import type { RouteContext } from '../http/context.ts';
+import { messageFromError, passwordErrorMessage } from '../http/form-errors.ts';
 import { updateClassNameSchema, updateMyPasswordSchema } from '../http/schemas.ts';
 
 export function registerProfileRoutes(app: FastifyInstance, context: RouteContext) {
@@ -33,7 +34,11 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
       newPassword: raw.newPassword,
     });
     if (!parsed.success) {
-      return reply.code(400).send('Invalid password payload');
+      reply.code(400);
+      return renderPage(request, reply, 'profile.pug', {
+        user,
+        formError: '密码填写不正确，请检查后重试。',
+      });
     }
 
     try {
@@ -43,8 +48,11 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
         parsed.data.newPassword,
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'failed to update password';
-      return reply.code(400).send(message);
+      reply.code(400);
+      return renderPage(request, reply, 'profile.pug', {
+        user,
+        formError: passwordErrorMessage(messageFromError(error, 'failed to update password')),
+      });
     }
 
     return redirectTo(reply, '/profile');

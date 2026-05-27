@@ -9,6 +9,9 @@ block content
       hgroup
         h1= "用户管理"
         p.page-lead= "查看当前账号列表和审核状态。"
+    if formError
+      article
+        p.form-alert(role="alert")= formError
     if users.length
       .page-actions
         button(

@@ -17,7 +17,7 @@ block content
           p.page-lead= "修改现有题目的标题、题面、语言和可见性。"
     article.panel-card.form-card
       .panel-body
-        p#adminProblemAlert.form-alert(role="alert" hidden)
+        p#adminProblemAlert.form-alert(role="alert" hidden=!formError)= formError || ''
         form#adminProblemForm(method="post" action=actionPath)
           if !isCreate
             input(type="hidden" name="id" value=problem.id)

@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { ProblemListViewModel, ProblemProgress } from '../app.ts';
 import type { RouteContext } from '../http/context.ts';
@@ -13,6 +13,29 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
     requireHtmlUser,
     services,
   } = context;
+
+  async function renderProblemSubmissionError(
+    request: Parameters<typeof renderPage>[0],
+    reply: FastifyReply,
+    pid: string,
+    formError: string,
+    formValues: Record<string, string>,
+  ) {
+    const problem = await services.getProblemByPid(pid);
+    if (!problem) {
+      return reply.code(404).send('Problem not found');
+    }
+    const enabledLanguages = await services.getEnabledLanguages();
+    reply.code(400);
+    return renderPage(request, reply, 'problem.pug', {
+      problem: {
+        ...problem,
+        allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+      },
+      formError,
+      formValues,
+    });
+  }
 
   app.get('/problems', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
@@ -86,19 +109,46 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
       return reply.code(403).send('Approval required');
     }
 
+    const raw = request.body as Record<string, string | undefined>;
+    const formValues = {
+      pid: String(raw.pid || ''),
+      language: String(raw.language || ''),
+      sourceCode: String(raw.sourceCode || ''),
+    };
     const parsed = createSubmissionSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send('Invalid submission payload');
+      if (!formValues.pid) {
+        return reply.code(400).send('Invalid submission payload');
+      }
+      return renderProblemSubmissionError(
+        request,
+        reply,
+        formValues.pid,
+        '提交信息不完整，请检查语言和代码。',
+        formValues,
+      );
     }
     const enabledLanguages = await services.getEnabledLanguages();
     if (!enabledLanguages.includes(parsed.data.language)) {
-      return reply.code(400).send(`language ${parsed.data.language} is disabled`);
+      return renderProblemSubmissionError(
+        request,
+        reply,
+        parsed.data.pid,
+        `语言 ${parsed.data.language} 当前不可用。`,
+        formValues,
+      );
     }
 
-    const created = await services.createSubmission({
-      userId: user.id,
-      ...parsed.data,
-    });
+    let created;
+    try {
+      created = await services.createSubmission({
+        userId: user.id,
+        ...parsed.data,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '提交失败，请检查后重试。';
+      return renderProblemSubmissionError(request, reply, parsed.data.pid, message, formValues);
+    }
     return redirectTo(reply, `/submissions/${created.publicId}`);
   });
 }

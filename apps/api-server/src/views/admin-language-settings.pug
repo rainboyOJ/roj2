@@ -9,7 +9,7 @@ block content
         p.page-lead= "控制全站哪些编程语言对用户可见且允许提交。"
     article.panel-card.form-card
       .panel-body
-        p#adminLanguageAlert.form-alert(role="alert" hidden)
+        p#adminLanguageAlert.form-alert(role="alert" hidden=!formError)= formError || ''
         form#adminLanguageForm(method="post" action='/admin/settings/languages')
           fieldset
             legend= "启用语言"

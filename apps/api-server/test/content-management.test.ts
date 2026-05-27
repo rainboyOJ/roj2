@@ -304,4 +304,106 @@ describe('content management routes', () => {
       },
     ]);
   });
+
+  it('renders grade form errors on the admin grade page', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      listGrades: async () => [
+        { id: 'grade-1', name: '2025', isActive: true, order: 1 },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/grades',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        name: '',
+        isActive: 'true',
+        order: '1',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toContain('年级管理');
+    expect(response.body).toContain('年级信息填写不正确。');
+    expect(response.body).toContain('2025');
+  });
+
+  it('renders problem form errors on the admin problem page', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/problems',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        pid: '1001',
+        title: 'New Problem',
+        statementMarkdown: 'desc',
+        isVisible: 'false',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toContain('创建题目');
+    expect(response.body).toContain('题目信息填写不正确');
+    expect(response.body).toContain('value="1001"');
+    expect(response.body).toContain('value="New Problem"');
+  });
+
+  it('renders language setting errors on the admin language page', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      getEnabledLanguages: async () => ['python'],
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/settings/languages',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toContain('语言设置');
+    expect(response.body).toContain('至少选择一种可用语言。');
+  });
+
+  it('renders user management errors when no user is selected for bulk approve', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      listAdminUsers: async () => [
+        {
+          id: 'user-2',
+          username: 'alice',
+          role: 'student',
+          approvalStatus: 'pending',
+          name: 'Alice',
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/users/bulk-approve',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toContain('用户管理');
+    expect(response.body).toContain('请先选择需要通过的用户。');
+    expect(response.body).toContain('alice');
+  });
 });

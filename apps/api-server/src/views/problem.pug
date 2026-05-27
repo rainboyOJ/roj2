@@ -24,14 +24,14 @@ block content
           h2= "提交代码"
           p.soft-note= "这里保持常见 OJ 的交题流程。"
         .panel-body
-          p#submissionAlert.form-alert(role="alert" hidden)
+          p#submissionAlert.form-alert(role="alert" hidden=!formError)= formError || ''
           form#submissionForm(method="post" action='/submissions')
             input(type="hidden" name="pid" value=problem.pid)
-            input(type="hidden" name="sourceCode" id="sourceCode")
+            input(type="hidden" name="sourceCode" id="sourceCode" value=(formValues && formValues.sourceCode) || '')
             label(for="language")= "语言"
             select(name="language" id="language" required disabled=problem.allowLanguages.length === 0)
               each language in problem.allowLanguages
-                option(value=language)= language
+                option(value=language selected=formValues && formValues.language === language)= language
             p.soft-note= "源代码"
             .editor-shell#sourceCodeEditor(data-initial-language=problem.allowLanguages[0])
             .form-actions

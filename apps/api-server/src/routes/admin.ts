@@ -1,12 +1,41 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import { DEFAULT_PAGE_SIZE, type RouteContext } from '../http/context.ts';
+import { messageFromError } from '../http/form-errors.ts';
 import {
   createGradeSchema,
   createProblemSchema,
   enabledLanguagesSchema,
   resetPasswordSchema,
 } from '../http/schemas.ts';
+
+function asStringArray(value: string | string[] | undefined) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  return value ? [value] : [];
+}
+
+function problemInputFromBody(raw: Record<string, string | string[] | undefined>) {
+  return {
+    pid: raw.pid,
+    title: raw.title,
+    statementMarkdown: raw.statementMarkdown,
+    allowLanguages: asStringArray(raw.allowLanguages),
+    isVisible: raw.isVisible === 'true',
+  };
+}
+
+function problemFormValues(raw: Record<string, string | string[] | undefined>, id = '') {
+  return {
+    id,
+    pid: String(raw.pid || ''),
+    title: String(raw.title || ''),
+    statementMarkdown: String(raw.statementMarkdown || ''),
+    allowLanguages: asStringArray(raw.allowLanguages),
+    isVisible: raw.isVisible === 'true',
+  };
+}
 
 export function registerAdminRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -17,6 +46,57 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     requireHtmlAdmin,
     services,
   } = context;
+
+  async function renderAdminUsersError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, user: { id: string }, formError: string) {
+    const users = await services.listAdminUsers();
+    reply.code(400);
+    return renderPage(request, reply, 'admin-users.pug', {
+      currentUser: user,
+      users,
+      formError,
+    });
+  }
+
+  async function renderAdminGradesError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, formError: string, formValues?: Record<string, string>) {
+    const grades = await services.listGrades();
+    reply.code(400);
+    return renderPage(request, reply, 'admin-grades.pug', {
+      grades,
+      formError,
+      formValues,
+    });
+  }
+
+  async function renderLanguageSettingsError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, formError: string) {
+    const enabledLanguages = await services.getEnabledLanguages();
+    reply.code(400);
+    return renderPage(request, reply, 'admin-language-settings.pug', {
+      settings: { enabledLanguages },
+      formError,
+    });
+  }
+
+  function renderProblemFormError(
+    request: Parameters<typeof renderPage>[0],
+    reply: FastifyReply,
+    mode: 'create' | 'edit',
+    problem: {
+      id: string;
+      pid: string;
+      title: string;
+      statementMarkdown: string;
+      allowLanguages: string[];
+      isVisible: boolean;
+    },
+    formError: string,
+  ) {
+    reply.code(400);
+    return renderPage(request, reply, 'admin-problem-form.pug', {
+      mode,
+      problem,
+      formError,
+    });
+  }
 
   app.get('/admin', async (request, reply) => {
     const user = await requireHtmlAdmin(request, reply);
@@ -58,11 +138,20 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = resetPasswordSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send('Invalid password payload');
+      return renderAdminUsersError(request, reply, user, '新密码至少需要 8 个字符。');
     }
 
     const params = request.params as { id: string };
-    await services.resetUserPassword(params.id, parsed.data.password);
+    try {
+      await services.resetUserPassword(params.id, parsed.data.password);
+    } catch (error) {
+      return renderAdminUsersError(
+        request,
+        reply,
+        user,
+        messageFromError(error, '重置密码失败，请检查后重试。'),
+      );
+    }
     return redirectTo(reply, '/admin/users');
   });
 
@@ -73,7 +162,16 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const params = request.params as { id: string };
-    await services.deleteUser(params.id);
+    try {
+      await services.deleteUser(params.id);
+    } catch (error) {
+      return renderAdminUsersError(
+        request,
+        reply,
+        user,
+        messageFromError(error, '删除用户失败，请检查后重试。'),
+      );
+    }
     return redirectTo(reply, '/admin/users');
   });
 
@@ -100,10 +198,27 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       order: Number(raw.order ?? '0'),
     });
     if (!parsed.success) {
-      return reply.code(400).send('Invalid grade payload');
+      return renderAdminGradesError(request, reply, '年级信息填写不正确。', {
+        name: String(raw.name || ''),
+        isActive: String(raw.isActive || ''),
+        order: String(raw.order || '0'),
+      });
     }
 
-    await services.createGrade(parsed.data);
+    try {
+      await services.createGrade(parsed.data);
+    } catch (error) {
+      return renderAdminGradesError(
+        request,
+        reply,
+        messageFromError(error, '创建年级失败，请检查后重试。'),
+        {
+          name: String(raw.name || ''),
+          isActive: String(raw.isActive || ''),
+          order: String(raw.order || '0'),
+        },
+      );
+    }
     return redirectTo(reply, '/admin/grades');
   });
 
@@ -121,10 +236,18 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       order: Number(raw.order ?? '0'),
     });
     if (!parsed.success) {
-      return reply.code(400).send('Invalid grade payload');
+      return renderAdminGradesError(request, reply, '年级信息填写不正确。');
     }
 
-    await services.updateGrade(params.id, parsed.data);
+    try {
+      await services.updateGrade(params.id, parsed.data);
+    } catch (error) {
+      return renderAdminGradesError(
+        request,
+        reply,
+        messageFromError(error, '保存年级失败，请检查后重试。'),
+      );
+    }
     return redirectTo(reply, '/admin/grades');
   });
 
@@ -140,10 +263,22 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       : raw.userIds
         ? [raw.userIds]
         : [];
+    if (userIds.length === 0) {
+      return renderAdminUsersError(request, reply, user, '请先选择需要通过的用户。');
+    }
 
     // 批量审核目前直接串行循环，先保持实现简单清楚。
-    for (const userId of userIds) {
-      await services.approveUser(userId, user.id);
+    try {
+      for (const userId of userIds) {
+        await services.approveUser(userId, user.id);
+      }
+    } catch (error) {
+      return renderAdminUsersError(
+        request,
+        reply,
+        user,
+        messageFromError(error, '审核用户失败，请检查后重试。'),
+      );
     }
 
     return redirectTo(reply, '/admin/users');
@@ -161,9 +296,21 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       : raw.userIds
         ? [raw.userIds]
         : [];
+    if (userIds.length === 0) {
+      return renderAdminUsersError(request, reply, user, '请先选择需要拒绝的用户。');
+    }
 
-    for (const userId of userIds) {
-      await services.rejectUser(userId, user.id);
+    try {
+      for (const userId of userIds) {
+        await services.rejectUser(userId, user.id);
+      }
+    } catch (error) {
+      return renderAdminUsersError(
+        request,
+        reply,
+        user,
+        messageFromError(error, '拒绝用户失败，请检查后重试。'),
+      );
     }
 
     return redirectTo(reply, '/admin/users');
@@ -428,24 +575,29 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const raw = request.body as Record<string, string | string[] | undefined>;
-    const languages = Array.isArray(raw.allowLanguages)
-      ? raw.allowLanguages
-      : raw.allowLanguages
-        ? [raw.allowLanguages]
-        : [];
-
-    const parsed = createProblemSchema.safeParse({
-      pid: raw.pid,
-      title: raw.title,
-      statementMarkdown: raw.statementMarkdown,
-      allowLanguages: languages,
-      isVisible: raw.isVisible === 'true',
-    });
+    const parsed = createProblemSchema.safeParse(problemInputFromBody(raw));
+    const formProblem = problemFormValues(raw);
     if (!parsed.success) {
-      return reply.code(400).send('Invalid problem payload');
+      return renderProblemFormError(
+        request,
+        reply,
+        'create',
+        formProblem,
+        '题目信息填写不正确，请至少填写题号、标题、题面并选择一种语言。',
+      );
     }
 
-    await services.createProblem(parsed.data);
+    try {
+      await services.createProblem(parsed.data);
+    } catch (error) {
+      return renderProblemFormError(
+        request,
+        reply,
+        'create',
+        formProblem,
+        messageFromError(error, '创建题目失败，请检查后重试。'),
+      );
+    }
     return redirectTo(reply, '/admin/problems');
   });
 
@@ -476,24 +628,29 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const params = request.params as { id: string };
     const raw = request.body as Record<string, string | string[] | undefined>;
-    const languages = Array.isArray(raw.allowLanguages)
-      ? raw.allowLanguages
-      : raw.allowLanguages
-        ? [raw.allowLanguages]
-        : [];
-
-    const parsed = createProblemSchema.safeParse({
-      pid: raw.pid,
-      title: raw.title,
-      statementMarkdown: raw.statementMarkdown,
-      allowLanguages: languages,
-      isVisible: raw.isVisible === 'true',
-    });
+    const parsed = createProblemSchema.safeParse(problemInputFromBody(raw));
+    const formProblem = problemFormValues(raw, params.id);
     if (!parsed.success) {
-      return reply.code(400).send('Invalid problem payload');
+      return renderProblemFormError(
+        request,
+        reply,
+        'edit',
+        formProblem,
+        '题目信息填写不正确，请至少填写题号、标题、题面并选择一种语言。',
+      );
     }
 
-    await services.updateProblem(params.id, parsed.data);
+    try {
+      await services.updateProblem(params.id, parsed.data);
+    } catch (error) {
+      return renderProblemFormError(
+        request,
+        reply,
+        'edit',
+        formProblem,
+        messageFromError(error, '保存题目失败，请检查后重试。'),
+      );
+    }
     return redirectTo(reply, '/admin/problems');
   });
 
@@ -515,7 +672,16 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const params = request.params as { id: string };
-    await services.publishProblem(params.id);
+    try {
+      await services.publishProblem(params.id);
+    } catch (error) {
+      const problems = await services.listAdminProblems();
+      reply.code(400);
+      return renderPage(request, reply, 'admin-problems.pug', {
+        problems,
+        formError: messageFromError(error, '发布题目失败，请检查后重试。'),
+      });
+    }
     return redirectTo(reply, '/admin/problems');
   });
 
@@ -534,10 +700,18 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = enabledLanguagesSchema.safeParse({ enabledLanguages });
     if (!parsed.success) {
-      return reply.code(400).send('Invalid language settings payload');
+      return renderLanguageSettingsError(request, reply, '至少选择一种可用语言。');
     }
 
-    await services.updateEnabledLanguages(parsed.data.enabledLanguages);
+    try {
+      await services.updateEnabledLanguages(parsed.data.enabledLanguages);
+    } catch (error) {
+      return renderLanguageSettingsError(
+        request,
+        reply,
+        messageFromError(error, '保存语言设置失败，请检查后重试。'),
+      );
+    }
     return redirectTo(reply, '/admin/settings/languages');
   });
 }

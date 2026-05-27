@@ -20,7 +20,7 @@
 - 保留 `assetUrl`、`currentUser`、`isAdminArea` 等真正需要的模板上下文。
 - 更新相关测试，确保页面仍然渲染中文内容。
 
-- [ ] **2. 统一 HTML 表单错误处理**
+- [x] **2. 统一 HTML 表单错误处理**
 
 当前 HTML 表单路由遇到错误时，很多地方直接返回纯文本，例如 `Invalid registration payload`、`Invalid problem payload`。
 

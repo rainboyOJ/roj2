@@ -9,16 +9,18 @@ block content
         p.page-lead= "维护注册页面可选年级，并控制哪些年级启用。"
     article.panel-card.form-card
       .panel-body
+        if formError
+          p.form-alert(role="alert")= formError
         form(method="post" action='/admin/grades')
           .form-grid
             div
               label(for="new-grade-name")= "年级"
-              input#new-grade-name(type="text" name="name" required)
+              input#new-grade-name(type="text" name="name" value=formValues && formValues.name required)
             div
               label(for="new-grade-order")= "排序"
-              input#new-grade-order(type="number" name="order" value="0" required min="0" step="1")
+              input#new-grade-order(type="number" name="order" value=(formValues && formValues.order) || "0" required min="0" step="1")
           label
-            input(type="checkbox" name="isActive" value="true" checked)
+            input(type="checkbox" name="isActive" value="true" checked=!formValues || formValues.isActive === 'true')
             = "启用"
           button(type="submit")= "创建年级"
     if grades.length
