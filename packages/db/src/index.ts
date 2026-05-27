@@ -242,6 +242,78 @@ export function buildUserProblemProgressRows(
   return Array.from(progressByKey.values());
 }
 
+const NO_ACCEPTED_AT = new Date('9999-12-31T23:59:59.999Z');
+
+export function buildRanklistAggregationPipeline() {
+  return [
+    {
+      $group: {
+        _id: '$username',
+        username: { $first: '$username' },
+        acceptedCount: {
+          $sum: {
+            $cond: [{ $eq: ['$verdict', SubmissionVerdicts.AC] }, 1, 0],
+          },
+        },
+        submissionCount: { $sum: 1 },
+        wrongAttempts: {
+          $sum: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ['$verdict', SubmissionVerdicts.PENDING] },
+                  { $ne: ['$verdict', SubmissionVerdicts.AC] },
+                ],
+              },
+              1,
+              0,
+            ],
+          },
+        },
+        lastAcceptedAt: {
+          $min: {
+            $cond: [
+              { $eq: ['$verdict', SubmissionVerdicts.AC] },
+              '$updatedAt',
+              NO_ACCEPTED_AT,
+            ],
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        lastAcceptedAtSort: '$lastAcceptedAt',
+        lastAcceptedAt: {
+          $cond: [
+            { $eq: ['$lastAcceptedAt', NO_ACCEPTED_AT] },
+            null,
+            '$lastAcceptedAt',
+          ],
+        },
+      },
+    },
+    {
+      $sort: {
+        acceptedCount: -1,
+        wrongAttempts: 1,
+        lastAcceptedAtSort: 1,
+        username: 1,
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        username: 1,
+        acceptedCount: 1,
+        submissionCount: 1,
+        wrongAttempts: 1,
+        lastAcceptedAt: 1,
+      },
+    },
+  ];
+}
+
 export class RojDb {
   readonly client: MongoClient;
   readonly dbName: string;
@@ -305,6 +377,7 @@ export class RojDb {
     await this.problems().createIndex({ pid: 1 }, { unique: true });
     await this.submissions().createIndex({ userId: 1, createdAt: -1 });
     await this.submissions().createIndex({ pid: 1, createdAt: -1 });
+    await this.submissions().createIndex({ username: 1, verdict: 1, updatedAt: 1 });
     await this.submissions().createIndex({ submissionNo: 1 }, { unique: true, sparse: true });
     await this.submissions().createIndex({ status: 1, 'judge.leaseExpireAt': 1 });
     await this.submissions().createIndex({ 'judge.submissionId': 1 });
@@ -671,54 +744,14 @@ export class RojDb {
     };
   }
 
-  // 简化版排行榜，直接基于 submissions 汇总。
   async buildSimpleRanklist() {
-    const submissions = await this.submissions().find({}).toArray();
-    const rows = new Map<string, {
+    return this.submissions().aggregate<{
       username: string;
       acceptedCount: number;
       submissionCount: number;
       wrongAttempts: number;
       lastAcceptedAt: Date | null;
-    }>();
-
-    for (const submission of submissions) {
-      const key = submission.username;
-      const current = rows.get(key) ?? {
-        username: submission.username,
-        acceptedCount: 0,
-        submissionCount: 0,
-        wrongAttempts: 0,
-        lastAcceptedAt: null,
-      };
-
-      current.submissionCount += 1;
-      if (submission.verdict === SubmissionVerdicts.AC) {
-        current.acceptedCount += 1;
-        if (!current.lastAcceptedAt || submission.updatedAt < current.lastAcceptedAt) {
-          current.lastAcceptedAt = submission.updatedAt;
-        }
-      } else if (submission.verdict !== SubmissionVerdicts.PENDING) {
-        current.wrongAttempts += 1;
-      }
-
-      rows.set(key, current);
-    }
-
-    return Array.from(rows.values()).sort((a, b) => {
-      if (b.acceptedCount !== a.acceptedCount) {
-        return b.acceptedCount - a.acceptedCount;
-      }
-      if (a.wrongAttempts !== b.wrongAttempts) {
-        return a.wrongAttempts - b.wrongAttempts;
-      }
-      const aTime = a.lastAcceptedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      const bTime = b.lastAcceptedAt?.getTime() ?? Number.MAX_SAFE_INTEGER;
-      if (aTime !== bTime) {
-        return aTime - bTime;
-      }
-      return a.username.localeCompare(b.username);
-    });
+    }>(buildRanklistAggregationPipeline()).toArray();
   }
 
   // 原子抢占一条待派发 submission，供 dispatcher 使用。

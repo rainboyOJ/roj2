@@ -39,7 +39,7 @@ db.user_problem_progress.createIndex({ userId: 1, status: 1 })
 
 这个优化适合在提交量明显增长、题目列表打开变慢，或者需要统计用户做题进度时再实现。
 
-- [ ] **2. 数据库查询与排行榜性能**
+- [x] **2. 数据库查询与排行榜性能**
 
 当前排行榜通过读取全站 submissions 后在 Node.js 里汇总。提交量少时实现简单，但提交量增长后会让 `/ranklist` 页面变慢，并增加 API 进程内存压力。
 
