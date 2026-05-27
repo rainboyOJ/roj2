@@ -8,11 +8,17 @@
   const formUtils = window.RojFormUtils;
 
   form.addEventListener('submit', (event) => {
-    formUtils.hideAlert(alertBox);
-    const checked = form.querySelectorAll('input[name="enabledLanguages"]:checked');
-    if (checked.length === 0) {
-      event.preventDefault();
-      formUtils.showAlert(alertBox, '至少选择一种可用语言。');
-    }
+    event.preventDefault();
+    formUtils.handleSubmit(form, alertBox, {
+      beforeSubmit: () => formUtils.requireChecked(
+        form,
+        'input[name="enabledLanguages"]:checked',
+        alertBox,
+        '至少选择一种可用语言。',
+      ),
+      submit: async () => {
+        HTMLFormElement.prototype.submit.call(form);
+      },
+    });
   });
 })();

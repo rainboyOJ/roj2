@@ -14,16 +14,19 @@
   };
 
   form.addEventListener('submit', (event) => {
-    formUtils.hideAlert(alertBox);
-    if (!formUtils.validateForm(form, alertBox, fieldMessages, '请检查题目信息。')) {
-      event.preventDefault();
-      return;
-    }
-
-    const selectedLanguages = form.querySelectorAll('input[name="allowLanguages"]:checked');
-    if (selectedLanguages.length === 0) {
-      event.preventDefault();
-      formUtils.showAlert(alertBox, '至少选择一种允许提交的语言。');
-    }
+    event.preventDefault();
+    formUtils.handleSubmit(form, alertBox, {
+      fieldMessages,
+      validationMessage: '请检查题目信息。',
+      beforeSubmit: () => formUtils.requireChecked(
+        form,
+        'input[name="allowLanguages"]:checked',
+        alertBox,
+        '至少选择一种允许提交的语言。',
+      ),
+      submit: async () => {
+        HTMLFormElement.prototype.submit.call(form);
+      },
+    });
   });
 })();

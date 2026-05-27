@@ -7,15 +7,6 @@
   }
   const formUtils = window.RojFormUtils;
 
-  const fieldLabels = {
-    username: '用户名',
-    name: '姓名',
-    gender: '性别',
-    grade: '年级',
-    className: '班级',
-    password: '密码',
-  };
-
   const fieldMessages = {
     username: '用户名只能使用小写字母、数字、下划线，长度 3-24。',
     name: '请填写姓名。',
@@ -25,63 +16,30 @@
     password: '密码至少 8 个字符。',
   };
 
-  function validateForm() {
-    return formUtils.validateForm(form, alertBox, fieldMessages, '表单填写不正确。');
-  }
-
-  function issueToMessage(issue) {
-    const field = Array.isArray(issue.path) ? issue.path[0] : '';
-    if (field === 'username') {
-      return '用户名只能使用小写字母、数字、下划线，长度 3-24。';
-    }
-    if (field === 'password') {
-      return '密码至少 8 个字符。';
-    }
-    if (field === 'gender') {
-      return '请选择男或女。';
-    }
-    const label = fieldLabels[field] || '表单';
-    return `${label}填写不正确。`;
-  }
-
-  function errorToMessage(error) {
-    const data = error.response && error.response.data;
-    if (data && Array.isArray(data.issues) && data.issues.length > 0) {
-      return issueToMessage(data.issues[0]);
-    }
-    if (data && typeof data.message === 'string') {
-      if (data.message.includes('username already exists')) {
-        return '用户名已存在。';
-      }
-      if (data.message.includes('grade') && data.message.includes('not available')) {
-        return '请选择可用的年级。';
-      }
-    }
-    return '注册失败，请检查填写内容后重试。';
-  }
-
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    formUtils.hideAlert(alertBox);
-    if (!validateForm()) {
-      return;
-    }
-
-    const formData = new FormData(form);
-    const payload = {
-      username: String(formData.get('username') || ''),
-      name: String(formData.get('name') || ''),
-      gender: String(formData.get('gender') || ''),
-      className: String(formData.get('className') || ''),
-      grade: String(formData.get('grade') || ''),
-      password: String(formData.get('password') || ''),
-    };
-
-    try {
-      await window.axios.post('/api/register', payload);
-      window.location.href = '/login';
-    } catch (error) {
-      formUtils.showAlert(alertBox, errorToMessage(error));
-    }
+    await formUtils.handleSubmit(form, alertBox, {
+      fieldMessages,
+      validationMessage: '表单填写不正确。',
+      serverMessageMap: {
+        'username already exists': '用户名已存在。',
+        'grade not available': '请选择可用的年级。',
+      },
+      errorMessage: '注册失败，请检查填写内容后重试。',
+      submit: async () => {
+        const formData = new FormData(form);
+        await window.axios.post('/api/register', {
+          username: String(formData.get('username') || ''),
+          name: String(formData.get('name') || ''),
+          gender: String(formData.get('gender') || ''),
+          className: String(formData.get('className') || ''),
+          grade: String(formData.get('grade') || ''),
+          password: String(formData.get('password') || ''),
+        });
+      },
+      onSuccess: () => {
+        window.location.href = '/login';
+      },
+    });
   });
 })();
