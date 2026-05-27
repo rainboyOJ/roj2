@@ -124,7 +124,7 @@ db.user_problem_progress.createIndex({ userId: 1, status: 1 })
 
 后续如果短期不做比赛功能，建议在页面上明确显示“比赛功能暂未开放”。如果要正式支持比赛，需要单独设计 contest、contest problem、contest submission、contest ranklist 等数据模型。
 
-- [ ] **10. 文档同步**
+- [x] **10. 文档同步**
 
 部署脚本、Docker Compose、GHCR 镜像、默认题目、quick start 调试流程都经历过多次修改，文档可能会逐渐和实际行为不一致。
 

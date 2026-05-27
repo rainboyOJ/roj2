@@ -86,7 +86,7 @@ judge_server_testData/
 安装完成后访问：
 
 ```text
-http://127.0.0.1:3000/problems
+http://127.0.0.1:3300/problems
 ```
 
 默认种子账号：
@@ -148,6 +148,12 @@ docker compose up -d
 
 ```bash
 docker compose up -d
+```
+
+默认 `.env.example` 会把容器内的 API `3000` 端口映射到宿主机 `3300`：
+
+```text
+API_HOST_PORT=3300
 ```
 
 查看日志：
@@ -241,6 +247,29 @@ npm test
 npm run typecheck
 ```
 
+### 快速调试 Docker 部署页面
+
+如果已经通过 `install.sh` 拉起了 Docker 服务，并且只想快速修改前端页面或 API 代码，可以使用：
+
+```bash
+./quick_start_for_test.sh
+```
+
+这个脚本会停止 Docker 中的 `roj-api-server` 和 `roj-judge-dispatcher`，复用仍在运行的 `roj-mongodb` 与 `roj-judge-server`，然后在本地启动：
+
+```text
+npm run dev:api
+npm run dev:dispatcher
+```
+
+默认访问地址仍是：
+
+```text
+http://127.0.0.1:3300/problems
+```
+
+更多细节见 [docs/quick_start_for_test.md](docs/quick_start_for_test.md)。
+
 ### 导入 ROJ 题目
 
 如果要把 `/home/rainboy/mycode/problems/roj` 里的题目批量导入当前 OJ，可以直接运行：
@@ -285,6 +314,7 @@ npm run import:roj
 - `docs/source-reading-guide.md`：源码阅读顺序
 - `packages/judge-driver/README.md`：judge TCP 客户端说明
 - `docs/docker_one_key_build_and_run.md`：Docker 一键构建部署说明
+- `docs/quick_start_for_test.md`：本地快速调试 Docker 部署服务
 
 ## License
 
