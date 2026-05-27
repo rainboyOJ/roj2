@@ -1,8 +1,8 @@
 mixin pageScript(src, type)
   if type
-    script(type=type src=src)
+    script(type=type src=assetUrl(src))
   else
-    script(src=src)
+    script(src=assetUrl(src))
 
 mixin formScripts(pageScriptSrc, needsAxios)
   if needsAxios

@@ -250,7 +250,7 @@ describe('rendered views', () => {
     expect(pico.body).toContain('--pico');
     expect(katex.statusCode).toBe(200);
     expect(katex.headers['content-type']).toContain('text/css');
-    expect(katex.headers['cache-control']).toContain('max-age=31536000');
+    expect(katex.headers['cache-control']).toBe('no-store');
     expect(katex.body).toContain('katex');
   });
 
@@ -280,7 +280,7 @@ describe('rendered views', () => {
     expect(login.body).toContain('用户名或密码错误');
     expect(login.body).toContain('RojFormUtils');
     expect(formUtils.statusCode).toBe(200);
-    expect(formUtils.headers['cache-control']).toContain('max-age=31536000');
+    expect(formUtils.headers['cache-control']).toBe('no-store');
     expect(formUtils.body).toContain('RojFormUtils');
     expect(formUtils.body).toContain('checkValidity');
     expect(profilePassword.statusCode).toBe(200);

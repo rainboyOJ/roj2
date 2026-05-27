@@ -5,12 +5,13 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { AppLanguage } from '@roj/shared';
 
 import type { ApiServerServices, SessionUser } from '../app.ts';
+import { assetUrl, getAssetCacheControl } from './assets.ts';
 import { createViewContext } from '../view-i18n.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const DEFAULT_PAGE_SIZE = 20;
-export const ASSET_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+export const ASSET_CACHE_CONTROL = getAssetCacheControl();
 
 export interface RouteContext {
   services: ApiServerServices;
@@ -111,6 +112,7 @@ export function createRouteContext(services: ApiServerServices): RouteContext {
     const pathname = currentPath.split('?')[0] || '/';
     return reply.view(template, {
       ...createViewContext(),
+      assetUrl,
       currentUser,
       isAdminArea: pathname === '/admin' || pathname.startsWith('/admin/'),
       ...data,

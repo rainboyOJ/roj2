@@ -7,9 +7,9 @@ html(lang="zh-CN" data-theme="light")
     meta(name="viewport" content="width=device-width, initial-scale=1")
     title= pageTitle ? `${pageTitle} | ROJ` : 'ROJ'
     meta(name="color-scheme" content="light")
-    link(rel="icon" href="/favicon.svg" type="image/svg+xml")
-    link(rel="stylesheet" href="/assets/pico.classless.min.css")
-    link(rel="stylesheet" href="/assets/katex.min.css")
+    link(rel="icon" href=assetUrl('/favicon.svg') type="image/svg+xml")
+    link(rel="stylesheet" href=assetUrl('/assets/pico.classless.min.css'))
+    link(rel="stylesheet" href=assetUrl('/assets/katex.min.css'))
     style.
       :root {
         --pico-font-family-sans-serif: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
