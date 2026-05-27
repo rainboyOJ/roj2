@@ -2,6 +2,7 @@
 //- - 顶部按钮做批量审核
 //- - 行内按钮做单条审核
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.list-panel
@@ -94,4 +95,6 @@ block content
     else
       article
         p= "没有需要查看的用户。"
-    script(src=assetUrl('/assets/admin-users.js'))
+
+block pageScripts
+  +formScripts('admin-users.js', true)

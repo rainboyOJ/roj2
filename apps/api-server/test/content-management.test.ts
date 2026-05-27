@@ -61,6 +61,82 @@ describe('content management routes', () => {
     ]);
   });
 
+  it('approves selected users through the admin API flow', async () => {
+    const approved: Array<{ userId: string; adminUserId: string }> = [];
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      approveUser: async (userId: string, adminUserId: string) => {
+        approved.push({ userId, adminUserId });
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users/bulk-approve',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        userIds: ['user-2', 'user-3'],
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ ok: true });
+    expect(approved).toEqual([
+      { userId: 'user-2', adminUserId: 'admin-1' },
+      { userId: 'user-3', adminUserId: 'admin-1' },
+    ]);
+  });
+
+  it('rejects selected users through the admin API flow', async () => {
+    const rejected: Array<{ userId: string; adminUserId: string }> = [];
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      rejectUser: async (userId: string, adminUserId: string) => {
+        rejected.push({ userId, adminUserId });
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users/bulk-reject',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        userIds: ['user-2', 'user-3'],
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ ok: true });
+    expect(rejected).toEqual([
+      { userId: 'user-2', adminUserId: 'admin-1' },
+      { userId: 'user-3', adminUserId: 'admin-1' },
+    ]);
+  });
+
+  it('rejects bulk user API actions without selected users', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users/bulk-approve',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        userIds: [],
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ message: 'No users selected' });
+  });
+
   it('returns a logged-in user submission list', async () => {
     const app = buildApp(createTestServices({
       listSubmissions: async () => paginated([

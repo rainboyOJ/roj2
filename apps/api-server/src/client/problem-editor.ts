@@ -3,10 +3,35 @@ import { Compartment } from '@codemirror/state';
 import { cpp } from '@codemirror/lang-cpp';
 import { python } from '@codemirror/lang-python';
 
+declare global {
+  interface Window {
+    axios?: {
+      post: <T = unknown>(url: string, payload?: unknown) => Promise<{ data: T }>;
+    };
+    RojFormUtils?: {
+      showAlert: (alertBox: HTMLElement, message: string) => void;
+      hideAlert: (alertBox: HTMLElement) => void;
+      setSubmitting: (form: HTMLFormElement, isSubmitting: boolean) => void;
+      serverMessage: (
+        error: unknown,
+        serverMessageMap: Record<string, string>,
+        fallbackMessage: string,
+      ) => string;
+    };
+  }
+}
+
 const languageFactories = {
   cpp,
   python,
 } as const;
+
+type CreateSubmissionResponse = {
+  submissionId?: string;
+  submissionNo?: number;
+  status?: string;
+  verdict?: string;
+};
 
 function getLanguageExtension(language: string) {
   const factory = languageFactories[language as keyof typeof languageFactories];
@@ -72,28 +97,63 @@ function initProblemEditor() {
     });
   }
 
-  form?.addEventListener('submit', (event) => {
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
     hiddenInput.value = editor.state.doc.toString();
-    if (alertBox) {
-      alertBox.hidden = true;
+    if (alertBox && window.RojFormUtils) {
+      window.RojFormUtils.hideAlert(alertBox);
     }
 
     if (!languageSelect || languageSelect.disabled || !languageSelect.value) {
-      event.preventDefault();
       if (alertBox) {
-        alertBox.textContent = '当前题目没有可用的提交语言。';
-        alertBox.hidden = false;
+        window.RojFormUtils?.showAlert(alertBox, '当前题目没有可用的提交语言。');
       }
       return;
     }
 
     if (!hiddenInput.value.trim()) {
-      event.preventDefault();
       if (alertBox) {
-        alertBox.textContent = '请填写代码。';
-        alertBox.hidden = false;
+        window.RojFormUtils?.showAlert(alertBox, '请填写代码。');
       }
       editor.focus();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    try {
+      window.RojFormUtils?.setSubmitting(form, true);
+      const response = await window.axios?.post<CreateSubmissionResponse>('/api/submissions', {
+        pid: String(formData.get('pid') || ''),
+        language: languageSelect.value,
+        sourceCode: hiddenInput.value,
+      });
+      const submissionId = response?.data.submissionId;
+      if (submissionId) {
+        window.location.href = `/submissions/${encodeURIComponent(submissionId)}`;
+        return;
+      }
+      window.location.href = '/submissions';
+    } catch (error) {
+      if (alertBox) {
+        window.RojFormUtils?.showAlert(
+          alertBox,
+          window.RojFormUtils.serverMessage(
+            error,
+            {
+              'Approval required': '账号审核通过后才能提交代码。',
+              'Invalid submission payload': '提交信息不完整，请检查语言和代码。',
+            },
+            '提交失败，请检查后重试。',
+          ),
+        );
+      }
+      editor.focus();
+    } finally {
+      window.RojFormUtils?.setSubmitting(form, false);
+      if (submitButton) {
+        submitButton.disabled = languageSelect.disabled;
+      }
     }
   });
 }

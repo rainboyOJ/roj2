@@ -50,8 +50,8 @@ block content
             a(href='/admin/problems' role="button" class="secondary")= "返回"
         if !isCreate
           hr
-          form(method="post" action=`/admin/problems/${problem.id}/publish`)
+          form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish` data-problem-id=problem.id)
             button(type="submit" class="contrast")= "发布题目"
 
 block pageScripts
-  +formScripts('admin-problem-form.js', false)
+  +formScripts('admin-problem-form.js', true)

@@ -1,5 +1,6 @@
 //- 管理员题目列表页：用于查看、编辑、发布题目。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.list-panel
@@ -37,8 +38,11 @@ block content
                   .table-actions
                     a(href=`/admin/problems/${problem.id}/edit`)= "编辑"
                     if !problem.isVisible
-                      form(method="post" action=`/admin/problems/${problem.id}/publish`)
+                      form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish` data-problem-id=problem.id)
                         button(type="submit" class="secondary")= "发布"
     else
       article
         p= "当前还没有题目。"
+
+block pageScripts
+  +formScripts('admin-problems.js', true)

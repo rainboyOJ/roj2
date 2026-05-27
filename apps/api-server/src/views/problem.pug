@@ -39,4 +39,6 @@ block content
               a(href='/problems' role="button" class="secondary")= "返回题目列表"
 
 block pageScripts
+  +pageScript('/assets/axios.min.js')
+  +pageScript('/assets/form-utils.js')
   +pageScript('/assets/editor/problem-editor.js', 'module')

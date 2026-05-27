@@ -22,6 +22,18 @@
     return error.response && error.response.data;
   }
 
+  function serverMessage(error, serverMessageMap, fallbackMessage) {
+    const data = responseData(error);
+    const mappedMessage = messageFromServerText(data && data.message, serverMessageMap);
+    if (mappedMessage) {
+      return mappedMessage;
+    }
+    if (data && typeof data.message === 'string') {
+      return data.message;
+    }
+    return fallbackMessage;
+  }
+
   function validateForm(form, alertBox, fieldMessages, fallbackMessage) {
     if (form.checkValidity()) {
       return true;
@@ -121,6 +133,7 @@
     validateForm,
     issueMessage,
     messageFromError,
+    serverMessage,
     requireChecked,
     handleSubmit,
     responseData,

@@ -200,6 +200,8 @@ describe('rendered views', () => {
     const formUtils = await app.inject({ method: 'GET', url: '/assets/form-utils.js' });
     const profilePassword = await app.inject({ method: 'GET', url: '/assets/profile-password.js' });
     const adminProblem = await app.inject({ method: 'GET', url: '/assets/admin-problem-form.js' });
+    const adminProblems = await app.inject({ method: 'GET', url: '/assets/admin-problems.js' });
+    const adminGrades = await app.inject({ method: 'GET', url: '/assets/admin-grades.js' });
     const adminLanguages = await app.inject({ method: 'GET', url: '/assets/admin-language-settings.js' });
     const adminUsers = await app.inject({ method: 'GET', url: '/assets/admin-users.js' });
 
@@ -230,11 +232,18 @@ describe('rendered views', () => {
     expect(adminProblem.statusCode).toBe(200);
     expect(adminProblem.body).toContain('至少选择一种允许提交的语言');
     expect(adminProblem.body).toContain('requireChecked');
+    expect(adminProblem.body).toContain('/api/admin/problems');
+    expect(adminProblems.statusCode).toBe(200);
+    expect(adminProblems.body).toContain('/api/admin/problems');
+    expect(adminGrades.statusCode).toBe(200);
+    expect(adminGrades.body).toContain('/api/admin/grades');
     expect(adminLanguages.statusCode).toBe(200);
     expect(adminLanguages.body).toContain('至少选择一种可用语言');
     expect(adminLanguages.body).toContain('requireChecked');
+    expect(adminLanguages.body).toContain('/api/admin/settings/languages');
     expect(adminUsers.statusCode).toBe(200);
     expect(adminUsers.headers['content-type']).toContain('application/javascript');
+    expect(adminUsers.body).toContain('/api/admin/users');
     expect(adminUsers.body).toContain('confirmMessage');
     expect(adminUsers.body).toContain('window.confirm');
     const missing = await app.inject({ method: 'GET', url: '/assets/missing.js' });
@@ -385,6 +394,8 @@ describe('rendered views', () => {
     expect(response.body).toContain('id="submissionForm"');
     expect(response.body).toContain('name="sourceCode"');
     expect(response.body).toContain('select name="language" id="language" required');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/editor/problem-editor.js"');
     expect(response.body).not.toContain('<pre class="mono-block">');
   });
@@ -676,6 +687,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('id="adminProblemForm"');
     expect(response.body).toContain('name="pid"');
     expect(response.body).toContain('name="statementMarkdown" required');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-problem-form.js"');
     expect(response.body).toContain('题目管理');
@@ -721,6 +733,7 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('编辑题目');
     expect(response.body).toContain('A + B Problem');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-problem-form.js"');
   });
@@ -768,6 +781,8 @@ describe('rendered views', () => {
     expect(response.body).toContain('确定要重置用户 alice 的密码吗？');
     expect(response.body).toContain('确定要删除用户 alice 吗？删除后不可恢复。');
     expect(response.body).toContain('data-require-password="password"');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-users.js"');
   });
 
@@ -798,6 +813,10 @@ describe('rendered views', () => {
     expect(response.body).toContain('id="new-grade-name" type="text" name="name" required');
     expect(response.body).toContain('id="new-grade-order" type="number" name="order" value="0" required min="0" step="1"');
     expect(response.body).toContain('name="isActive"');
+    expect(response.body).toContain('id="adminGradesAlert"');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/admin-grades.js"');
   });
 
   it('renders admin language settings validation hooks', async () => {
@@ -817,6 +836,7 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('id="adminLanguageAlert"');
     expect(response.body).toContain('id="adminLanguageForm"');
+    expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-language-settings.js"');
   });

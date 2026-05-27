@@ -1,5 +1,6 @@
 //- 管理员年级管理页：维护注册页面可选年级。
 extends layout.pug
+include mixins/assets.pug
 
 block content
   section.list-panel
@@ -9,9 +10,8 @@ block content
         p.page-lead= "维护注册页面可选年级，并控制哪些年级启用。"
     article.panel-card.form-card
       .panel-body
-        if formError
-          p.form-alert(role="alert")= formError
-        form(method="post" action='/admin/grades')
+        p#adminGradesAlert.form-alert(role="alert" hidden=!formError)= formError || ''
+        form.admin-grade-form(method="post" action='/admin/grades')
           .form-grid
             div
               label(for="new-grade-name")= "年级"
@@ -36,7 +36,7 @@ block content
             each grade in grades
               tr
                 td
-                  form(method="post" action=`/admin/grades/${grade.id}` id=`grade-form-${grade.id}`)
+                  form.admin-grade-form(method="post" action=`/admin/grades/${grade.id}` id=`grade-form-${grade.id}` data-grade-id=grade.id)
                     input(type="text" name="name" value=grade.name required)
                 td
                   label
@@ -49,3 +49,6 @@ block content
     else
       article
         p= "当前还没有年级。"
+
+block pageScripts
+  +formScripts('admin-grades.js', true)

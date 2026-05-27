@@ -408,6 +408,46 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     return reply.send({ ok: true });
   });
 
+  app.post('/api/admin/users/bulk-approve', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const raw = request.body as { userIds?: unknown };
+    const userIds = Array.isArray(raw.userIds)
+      ? raw.userIds.filter((userId): userId is string => typeof userId === 'string')
+      : [];
+    if (userIds.length === 0) {
+      return reply.code(400).send({ message: 'No users selected' });
+    }
+
+    for (const userId of userIds) {
+      await services.approveUser(userId, user.id);
+    }
+    return reply.send({ ok: true });
+  });
+
+  app.post('/api/admin/users/bulk-reject', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const raw = request.body as { userIds?: unknown };
+    const userIds = Array.isArray(raw.userIds)
+      ? raw.userIds.filter((userId): userId is string => typeof userId === 'string')
+      : [];
+    if (userIds.length === 0) {
+      return reply.code(400).send({ message: 'No users selected' });
+    }
+
+    for (const userId of userIds) {
+      await services.rejectUser(userId, user.id);
+    }
+    return reply.send({ ok: true });
+  });
+
   app.post('/api/admin/users/:id/reset-password', async (request, reply) => {
     const user = await requireApiAdmin(request, reply);
     if (!user) {
