@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 
-import { DEFAULT_PAGE_SIZE, type RouteContext } from '../http/context.ts';
+import type { RouteContext } from '../http/context.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
 import type { SessionUser, SubmissionListFilters, SubmissionViewModel } from '../app.ts';
 
@@ -39,6 +39,7 @@ function withSubmissionSourcePermission(
 export function registerSubmissionRoutes(app: FastifyInstance, context: RouteContext) {
   const {
     parsePage,
+    parsePageSize,
     renderPage,
     requireApiUser,
     requireHtmlUser,
@@ -69,9 +70,10 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
     }
 
     const filters = parseSubmissionListFilters(request.query);
+    const paginationSettings = await services.getPaginationSettings();
     const result = await services.listSubmissions(user, {
       page: parsePage(request.query),
-      pageSize: DEFAULT_PAGE_SIZE,
+      pageSize: paginationSettings.listPageSize,
     }, filters);
     return renderPage(request, reply, 'submissions.pug', { ...result });
   });
@@ -96,9 +98,10 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
       return;
     }
 
+    const paginationSettings = await services.getPaginationSettings();
     return services.listSubmissions(user, {
       page: parsePage(request.query),
-      pageSize: DEFAULT_PAGE_SIZE,
+      pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
     }, parseSubmissionListFilters(request.query));
   });
 

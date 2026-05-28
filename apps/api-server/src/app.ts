@@ -44,6 +44,11 @@ export interface ProblemListViewModel extends ProblemViewModel {
   progress: ProblemProgress | null;
 }
 
+export interface PaginatedProblemsViewModel {
+  problems: ProblemListViewModel[];
+  pagination: PaginationViewModel;
+}
+
 export interface ProblemSetListViewModel {
   id: string;
   title: string;
@@ -73,6 +78,11 @@ export interface AdminProblemSetViewModel extends ProblemSetListViewModel {
 
 export interface LanguageSettingsViewModel {
   enabledLanguages: AppLanguage[];
+}
+
+export interface PaginationSettingsViewModel {
+  listPageSize: number;
+  allowedPageSizes: number[];
 }
 
 export interface SessionUser {
@@ -160,6 +170,13 @@ export interface ApiServerServices {
     sourceCode: string;
   }): Promise<CreateSubmissionResult>;
   listProblems(): Promise<ProblemViewModel[]>;
+  listProblemsPaginated(pagination: {
+    page: number;
+    pageSize: number;
+  }): Promise<{
+    problems: ProblemViewModel[];
+    pagination: PaginationViewModel;
+  }>;
   listProblemsByPids(pids: string[]): Promise<ProblemViewModel[]>;
   listProblemProgressByUser(userId: string): Promise<Map<string, ProblemProgress>>;
   getProblemByPid(pid: string): Promise<ProblemViewModel | null>;
@@ -225,6 +242,8 @@ export interface ApiServerServices {
   }): Promise<void>;
   getEnabledLanguages(): Promise<readonly AppLanguage[]>;
   updateEnabledLanguages(enabledLanguages: AppLanguage[]): Promise<void>;
+  getPaginationSettings(): Promise<PaginationSettingsViewModel>;
+  updateListPageSize(listPageSize: number): Promise<void>;
   listAdminProblems(): Promise<AdminProblemViewModel[]>;
   getAdminProblemById(id: string): Promise<AdminProblemViewModel | null>;
   createProblem(input: {

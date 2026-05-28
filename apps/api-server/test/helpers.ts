@@ -61,7 +61,7 @@ export function paginated(
 export function createTestServices(
   overrides: Partial<ApiServerServices> = {},
 ): ApiServerServices {
-  return {
+  const services: ApiServerServices = {
     createSubmission: async () => ({
       id: 'sub-1',
       publicId: '42',
@@ -71,6 +71,21 @@ export function createTestServices(
       score: 0,
     }),
     listProblems: async () => [],
+    listProblemsPaginated: async (pagination) => {
+      const problems = await services.listProblems();
+      const totalPages = Math.max(1, Math.ceil(problems.length / pagination.pageSize));
+      return {
+        problems,
+        pagination: {
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: problems.length,
+          totalPages,
+          previousPage: pagination.page > 1 ? pagination.page - 1 : null,
+          nextPage: pagination.page < totalPages ? pagination.page + 1 : null,
+        },
+      };
+    },
     listProblemsByPids: async () => [],
     listProblemProgressByUser: async () => new Map(),
     getProblemByPid: async () => null,
@@ -111,6 +126,11 @@ export function createTestServices(
     updateGrade: async () => undefined,
     getEnabledLanguages: async () => ['cpp', 'python'],
     updateEnabledLanguages: async () => undefined,
+    getPaginationSettings: async () => ({
+      listPageSize: 20,
+      allowedPageSizes: [20, 50, 100],
+    }),
+    updateListPageSize: async () => undefined,
     listAdminProblems: async () => [],
     getAdminProblemById: async () => null,
     createProblem: async () => ({
@@ -123,6 +143,6 @@ export function createTestServices(
     resetUserPassword: async () => undefined,
     deleteUser: async () => undefined,
     updateMyPassword: async () => undefined,
-    ...overrides,
   };
+  return Object.assign(services, overrides);
 }

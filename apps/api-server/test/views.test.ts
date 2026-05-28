@@ -299,8 +299,54 @@ describe('rendered views', () => {
     expect(response.body).toContain('A + B Problem');
     expect(response.body).toContain('提交代码');
     expect(response.body).toContain('href="/login"');
+    expect(response.body).toContain('题目列表分页');
     expect(response.body).not.toContain('已通过');
     expect(response.body).not.toContain('已尝试');
+  });
+
+  it('uses pagination settings on the problems page', async () => {
+    let receivedPagination: { page: number; pageSize: number } | null = null;
+    const app = buildApp(createServices({
+      getPaginationSettings: async () => ({
+        listPageSize: 50,
+        allowedPageSizes: [20, 50, 100],
+      }),
+      listProblemsPaginated: async (pagination: { page: number; pageSize: number }) => {
+        receivedPagination = pagination;
+        return {
+          problems: [
+            {
+              pid: '1001',
+              title: 'Second Problem',
+              statementMarkdown: 'Second.',
+              statementHtml: '<p>Second.</p>',
+              allowLanguages: ['python'],
+            },
+          ],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 51,
+            totalPages: 2,
+            previousPage: 1,
+            nextPage: null,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems?page=2',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPagination).toEqual({
+      page: 2,
+      pageSize: 50,
+    });
+    expect(response.body).toContain('Second Problem');
+    expect(response.body).toContain('第 2 / 2 页，共 51 条');
   });
 
   it('does not show the login button on the problems page for logged-in users', async () => {
@@ -973,10 +1019,38 @@ describe('rendered views', () => {
     expect(response.body).toContain('src="/assets/admin-language-settings.js"');
   });
 
+  it('renders admin pagination settings page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+      getPaginationSettings: async () => ({
+        listPageSize: 50,
+        allowedPageSizes: [20, 50, 100],
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/settings/pagination',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('分页设置');
+    expect(response.body).toContain('name="listPageSize"');
+    expect(response.body).toContain('value="50" checked');
+    expect(response.body).toContain('100 条');
+  });
+
   it('renders pagination on the admin submissions page and requests the selected page', async () => {
     let receivedPagination: { page: number; pageSize: number } | null = null;
     const app = buildApp(createServices({
       getCurrentUser: async () => adminUser(),
+      getPaginationSettings: async () => ({
+        listPageSize: 50,
+        allowedPageSizes: [20, 50, 100],
+      }),
       listAdminSubmissions: async (pagination: { page: number; pageSize: number }) => {
         receivedPagination = pagination;
         return {
@@ -1024,7 +1098,7 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(receivedPagination).toEqual({
       page: 2,
-      pageSize: 20,
+      pageSize: 50,
     });
     expect(response.body).toContain('提交管理分页');
     expect(response.body).toContain('第 2 / 3 页，共 41 条');

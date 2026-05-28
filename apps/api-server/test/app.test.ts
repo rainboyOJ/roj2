@@ -89,12 +89,19 @@ describe('GET /api/problems', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual([
-      expect.objectContaining({
-        pid: '1000',
-        allowLanguages: ['python'],
-      }),
-    ]);
+    expect(response.json()).toMatchObject({
+      problems: [
+        expect.objectContaining({
+          pid: '1000',
+          allowLanguages: ['python'],
+        }),
+      ],
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 1,
+      },
+    });
   });
 });
 
@@ -104,6 +111,10 @@ describe('GET /api/submissions', () => {
     let receivedFilters: unknown = null;
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser({ id: 'user-1', username: 'alice' }),
+      getPaginationSettings: async () => ({
+        listPageSize: 50,
+        allowedPageSizes: [20, 50, 100],
+      }),
       listSubmissions: async (
         _user: SessionUser,
         pagination: { page: number; pageSize: number },
@@ -158,7 +169,7 @@ describe('GET /api/submissions', () => {
     expect(response.statusCode).toBe(200);
     expect(receivedPagination).toEqual({
       page: 2,
-      pageSize: 20,
+      pageSize: 50,
     });
     expect(receivedFilters).toEqual({
       pid: '1000',
@@ -174,7 +185,7 @@ describe('GET /api/submissions', () => {
       ],
       pagination: {
         page: 2,
-        pageSize: 20,
+        pageSize: 50,
         total: 41,
         totalPages: 3,
       },
@@ -182,6 +193,31 @@ describe('GET /api/submissions', () => {
         pid: '1000',
         user: 'Alice',
       },
+    });
+  });
+
+  it('caps requested submission page size at 100', async () => {
+    let receivedPagination: { page: number; pageSize: number } | null = null;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      listSubmissions: async (_user, pagination) => {
+        receivedPagination = pagination;
+        return paginated();
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/submissions?pageSize=500',
+      headers: {
+        cookie: sessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPagination).toEqual({
+      page: 1,
+      pageSize: 100,
     });
   });
 
@@ -231,6 +267,10 @@ describe('production services', () => {
   it('populates problem titles for submission lists without reading denormalized titles', async () => {
     const services = await buildProductionServices({
       listVisibleProblems: async () => [],
+      listVisibleProblemsPaginated: async () => ({
+        items: [],
+        total: 0,
+      }),
       getProblemByPid: async () => null,
       createSubmission: async () => ({
         _id: 'sub-1',
@@ -300,6 +340,8 @@ describe('production services', () => {
       publishProblem: async () => undefined,
       getEnabledLanguages: async () => ['cpp', 'python'],
       updateEnabledLanguages: async () => undefined,
+      getListPageSize: async () => 20,
+      updateListPageSize: async () => undefined,
       updateProfileClassName: async () => undefined,
       resetUserPassword: async () => undefined,
     } as never);

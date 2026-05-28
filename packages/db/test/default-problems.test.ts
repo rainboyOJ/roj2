@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isDefaultProblemDirectoryName,
+  normalizeListPageSize,
   parseEnabledLanguagesEnv,
   readDefaultProblemSeeds,
 } from '../src/index.ts';
@@ -71,5 +72,15 @@ describe('enabled language defaults', () => {
     expect(parseEnabledLanguagesEnv('python')).toEqual(['python']);
     expect(parseEnabledLanguagesEnv(' cpp, python,cpp ')).toEqual(['cpp', 'python']);
     expect(parseEnabledLanguagesEnv('java')).toEqual(['cpp', 'python']);
+  });
+});
+
+describe('pagination settings defaults', () => {
+  it('normalizes list page size to allowed values', () => {
+    expect(normalizeListPageSize(20)).toBe(20);
+    expect(normalizeListPageSize(50)).toBe(50);
+    expect(normalizeListPageSize(100)).toBe(100);
+    expect(normalizeListPageSize(500)).toBe(20);
+    expect(normalizeListPageSize(undefined)).toBe(20);
   });
 });

@@ -1,5 +1,6 @@
 //- 题目列表页：普通用户最常进入的页面之一。
 extends layout.pug
+include mixins/pagination.pug
 
 block content
   section.list-panel
@@ -40,6 +41,7 @@ block content
                 td= problem.allowLanguages.join(', ')
                 td
                   a(href=`/problem/${problem.pid}`)= "提交代码"
+      +paginationBar('/problems', pagination, '题目列表分页')
     else
       article
         p= "目前还没有可见题目。"

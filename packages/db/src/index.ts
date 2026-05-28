@@ -150,6 +150,17 @@ export interface SubmissionListFilters {
   user?: string;
 }
 
+export const DEFAULT_LIST_PAGE_SIZE = 20;
+export const ALLOWED_LIST_PAGE_SIZES = [20, 50, 100] as const;
+export type ListPageSize = (typeof ALLOWED_LIST_PAGE_SIZES)[number];
+
+export function normalizeListPageSize(value: unknown): ListPageSize {
+  const pageSize = Number(value);
+  return ALLOWED_LIST_PAGE_SIZES.includes(pageSize as ListPageSize)
+    ? pageSize as ListPageSize
+    : DEFAULT_LIST_PAGE_SIZE;
+}
+
 // 持久化 judge 返回快照时使用的输入结构。
 export interface JudgeSnapshotPersistInput {
   submissionId: number;
@@ -588,6 +599,7 @@ export class RojDb {
       {
         $setOnInsert: {
           enabledLanguages: parseEnabledLanguagesEnv(process.env.ROJ_ENABLED_LANGUAGES),
+          listPageSize: DEFAULT_LIST_PAGE_SIZE,
           updatedAt: now,
         },
       },
@@ -597,6 +609,25 @@ export class RojDb {
 
   async listVisibleProblems() {
     return this.problems().find({ isVisible: true }).sort({ pid: 1 }).toArray();
+  }
+
+  async listVisibleProblemsPaginated(input: {
+    page: number;
+    pageSize: number;
+  }) {
+    const skip = (input.page - 1) * input.pageSize;
+    const query = { isVisible: true };
+    const [items, total] = await Promise.all([
+      this.problems()
+        .find(query)
+        .sort({ pid: 1 })
+        .skip(skip)
+        .limit(input.pageSize)
+        .toArray(),
+      this.problems().countDocuments(query),
+    ]);
+
+    return { items, total };
   }
 
   async getProblemByPid(pid: string) {
@@ -1170,12 +1201,30 @@ export class RojDb {
     return settings.enabledLanguages;
   }
 
+  async getListPageSize(): Promise<ListPageSize> {
+    const settings = await this.settings().findOne({ _id: 'site_settings' });
+    return normalizeListPageSize(settings?.listPageSize);
+  }
+
   async updateEnabledLanguages(enabledLanguages: AppLanguage[]) {
     await this.settings().updateOne(
       { _id: 'site_settings' },
       {
         $set: {
           enabledLanguages,
+          updatedAt: new Date(),
+        },
+      },
+      { upsert: true },
+    );
+  }
+
+  async updateListPageSize(listPageSize: number) {
+    await this.settings().updateOne(
+      { _id: 'site_settings' },
+      {
+        $set: {
+          listPageSize: normalizeListPageSize(listPageSize),
           updatedAt: new Date(),
         },
       },

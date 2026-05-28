@@ -11,6 +11,7 @@ import { createViewHelpers } from '../view-helpers.ts';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;
 export const ASSET_CACHE_CONTROL = getAssetCacheControl();
 
 export interface RouteContext {
@@ -24,6 +25,7 @@ export interface RouteContext {
     enabledLanguages: readonly AppLanguage[],
   ): string[];
   parsePage(query: unknown): number;
+  parsePageSize(query: unknown, defaultPageSize: number): number;
   renderPage(
     request: { query?: unknown; url: string; headers?: { cookie?: string | undefined } },
     reply: { view(template: string, data?: Record<string, unknown>): unknown },
@@ -92,6 +94,19 @@ export function parsePage(query: unknown): number {
   const pageText = Array.isArray(rawPage) ? rawPage[0] : rawPage;
   const page = Number(pageText ?? 1);
   return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+export function parsePageSize(query: unknown, defaultPageSize: number): number {
+  const rawPageSize =
+    typeof query === 'object' && query !== null && 'pageSize' in query
+      ? (query as { pageSize?: unknown }).pageSize
+      : undefined;
+  const pageSizeText = Array.isArray(rawPageSize) ? rawPageSize[0] : rawPageSize;
+  const pageSize = Number(pageSizeText ?? defaultPageSize);
+  if (!Number.isInteger(pageSize) || pageSize <= 0) {
+    return defaultPageSize;
+  }
+  return Math.min(pageSize, MAX_PAGE_SIZE);
 }
 
 export function createRouteContext(services: ApiServerServices): RouteContext {
@@ -180,6 +195,7 @@ export function createRouteContext(services: ApiServerServices): RouteContext {
     clearSessionCookie,
     filterAllowedLanguages,
     parsePage,
+    parsePageSize,
     renderPage,
     redirectTo,
     getRequestUser,

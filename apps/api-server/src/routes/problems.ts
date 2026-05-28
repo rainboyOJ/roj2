@@ -7,6 +7,8 @@ import { createSubmissionSchema } from '../http/schemas.ts';
 export function registerProblemRoutes(app: FastifyInstance, context: RouteContext) {
   const {
     filterAllowedLanguages,
+    parsePage,
+    parsePageSize,
     parseSessionToken,
     redirectTo,
     renderPage,
@@ -40,8 +42,13 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
   app.get('/problems', async (request, reply) => {
     const token = parseSessionToken(request.headers.cookie);
     const currentUser = await services.getCurrentUser(token);
-    const [problems, enabledLanguages, progressByPid] = await Promise.all([
-      services.listProblems(),
+    const paginationSettings = await services.getPaginationSettings();
+    const pageSize = paginationSettings.listPageSize;
+    const [result, enabledLanguages, progressByPid] = await Promise.all([
+      services.listProblemsPaginated({
+        page: parsePage(request.query),
+        pageSize,
+      }),
       services.getEnabledLanguages(),
       currentUser
         ? services.listProblemProgressByUser(currentUser.id)
@@ -49,11 +56,12 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
     ]);
 
     return renderPage(request, reply, 'problems.pug', {
-      problems: problems.map((problem): ProblemListViewModel => ({
+      problems: result.problems.map((problem): ProblemListViewModel => ({
         ...problem,
         allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
         progress: progressByPid.get(problem.pid) ?? null,
       })),
+      pagination: result.pagination,
     });
   });
 
@@ -73,16 +81,23 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
     });
   });
 
-  app.get('/api/problems', async () => {
-    const [problems, enabledLanguages] = await Promise.all([
-      services.listProblems(),
+  app.get('/api/problems', async (request) => {
+    const paginationSettings = await services.getPaginationSettings();
+    const [result, enabledLanguages] = await Promise.all([
+      services.listProblemsPaginated({
+        page: parsePage(request.query),
+        pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
+      }),
       services.getEnabledLanguages(),
     ]);
 
-    return problems.map((problem) => ({
-      ...problem,
-      allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
-    }));
+    return {
+      problems: result.problems.map((problem) => ({
+        ...problem,
+        allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+      })),
+      pagination: result.pagination,
+    };
   });
 
   app.get('/api/problems/:pid', async (request, reply) => {

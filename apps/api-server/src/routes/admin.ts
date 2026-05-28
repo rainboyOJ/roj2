@@ -1,12 +1,13 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
-import { DEFAULT_PAGE_SIZE, type RouteContext } from '../http/context.ts';
+import type { RouteContext } from '../http/context.ts';
 import { messageFromError } from '../http/form-errors.ts';
 import {
   createGradeSchema,
   createProblemSchema,
   createProblemSetSchema,
   enabledLanguagesSchema,
+  paginationSettingsSchema,
   resetPasswordSchema,
 } from '../http/schemas.ts';
 
@@ -60,6 +61,7 @@ function problemSetFormValues(raw: Record<string, string | undefined>, id = '') 
 export function registerAdminRoutes(app: FastifyInstance, context: RouteContext) {
   const {
     parsePage,
+    parsePageSize,
     redirectTo,
     renderPage,
     requireApiAdmin,
@@ -92,6 +94,15 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     reply.code(400);
     return renderPage(request, reply, 'admin-language-settings.pug', {
       settings: { enabledLanguages },
+      formError,
+    });
+  }
+
+  async function renderPaginationSettingsError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, formError: string) {
+    const settings = await services.getPaginationSettings();
+    reply.code(400);
+    return renderPage(request, reply, 'admin-pagination-settings.pug', {
+      settings,
       formError,
     });
   }
@@ -155,6 +166,17 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     const enabledLanguages = await services.getEnabledLanguages();
     return renderPage(request, reply, 'admin-language-settings.pug', {
       settings: { enabledLanguages },
+    });
+  });
+
+  app.get('/admin/settings/pagination', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    return renderPage(request, reply, 'admin-pagination-settings.pug', {
+      settings: await services.getPaginationSettings(),
     });
   });
 
@@ -452,9 +474,10 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
+    const paginationSettings = await services.getPaginationSettings();
     const result = await services.listAdminSubmissions({
       page: parsePage(request.query),
-      pageSize: DEFAULT_PAGE_SIZE,
+      pageSize: paginationSettings.listPageSize,
     });
     return renderPage(request, reply, 'admin-submissions.pug', { ...result });
   });
@@ -567,12 +590,11 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    return {
-      ...(await services.listAdminSubmissions({
-        page: parsePage(request.query),
-        pageSize: DEFAULT_PAGE_SIZE,
-      })),
-    };
+    const paginationSettings = await services.getPaginationSettings();
+    return services.listAdminSubmissions({
+      page: parsePage(request.query),
+      pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
+    });
   });
 
   app.get('/api/admin/grades', async (request, reply) => {
@@ -661,6 +683,15 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     };
   });
 
+  app.get('/api/admin/settings/pagination', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    return services.getPaginationSettings();
+  });
+
   app.post('/api/admin/settings/languages', async (request, reply) => {
     const user = await requireApiAdmin(request, reply);
     if (!user) {
@@ -676,6 +707,24 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     await services.updateEnabledLanguages(parsed.data.enabledLanguages);
+    return reply.send({ ok: true });
+  });
+
+  app.post('/api/admin/settings/pagination', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const parsed = paginationSettingsSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        message: 'Invalid pagination settings payload',
+        issues: parsed.error.issues,
+      });
+    }
+
+    await services.updateListPageSize(parsed.data.listPageSize);
     return reply.send({ ok: true });
   });
 
@@ -984,5 +1033,31 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       );
     }
     return redirectTo(reply, '/admin/settings/languages');
+  });
+
+  app.post('/admin/settings/pagination', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const raw = request.body as { listPageSize?: string };
+    const parsed = paginationSettingsSchema.safeParse({
+      listPageSize: Number(raw.listPageSize),
+    });
+    if (!parsed.success) {
+      return renderPaginationSettingsError(request, reply, '请选择有效的每页数量。');
+    }
+
+    try {
+      await services.updateListPageSize(parsed.data.listPageSize);
+    } catch (error) {
+      return renderPaginationSettingsError(
+        request,
+        reply,
+        messageFromError(error, '保存分页设置失败，请检查后重试。'),
+      );
+    }
+    return redirectTo(reply, '/admin/settings/pagination');
   });
 }

@@ -61,6 +61,7 @@ export type AppLanguage = keyof typeof LanguageLabels;
 export interface SiteSettingsDocument {
   _id: 'site_settings';
   enabledLanguages: AppLanguage[];
+  listPageSize: number;
   updatedAt: Date;
 }
 

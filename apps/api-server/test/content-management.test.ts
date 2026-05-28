@@ -378,6 +378,49 @@ describe('content management routes', () => {
     expect(receivedLanguages).toEqual(['python']);
   });
 
+  it('updates pagination settings for admin users', async () => {
+    let receivedPageSize = 0;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      updateListPageSize: async (listPageSize: number) => {
+        receivedPageSize = listPageSize;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/settings/pagination',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        listPageSize: 50,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPageSize).toBe(50);
+  });
+
+  it('rejects invalid pagination settings for admin users', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/settings/pagination',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        listPageSize: 500,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('deletes a user for admin users', async () => {
     let deletedUserId = '';
     const app = buildApp(createTestServices({

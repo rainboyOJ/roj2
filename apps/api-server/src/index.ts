@@ -3,6 +3,7 @@
 // 1. 把数据库层封装成“页面/接口需要的 services”
 // 2. 调 buildApp() 组装出真正的 Fastify 应用
 import { RojDb } from '@roj/db';
+import { ALLOWED_LIST_PAGE_SIZES } from '@roj/db';
 
 import {
   buildApp,
@@ -234,6 +235,17 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const problems = await db.listVisibleProblems();
       return problems.map(mapProblem);
     },
+    listProblemsPaginated: async (pagination) => {
+      const result = await db.listVisibleProblemsPaginated(pagination);
+      return {
+        problems: result.items.map(mapProblem),
+        pagination: buildPaginationViewModel({
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: result.total,
+        }),
+      };
+    },
     listProblemsByPids: async (pids) => {
       const problems = await db.listVisibleProblemsByPids(pids);
       return problems.map(mapProblem);
@@ -372,6 +384,13 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     getEnabledLanguages: async (): Promise<readonly AppLanguage[]> => db.getEnabledLanguages(),
     updateEnabledLanguages: async (enabledLanguages) => {
       await db.updateEnabledLanguages(enabledLanguages);
+    },
+    getPaginationSettings: async () => ({
+      listPageSize: await db.getListPageSize(),
+      allowedPageSizes: [...ALLOWED_LIST_PAGE_SIZES],
+    }),
+    updateListPageSize: async (listPageSize) => {
+      await db.updateListPageSize(listPageSize);
     },
     listAdminProblems: async () => {
       const problems = await db.listAdminProblems();

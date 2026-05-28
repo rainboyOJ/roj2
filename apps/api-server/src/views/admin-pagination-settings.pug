@@ -1,0 +1,26 @@
+extends layout.pug
+
+block content
+  section.auth-panel
+    header
+      hgroup
+        h1= "分页设置"
+        p.page-lead= "设置题目列表、提交列表和后台提交管理每页显示多少条记录。"
+    article.panel-card.form-card
+      .panel-body
+        p.form-alert(role="alert" hidden=!formError)= formError || ''
+        form(method="post" action="/admin/settings/pagination")
+          fieldset
+            legend= "每页数量"
+            each pageSize in settings.allowedPageSizes
+              label
+                input(
+                  type="radio"
+                  name="listPageSize"
+                  value=pageSize
+                  checked=settings.listPageSize === pageSize
+                )
+                | #{pageSize} 条
+          .form-actions
+            button(type="submit")= "保存设置"
+            a(href="/admin" role="button" class="secondary")= "返回管理后台"
