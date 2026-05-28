@@ -3,11 +3,14 @@ extends layout.pug
 include mixins/pagination.pug
 
 block content
+  - const currentPageSuffix = pagination && pagination.page > 1 ? `?page=${pagination.page}` : ''
   section.list-panel
     header
       hgroup
         h1= "提交管理"
         p.page-lead= "用标准列表视图查看所有提交的评测活动。"
+      .page-actions
+        a(href=`/admin/submissions${currentPageSuffix}` role="button" class="secondary")= "刷新"
     if submissions.length
       .table-shell
         table.data-table

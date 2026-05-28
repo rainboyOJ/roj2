@@ -17,6 +17,7 @@ block content
         p.form-alert(role="alert")= formError
     if users.length
       .page-actions
+        a(href=`/admin/users${currentPageSuffix}` role="button" class="secondary")= "刷新"
         button(
           type="submit"
           form="bulk-user-review-form"

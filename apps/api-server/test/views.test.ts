@@ -1085,6 +1085,8 @@ describe('rendered views', () => {
     expect(response.body).toContain('data-require-password="password"');
     expect(response.body).toContain('用户管理分页');
     expect(response.body).toContain('/admin/users?page=2');
+    expect(response.body).toContain('刷新');
+    expect(response.body).toContain('href="/admin/users"');
     expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-users.js"');
@@ -1261,5 +1263,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('第 2 / 3 页，共 41 条');
     expect(response.body).toContain('/admin/submissions?page=1');
     expect(response.body).toContain('/admin/submissions?page=3');
+    expect(response.body).toContain('刷新');
+    expect(response.body).toContain('href="/admin/submissions?page=2"');
   });
 });
