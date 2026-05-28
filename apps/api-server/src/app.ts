@@ -15,6 +15,7 @@ import { registerAdminRoutes } from './routes/admin.ts';
 import { registerAuthRoutes } from './routes/auth.ts';
 import { registerMiscRoutes } from './routes/misc.ts';
 import { registerProblemRoutes } from './routes/problems.ts';
+import { registerProblemSetRoutes } from './routes/problem-sets.ts';
 import { registerProfileRoutes } from './routes/profile.ts';
 import { registerStaticRoutes } from './routes/static.ts';
 import { registerSubmissionRoutes } from './routes/submissions.ts';
@@ -41,6 +42,33 @@ export type ProblemProgress = 'accepted' | 'attempted';
 
 export interface ProblemListViewModel extends ProblemViewModel {
   progress: ProblemProgress | null;
+}
+
+export interface ProblemSetListViewModel {
+  id: string;
+  title: string;
+  problemRefs: string[];
+  isPublished: boolean;
+  publishedAtText: string | null;
+  updatedAtText: string;
+}
+
+export interface ProblemSetProblemRefViewModel {
+  pid: string;
+  title: string;
+  href: string | null;
+  status: 'accepted' | 'empty';
+  missing: boolean;
+}
+
+export interface ProblemSetDetailViewModel extends ProblemSetListViewModel {
+  contentMarkdown: string;
+  contentHtml: string;
+  problemRefsView: ProblemSetProblemRefViewModel[];
+}
+
+export interface AdminProblemSetViewModel extends ProblemSetListViewModel {
+  contentMarkdown: string;
 }
 
 export interface LanguageSettingsViewModel {
@@ -125,8 +153,22 @@ export interface ApiServerServices {
     sourceCode: string;
   }): Promise<CreateSubmissionResult>;
   listProblems(): Promise<ProblemViewModel[]>;
+  listProblemsByPids(pids: string[]): Promise<ProblemViewModel[]>;
   listProblemProgressByUser(userId: string): Promise<Map<string, ProblemProgress>>;
   getProblemByPid(pid: string): Promise<ProblemViewModel | null>;
+  listPublishedProblemSets(): Promise<ProblemSetListViewModel[]>;
+  getPublishedProblemSetById(id: string): Promise<ProblemSetDetailViewModel | null>;
+  listAdminProblemSets(): Promise<AdminProblemSetViewModel[]>;
+  getAdminProblemSetById(id: string): Promise<AdminProblemSetViewModel | null>;
+  createProblemSet(input: {
+    title: string;
+    contentMarkdown: string;
+  }): Promise<{ id: string }>;
+  updateProblemSet(id: string, input: {
+    title: string;
+    contentMarkdown: string;
+  }): Promise<void>;
+  publishProblemSet(id: string): Promise<void>;
   getSubmissionById(id: string): Promise<SubmissionViewModel | null>;
   listSubmissions(user: SessionUser, pagination: {
     page: number;
@@ -236,6 +278,7 @@ export function buildApp(services: ApiServerServices) {
   registerProfileRoutes(app, context);
   registerAdminRoutes(app, context);
   registerProblemRoutes(app, context);
+  registerProblemSetRoutes(app, context);
   registerSubmissionRoutes(app, context);
 
   return app;

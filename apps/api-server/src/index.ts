@@ -8,8 +8,11 @@ import {
   buildApp,
   type AdminProblemViewModel,
   type ApiServerServices,
+  type AdminProblemSetViewModel,
   type ContestViewModel,
   type PaginatedSubmissionsViewModel,
+  type ProblemSetDetailViewModel,
+  type ProblemSetListViewModel,
   type ProblemViewModel,
   type RanklistEntryViewModel,
   type SessionUser,
@@ -54,6 +57,45 @@ function mapAdminProblem(problem: {
     statementHtml: problem.statementHtml ?? '',
     allowLanguages: problem.allowLanguages,
     isVisible: problem.isVisible,
+  };
+}
+
+function mapProblemSetBase(problemSet: {
+  _id: string;
+  title: string;
+  problemRefs: string[];
+  isPublished: boolean;
+  publishedAt: Date | null;
+  updatedAt: Date;
+}): ProblemSetListViewModel {
+  return {
+    id: problemSet._id,
+    title: problemSet.title,
+    problemRefs: problemSet.problemRefs,
+    isPublished: problemSet.isPublished,
+    publishedAtText: formatDateTime(problemSet.publishedAt),
+    updatedAtText: formatDateTime(problemSet.updatedAt) ?? '',
+  };
+}
+
+function mapAdminProblemSet(problemSet: Parameters<typeof mapProblemSetBase>[0] & {
+  contentMarkdown: string;
+}): AdminProblemSetViewModel {
+  return {
+    ...mapProblemSetBase(problemSet),
+    contentMarkdown: problemSet.contentMarkdown,
+  };
+}
+
+function mapProblemSetDetail(problemSet: Parameters<typeof mapProblemSetBase>[0] & {
+  contentMarkdown: string;
+  contentHtml: string;
+}): ProblemSetDetailViewModel {
+  return {
+    ...mapProblemSetBase(problemSet),
+    contentMarkdown: problemSet.contentMarkdown,
+    contentHtml: problemSet.contentHtml,
+    problemRefsView: [],
   };
 }
 
@@ -184,10 +226,43 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const problems = await db.listVisibleProblems();
       return problems.map(mapProblem);
     },
+    listProblemsByPids: async (pids) => {
+      const problems = await db.listVisibleProblemsByPids(pids);
+      return problems.map(mapProblem);
+    },
     listProblemProgressByUser: async (userId: string) => db.listProblemProgressByUser(userId),
     getProblemByPid: async (pid: string) => {
       const problem = await db.getProblemByPid(pid);
       return problem ? mapProblem(problem) : null;
+    },
+    listPublishedProblemSets: async () => {
+      const problemSets = await db.listPublishedProblemSets();
+      return problemSets.map(mapProblemSetBase);
+    },
+    getPublishedProblemSetById: async (id) => {
+      const problemSet = await db.getPublishedProblemSetById(id);
+      if (!problemSet) {
+        return null;
+      }
+      return mapProblemSetDetail(problemSet);
+    },
+    listAdminProblemSets: async () => {
+      const problemSets = await db.listAdminProblemSets();
+      return problemSets.map(mapAdminProblemSet);
+    },
+    getAdminProblemSetById: async (id) => {
+      const problemSet = await db.getAdminProblemSetById(id);
+      return problemSet ? mapAdminProblemSet(problemSet) : null;
+    },
+    createProblemSet: async (input) => {
+      const problemSet = await db.createProblemSet(input);
+      return { id: problemSet._id };
+    },
+    updateProblemSet: async (id, input) => {
+      await db.updateProblemSet(id, input);
+    },
+    publishProblemSet: async (id) => {
+      await db.publishProblemSet(id);
     },
     getSubmissionById: async (id: string) => {
       const submission = await db.getSubmissionWithProblemByPublicId(id);

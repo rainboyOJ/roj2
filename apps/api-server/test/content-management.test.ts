@@ -249,6 +249,36 @@ describe('content management routes', () => {
     });
   });
 
+  it('creates a problem set draft for admin users', async () => {
+    let receivedPayload: { title: string; contentMarkdown: string } | null = null;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      createProblemSet: async (input) => {
+        receivedPayload = input;
+        return { id: 'set-1' };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/problem-sets',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        title: '第一周训练',
+        contentMarkdown: '- [[pid:1000]]',
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toEqual({ problemSetId: 'set-1' });
+    expect(receivedPayload).toEqual({
+      title: '第一周训练',
+      contentMarkdown: '- [[pid:1000]]',
+    });
+  });
+
   it('updates a class name for the current student', async () => {
     const app = buildApp(createTestServices());
     const response = await app.inject({
@@ -300,6 +330,28 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
+  });
+
+  it('publishes a problem set from the admin HTML page flow', async () => {
+    let publishedId = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      publishProblemSet: async (id: string) => {
+        publishedId = id;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/problem-sets/set-1/publish',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/problem-sets');
+    expect(publishedId).toBe('set-1');
   });
 
   it('updates enabled languages for admin users', async () => {

@@ -6,6 +6,7 @@
     return;
   }
   const formUtils = window.RojFormUtils;
+  const usernameInput = form.querySelector('#username');
 
   const fieldMessages = {
     username: '用户名只能使用小写字母、数字、下划线，长度 3-24。',
@@ -15,6 +16,26 @@
     className: '请填写班级。',
     password: '密码至少 8 个字符。',
   };
+
+  if (usernameInput) {
+    const setUsernameValidityMessage = () => {
+      usernameInput.setCustomValidity('');
+      if (usernameInput.validity.valueMissing) {
+        usernameInput.setCustomValidity('请填写用户名。');
+      } else if (
+        usernameInput.validity.tooShort
+        || usernameInput.validity.tooLong
+        || usernameInput.validity.patternMismatch
+      ) {
+        usernameInput.setCustomValidity(fieldMessages.username);
+      }
+    };
+
+    usernameInput.addEventListener('invalid', setUsernameValidityMessage);
+    usernameInput.addEventListener('input', () => {
+      usernameInput.setCustomValidity('');
+    });
+  }
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

@@ -151,6 +151,19 @@ export interface ProblemDocument {
   updatedAt: Date;
 }
 
+// problem_sets 集合保存管理员发布的题目单。
+export interface ProblemSetDocument {
+  _id: string;
+  title: string;
+  contentMarkdown: string;
+  contentHtml: string;
+  problemRefs: string[];
+  isPublished: boolean;
+  publishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // submission 中与 judge 交互相关的状态，主要由 dispatcher 维护。
 export interface SubmissionJudgeState {
   submissionId: number | null;

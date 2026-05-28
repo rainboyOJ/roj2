@@ -1,0 +1,31 @@
+//- 题目单列表页：展示管理员已发布的训练清单。
+extends layout.pug
+
+block content
+  section.list-panel
+    header
+      hgroup
+        h1= "题目单"
+        p.page-lead= "按老师发布的训练清单刷题，打开后可以看到题目完成状态。"
+    if problemSets.length
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= "标题"
+              th= "题目数量"
+              th= "发布时间"
+              th= "操作"
+          tbody
+            each problemSet in problemSets
+              tr
+                td
+                  strong
+                    a(href=`/problem-sets/${problemSet.id}`)= problemSet.title
+                td= problemSet.problemRefs.length
+                td= problemSet.publishedAtText || "-"
+                td
+                  a(href=`/problem-sets/${problemSet.id}`)= "查看"
+    else
+      article
+        p= "当前还没有已发布的题目单。"

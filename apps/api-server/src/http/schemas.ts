@@ -39,6 +39,11 @@ export const createProblemSchema = z.object({
   isVisible: z.boolean(),
 });
 
+export const createProblemSetSchema = z.object({
+  title: z.string().min(1),
+  contentMarkdown: z.string().min(1),
+});
+
 export const updateClassNameSchema = z.object({
   className: z.string().min(1),
 });

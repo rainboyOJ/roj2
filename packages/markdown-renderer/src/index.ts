@@ -136,11 +136,46 @@ const mathPlugin: PluginSimple = (md) => {
   })}\n`;
 };
 
-const renderer = new MarkdownIt({
-  html: false,
-  linkify: true,
-  typographer: false,
-}).use(mathPlugin);
+const problemRefPattern = /\[\[pid:([A-Za-z0-9_-]+)\]\]/g;
+
+const problemRefPlugin: PluginSimple = (md) => {
+  md.inline.ruler.after('escape', 'problem_ref', (state: StateInline, silent: boolean) => {
+    if (state.src.slice(state.pos, state.pos + 6) !== '[[pid:') {
+      return false;
+    }
+
+    const match = /^\[\[pid:([A-Za-z0-9_-]+)\]\]/.exec(state.src.slice(state.pos));
+    if (!match) {
+      return false;
+    }
+
+    if (!silent) {
+      const token = state.push('problem_ref', 'span', 0);
+      token.attrSet('class', 'problem-set-ref');
+      token.attrSet('data-pid', match[1]);
+    }
+    state.pos += match[0].length;
+    return true;
+  });
+
+  md.renderer.rules.problem_ref = (tokens, idx) => {
+    const pid = tokens[idx].attrGet('data-pid') ?? '';
+    return `<span class="problem-set-ref" data-pid="${pid}"></span>`;
+  };
+};
+
+function createRenderer(includeProblemRefs = false) {
+  const md = new MarkdownIt({
+    html: false,
+    linkify: true,
+    typographer: false,
+  }).use(mathPlugin);
+
+  return includeProblemRefs ? md.use(problemRefPlugin) : md;
+}
+
+const renderer = createRenderer();
+const problemSetRenderer = createRenderer(true);
 
 const allowedTags = sanitizeHtml.defaults.allowedTags.concat([
   'annotation',
@@ -168,16 +203,16 @@ const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
   a: ['href', 'name', 'target', 'rel'],
   annotation: ['encoding'],
   math: ['xmlns'],
-  span: ['class', 'style'],
+  span: ['class', 'style', 'data-pid'],
 };
 
-export function renderMarkdown(markdown: string): string {
-  const rendered = renderer.render(markdown);
+function sanitizeRenderedHtml(rendered: string): string {
   return sanitizeHtml(rendered, {
     allowedTags,
     allowedAttributes,
     allowedClasses: {
       span: [
+        /^problem-set-ref$/,
         /^katex/,
         /^m/,
         /^pstrut$/,
@@ -197,4 +232,20 @@ export function renderMarkdown(markdown: string): string {
       }),
     },
   });
+}
+
+export function renderMarkdown(markdown: string): string {
+  return sanitizeRenderedHtml(renderer.render(markdown));
+}
+
+export function extractProblemRefs(markdown: string): string[] {
+  const refs = new Set<string>();
+  for (const match of markdown.matchAll(problemRefPattern)) {
+    refs.add(match[1]);
+  }
+  return Array.from(refs);
+}
+
+export function renderProblemSetMarkdown(markdown: string): string {
+  return sanitizeRenderedHtml(problemSetRenderer.render(markdown));
 }

@@ -1,0 +1,13 @@
+//- 题目单详情页：Markdown 内容中的题目引用已经在路由层替换成状态化链接。
+extends layout.pug
+
+block content
+  section.detail-panel
+    header
+      hgroup
+        h1= problemSet.title
+        p.page-lead= `共 ${problemSet.problemRefs.length} 道题，发布时间：${problemSet.publishedAtText || "-"}。`
+      .page-actions
+        a(href='/problem-sets' role="button" class="secondary")= "返回题目单"
+    article
+      .panel-body.markdown-body!= problemSet.renderedContentHtml

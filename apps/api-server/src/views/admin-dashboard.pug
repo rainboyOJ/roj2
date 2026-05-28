@@ -15,6 +15,12 @@ block content
           a(href='/admin/problems' role="button")= "打开题目管理"
           a(href='/admin/problems/new' role="button" class="secondary")= "创建题目"
       article.feature-card
+        h3= "题目单管理"
+        p= "发布 Markdown 训练清单，用题目引用组织学生刷题。"
+        .page-actions
+          a(href='/admin/problem-sets' role="button")= "打开题目单管理"
+          a(href='/admin/problem-sets/new' role="button" class="secondary")= "创建题目单"
+      article.feature-card
         h3= "用户审核"
         p= "查看注册用户，批量通过或拒绝学生账号。"
         .page-actions

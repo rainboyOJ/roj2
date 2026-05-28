@@ -23,6 +23,7 @@ import {
   type CreateSubmissionInput,
   type GradeDocument,
   type ProblemDocument,
+  type ProblemSetDocument,
   type SessionDocument,
   type SiteSettingsDocument,
   type SubmissionDocument,
@@ -30,7 +31,7 @@ import {
   type ProblemProgressStatus,
   type UserProblemProgressDocument,
 } from '@roj/shared';
-import { renderMarkdown } from '@roj/markdown-renderer';
+import { extractProblemRefs, renderMarkdown, renderProblemSetMarkdown } from '@roj/markdown-renderer';
 import { MongoClient } from 'mongodb';
 
 function debugJudge(message: string, details?: Record<string, unknown>) {
@@ -358,6 +359,10 @@ export class RojDb {
     return this.db.collection<ProblemDocument>('problems');
   }
 
+  problemSets() {
+    return this.db.collection<ProblemSetDocument>('problem_sets');
+  }
+
   grades() {
     return this.db.collection<GradeDocument>('grades');
   }
@@ -389,6 +394,8 @@ export class RojDb {
     await this.sessions().createIndex({ token: 1 }, { unique: true });
     await this.sessions().createIndex({ expiresAt: 1 });
     await this.problems().createIndex({ pid: 1 }, { unique: true });
+    await this.problemSets().createIndex({ isPublished: 1, publishedAt: -1 });
+    await this.problemSets().createIndex({ createdAt: -1 });
     await this.submissions().createIndex({ userId: 1, createdAt: -1 });
     await this.submissions().createIndex({ pid: 1, createdAt: -1 });
     await this.submissions().createIndex({ username: 1, verdict: 1, updatedAt: 1 });
@@ -552,6 +559,15 @@ export class RojDb {
 
   async getProblemByPid(pid: string) {
     return this.problems().findOne({ pid, isVisible: true });
+  }
+
+  async listVisibleProblemsByPids(pids: string[]) {
+    if (pids.length === 0) {
+      return [];
+    }
+    return this.problems()
+      .find({ pid: { $in: pids }, isVisible: true })
+      .toArray();
   }
 
   async getDemoUser() {
@@ -1175,6 +1191,77 @@ export class RojDb {
         $set: {
           isVisible: true,
           updatedAt: new Date(),
+        },
+      },
+    );
+  }
+
+  async listPublishedProblemSets() {
+    return this.problemSets()
+      .find({ isPublished: true })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .toArray();
+  }
+
+  async getPublishedProblemSetById(id: string) {
+    return this.problemSets().findOne({ _id: id, isPublished: true });
+  }
+
+  async listAdminProblemSets() {
+    return this.problemSets().find({}).sort({ createdAt: -1 }).toArray();
+  }
+
+  async getAdminProblemSetById(id: string) {
+    return this.problemSets().findOne({ _id: id });
+  }
+
+  async createProblemSet(input: {
+    title: string;
+    contentMarkdown: string;
+  }) {
+    const now = new Date();
+    const problemSet: ProblemSetDocument = {
+      _id: new ObjectId().toHexString(),
+      title: input.title,
+      contentMarkdown: input.contentMarkdown,
+      contentHtml: renderProblemSetMarkdown(input.contentMarkdown),
+      problemRefs: extractProblemRefs(input.contentMarkdown),
+      isPublished: false,
+      publishedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.problemSets().insertOne(problemSet);
+    return problemSet;
+  }
+
+  async updateProblemSet(id: string, input: {
+    title: string;
+    contentMarkdown: string;
+  }) {
+    await this.problemSets().updateOne(
+      { _id: id },
+      {
+        $set: {
+          title: input.title,
+          contentMarkdown: input.contentMarkdown,
+          contentHtml: renderProblemSetMarkdown(input.contentMarkdown),
+          problemRefs: extractProblemRefs(input.contentMarkdown),
+          updatedAt: new Date(),
+        },
+      },
+    );
+  }
+
+  async publishProblemSet(id: string) {
+    const now = new Date();
+    await this.problemSets().updateOne(
+      { _id: id },
+      {
+        $set: {
+          isPublished: true,
+          publishedAt: now,
+          updatedAt: now,
         },
       },
     );

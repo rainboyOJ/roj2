@@ -1,0 +1,23 @@
+//- 管理员题目单编辑页。
+extends layout.pug
+
+block content
+  section.detail-panel
+    header
+      hgroup
+        h1= mode === 'create' ? "创建题目单" : "编辑题目单"
+        p.page-lead= "使用 Markdown 编写训练说明，用 [[pid:1000]] 引用题目。"
+      .page-actions
+        a(href='/admin/problem-sets' role="button" class="secondary")= "返回列表"
+    article
+      .panel-body
+        if formError
+          p.form-alert(role="alert")= formError
+        form(method="post" action=mode === 'create' ? '/admin/problem-sets' : `/admin/problem-sets/${problemSet.id}`)
+          label(for="title")= "标题"
+          input#title(type="text" name="title" required value=problemSet.title placeholder="例如：第一周基础训练")
+          label(for="contentMarkdown")= "内容"
+          textarea#contentMarkdown(name="contentMarkdown" required rows="18" placeholder="- [[pid:1000]]")= problemSet.contentMarkdown
+          small.soft-note= "题目引用格式：[[pid:1000]]。保存后先是草稿，需要在列表页点击发布。"
+          .form-actions
+            button(type="submit")= "保存"

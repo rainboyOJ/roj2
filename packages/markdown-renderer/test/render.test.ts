@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { renderMarkdown } from '../src/index.ts';
+import { extractProblemRefs, renderMarkdown, renderProblemSetMarkdown } from '../src/index.ts';
 
 describe('renderMarkdown', () => {
   it('renders markdown headings and code blocks', () => {
@@ -35,5 +35,24 @@ describe('renderMarkdown', () => {
     expect(html).not.toContain('href="javascript:');
     expect(html).not.toContain('onerror');
     expect(html).not.toContain('<span onclick=');
+  });
+
+  it('renders problem references as safe placeholders', () => {
+    const html = renderProblemSetMarkdown('- [[pid:1000]]\n- [[pid:abc_1]]');
+
+    expect(html).toContain('class="problem-set-ref"');
+    expect(html).toContain('data-pid="1000"');
+    expect(html).toContain('data-pid="abc_1"');
+    expect(extractProblemRefs('- [[pid:1000]]\n- [[pid:1000]] [[pid:abc_1]]')).toEqual([
+      '1000',
+      'abc_1',
+    ]);
+  });
+
+  it('does not enable problem references for normal markdown rendering', () => {
+    const html = renderMarkdown('[[pid:1000]]');
+
+    expect(html).not.toContain('problem-set-ref');
+    expect(html).toContain('[[pid:1000]]');
   });
 });

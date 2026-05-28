@@ -676,6 +676,40 @@ html(lang="zh-CN" data-theme="light")
         background: #2f7d50;
       }
 
+      .problem-set-problem-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        color: var(--pico-primary);
+        font-weight: 650;
+        text-decoration: none;
+      }
+
+      .problem-set-problem-link.missing {
+        color: var(--soft-text);
+      }
+
+      .problem-set-ref-icon {
+        width: 1.2rem;
+        height: 1.2rem;
+        flex: 0 0 1.2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0;
+        border: 1px solid #9fb0c3;
+        background: #ffffff;
+        color: #607086;
+        font-size: 0.9rem;
+        line-height: 1;
+      }
+
+      .problem-set-ref-icon.accepted {
+        border-color: #2f7d50;
+        background: #2f7d50;
+        color: #ffffff;
+      }
+
       .table-actions {
         display: inline-flex;
         flex-wrap: wrap;
@@ -810,6 +844,7 @@ html(lang="zh-CN" data-theme="light")
         .nav-links
           if isAdminArea
             a(href='/admin/problems')= "题目管理"
+            a(href='/admin/problem-sets')= "题目单"
             a(href='/admin/settings/languages')= "语言设置"
             a(href='/admin/grades')= "年级管理"
             a(href='/admin/submissions')= "提交管理"
@@ -818,6 +853,7 @@ html(lang="zh-CN" data-theme="light")
           else
             a(href='/')= "首页"
             a(href='/problems')= "题目"
+            a(href='/problem-sets')= "题目单"
             a(href='/submissions')= "提交"
             a(href='/ranklist')= "排行榜"
             a(href='/contests')= "比赛"
