@@ -21,6 +21,7 @@ export function registerStaticRoutes(app: FastifyInstance, context: RouteContext
       ['register.js', 'application/javascript; charset=utf-8'],
       ['login.js', 'application/javascript; charset=utf-8'],
       ['profile-password.js', 'application/javascript; charset=utf-8'],
+      ['profile-class.js', 'application/javascript; charset=utf-8'],
       ['admin-problem-form.js', 'application/javascript; charset=utf-8'],
       ['admin-problems.js', 'application/javascript; charset=utf-8'],
       ['admin-grades.js', 'application/javascript; charset=utf-8'],

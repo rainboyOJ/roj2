@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { RouteContext } from '../http/context.ts';
 import { messageFromError } from '../http/form-errors.ts';
 import {
+  createClassSchema,
   createGradeSchema,
   createProblemSchema,
   createProblemSetSchema,
@@ -84,6 +85,16 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     reply.code(400);
     return renderPage(request, reply, 'admin-grades.pug', {
       grades,
+      formError,
+      formValues,
+    });
+  }
+
+  async function renderAdminClassesError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, formError: string, formValues?: Record<string, string>) {
+    const classes = await services.listClasses();
+    reply.code(400);
+    return renderPage(request, reply, 'admin-classes.pug', {
+      classes,
       formError,
       formValues,
     });
@@ -310,6 +321,82 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       );
     }
     return redirectTo(reply, '/admin/grades');
+  });
+
+  app.get('/admin/classes', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const classes = await services.listClasses();
+    return renderPage(request, reply, 'admin-classes.pug', { classes });
+  });
+
+  app.post('/admin/classes', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const raw = request.body as Record<string, string | undefined>;
+    const parsed = createClassSchema.safeParse({
+      name: raw.name,
+      isActive: raw.isActive === 'true',
+      order: Number(raw.order ?? '0'),
+    });
+    if (!parsed.success) {
+      return renderAdminClassesError(request, reply, '班级信息填写不正确。', {
+        name: String(raw.name || ''),
+        isActive: String(raw.isActive || ''),
+        order: String(raw.order || '0'),
+      });
+    }
+
+    try {
+      await services.createClass(parsed.data);
+    } catch (error) {
+      return renderAdminClassesError(
+        request,
+        reply,
+        messageFromError(error, '创建班级失败，请检查后重试。'),
+        {
+          name: String(raw.name || ''),
+          isActive: String(raw.isActive || ''),
+          order: String(raw.order || '0'),
+        },
+      );
+    }
+    return redirectTo(reply, '/admin/classes');
+  });
+
+  app.post('/admin/classes/:id', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = request.params as { id: string };
+    const raw = request.body as Record<string, string | undefined>;
+    const parsed = createClassSchema.safeParse({
+      name: raw.name,
+      isActive: raw.isActive === 'true',
+      order: Number(raw.order ?? '0'),
+    });
+    if (!parsed.success) {
+      return renderAdminClassesError(request, reply, '班级信息填写不正确。');
+    }
+
+    try {
+      await services.updateClass(params.id, parsed.data);
+    } catch (error) {
+      return renderAdminClassesError(
+        request,
+        reply,
+        messageFromError(error, '保存班级失败，请检查后重试。'),
+      );
+    }
+    return redirectTo(reply, '/admin/classes');
   });
 
   app.post('/admin/users/bulk-approve', async (request, reply) => {
@@ -647,6 +734,59 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const params = request.params as { id: string };
     await services.updateGrade(params.id, parsed.data);
+    return reply.send({ ok: true });
+  });
+
+  app.get('/api/admin/classes', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    return {
+      classes: await services.listClasses(),
+    };
+  });
+
+  app.post('/api/admin/classes', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const parsed = createClassSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        message: 'Invalid class payload',
+        issues: parsed.error.issues,
+      });
+    }
+
+    const created = await services.createClass(parsed.data);
+    return reply.code(201).send({
+      classId: created.id,
+      name: created.name,
+      isActive: created.isActive,
+      order: created.order,
+    });
+  });
+
+  app.put('/api/admin/classes/:id', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const parsed = createClassSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({
+        message: 'Invalid class payload',
+        issues: parsed.error.issues,
+      });
+    }
+
+    const params = request.params as { id: string };
+    await services.updateClass(params.id, parsed.data);
     return reply.send({ ok: true });
   });
 

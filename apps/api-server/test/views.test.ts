@@ -201,6 +201,7 @@ describe('rendered views', () => {
     const login = await app.inject({ method: 'GET', url: '/assets/login.js' });
     const formUtils = await app.inject({ method: 'GET', url: '/assets/form-utils.js' });
     const profilePassword = await app.inject({ method: 'GET', url: '/assets/profile-password.js' });
+    const profileClass = await app.inject({ method: 'GET', url: '/assets/profile-class.js' });
     const adminProblem = await app.inject({ method: 'GET', url: '/assets/admin-problem-form.js' });
     const adminProblems = await app.inject({ method: 'GET', url: '/assets/admin-problems.js' });
     const adminGrades = await app.inject({ method: 'GET', url: '/assets/admin-grades.js' });
@@ -233,6 +234,9 @@ describe('rendered views', () => {
     expect(profilePassword.body).toContain('/api/me/password');
     expect(profilePassword.body).toContain('当前密码错误');
     expect(profilePassword.body).toContain('handleSubmit');
+    expect(profileClass.statusCode).toBe(200);
+    expect(profileClass.body).toContain('/api/me/class-name');
+    expect(profileClass.body).toContain('请选择可用的班级');
     expect(adminProblem.statusCode).toBe(200);
     expect(adminProblem.body).toContain('至少选择一种允许提交的语言');
     expect(adminProblem.body).toContain('requireChecked');
@@ -754,7 +758,7 @@ describe('rendered views', () => {
     expect(response.body).toContain('登录');
   });
 
-  it('renders registration form with gender radios, grade select, and text class input', async () => {
+  it('renders registration form with gender radios, grade select, and class select', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => null,
       listGrades: async () => [
@@ -769,6 +773,14 @@ describe('rendered views', () => {
           name: '2024',
           isActive: false,
           order: 2,
+        },
+      ],
+      listActiveClasses: async () => [
+        {
+          id: 'class-1',
+          name: '1 班',
+          isActive: true,
+          order: 1,
         },
       ],
     }));
@@ -787,10 +799,12 @@ describe('rendered views', () => {
     expect(response.body).toContain('<select id="grade" name="grade" required>');
     expect(response.body).toContain('value="2025"');
     expect(response.body).not.toContain('value="2024"');
-    expect(response.body).toContain('input id="className" type="text"');
+    expect(response.body).toContain('<select id="className" name="className" required>');
+    expect(response.body).toContain('value="1 班"');
+    expect(response.body).not.toContain('input id="className" type="text"');
   });
 
-  it('renders profile password change form', async () => {
+  it('renders profile password and class change forms', async () => {
     const app = buildApp(createServices());
 
     const response = await app.inject({
@@ -808,8 +822,16 @@ describe('rendered views', () => {
     expect(response.body).toContain('name="currentPassword"');
     expect(response.body).toContain('name="newPassword"');
     expect(response.body).toContain('required minlength="8"');
+    expect(response.body).toContain('姓名');
+    expect(response.body).toContain('Alice');
+    expect(response.body).toContain('年级');
+    expect(response.body).toContain('2025');
+    expect(response.body).toContain('修改班级');
+    expect(response.body).toContain('id="profileClassForm"');
+    expect(response.body).toContain('id="profileClassName" name="className" required');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/profile-password.js"');
+    expect(response.body).toContain('src="/assets/profile-class.js"');
   });
 
   it('renders the ranklist page', async () => {
@@ -994,6 +1016,37 @@ describe('rendered views', () => {
     expect(response.body).toContain('id="adminGradesAlert"');
     expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/admin-grades.js"');
+  });
+
+  it('renders admin class management page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+      listClasses: async () => [
+        {
+          id: 'class-1',
+          name: '1 班',
+          isActive: true,
+          order: 1,
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/classes',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('班级管理');
+    expect(response.body).toContain('1 班');
+    expect(response.body).toContain('id="new-class-name" type="text" name="name" required');
+    expect(response.body).toContain('id="new-class-order" type="number" name="order" value="0" required min="0" step="1"');
+    expect(response.body).toContain('name="isActive"');
+    expect(response.body).toContain('id="adminClassesAlert"');
     expect(response.body).toContain('src="/assets/admin-grades.js"');
   });
 

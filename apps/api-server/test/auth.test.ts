@@ -44,7 +44,7 @@ describe('auth routes', () => {
         username: 'alice',
         name: 'Alice',
         gender: 'female',
-        className: 'Class 1',
+        className: '1 班',
         grade: '2025',
         password: 'secret123',
       },
@@ -64,7 +64,7 @@ describe('auth routes', () => {
         username: 'alice',
         name: 'Alice',
         gender: 'female',
-        className: 'Class 1',
+        className: '1 班',
         grade: '2025',
         password: 'secret123',
       },
@@ -91,7 +91,7 @@ describe('auth routes', () => {
         username: 'alice',
         name: 'Alice',
         gender: 'female',
-        className: 'Class 1',
+        className: '1 班',
         grade: '2025',
         password: 'secret123',
       },
@@ -100,6 +100,32 @@ describe('auth routes', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({
       message: 'username already exists',
+    });
+  });
+
+  it('returns a JSON error when registration uses an unavailable class', async () => {
+    const app = buildApp(createAnonymousServices({
+      registerUser: async () => {
+        throw new Error('class 99 班 is not available');
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/register',
+      payload: {
+        username: 'alice',
+        name: 'Alice',
+        gender: 'female',
+        className: '99 班',
+        grade: '2025',
+        password: 'secret123',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({
+      message: 'class 99 班 is not available',
     });
   });
 

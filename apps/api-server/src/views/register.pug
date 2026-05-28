@@ -36,7 +36,9 @@ block content
                   option(value=grade.name)= grade.name
             div
               label(for="className")= "班级"
-              input#className(type="text" name="className" placeholder="1 班" required autocomplete="organization-title")
+              select#className(name="className" required)
+                each classRecord in classes
+                  option(value=classRecord.name)= classRecord.name
             div
               label(for="password")= "密码"
               input#password(type="password" name="password" placeholder="至少 8 个字符" required minlength="8" autocomplete="new-password")

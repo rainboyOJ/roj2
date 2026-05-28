@@ -161,12 +161,18 @@ function mapSessionUser(user: {
   username: string;
   role: 'student' | 'admin';
   approvalStatus: 'pending' | 'approved' | 'rejected';
+  name?: string;
+  grade?: string;
+  className?: string;
 }): SessionUser {
   return {
     id: user.id,
     username: user.username,
     role: user.role,
     approvalStatus: user.approvalStatus,
+    name: user.name,
+    grade: user.grade,
+    className: user.className,
   };
 }
 
@@ -333,6 +339,8 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
         role: user.role,
         approvalStatus: user.approvalStatus,
         name: user.name,
+        grade: user.grade,
+        className: user.className,
       }));
     },
     approveUser: async (userId, adminUserId) => {
@@ -380,6 +388,36 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     },
     updateGrade: async (id, input) => {
       await db.updateGrade(id, input);
+    },
+    listClasses: async () => {
+      const classes = await db.listClasses();
+      return classes.map((classRecord) => ({
+        id: classRecord._id,
+        name: classRecord.name,
+        isActive: classRecord.isActive,
+        order: classRecord.order,
+      }));
+    },
+    listActiveClasses: async () => {
+      const classes = await db.listActiveClasses();
+      return classes.map((classRecord) => ({
+        id: classRecord._id,
+        name: classRecord.name,
+        isActive: classRecord.isActive,
+        order: classRecord.order,
+      }));
+    },
+    createClass: async (input) => {
+      const classRecord = await db.createClass(input);
+      return {
+        id: classRecord._id,
+        name: classRecord.name,
+        isActive: classRecord.isActive,
+        order: classRecord.order,
+      };
+    },
+    updateClass: async (id, input) => {
+      await db.updateClass(id, input);
     },
     getEnabledLanguages: async (): Promise<readonly AppLanguage[]> => db.getEnabledLanguages(),
     updateEnabledLanguages: async (enabledLanguages) => {

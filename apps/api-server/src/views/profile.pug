@@ -19,6 +19,15 @@ block content
                 strong= "用户名"
                 p.table-code= user.username
               .info-item
+                strong= "姓名"
+                p= user.name || "未填写"
+              .info-item
+                strong= "年级"
+                p= user.grade || "未填写"
+              .info-item
+                strong= "班级"
+                p= user.className || "未填写"
+              .info-item
                 strong= "角色"
                 p= formatRoleLabel(user.role)
       .detail-sidebar
@@ -43,6 +52,18 @@ block content
               label(for="newPassword")= "新密码"
               input#newPassword(type="password" name="newPassword" required minlength="8" autocomplete="new-password")
               button(type="submit")= "更新密码"
+        article.panel-card
+          header
+            h3= "修改班级"
+          .panel-body
+            p#profileClassAlert.form-alert(role="alert" hidden)
+            form#profileClassForm
+              label(for="profileClassName")= "班级"
+              select#profileClassName(name="className" required)
+                each classRecord in classes
+                  option(value=classRecord.name selected=user.className === classRecord.name)= classRecord.name
+              button(type="submit")= "更新班级"
 
 block pageScripts
   +formScripts('profile-password.js', true)
+  script(src=assetUrl('/assets/profile-class.js'))

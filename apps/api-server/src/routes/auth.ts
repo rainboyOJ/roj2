@@ -14,8 +14,14 @@ export function registerAuthRoutes(app: FastifyInstance, context: RouteContext) 
   } = context;
 
   app.get('/register', async (request, reply) => {
-    const grades = (await services.listGrades()).filter((grade) => grade.isActive);
-    return renderPage(request, reply, 'register.pug', { grades });
+    const [grades, classes] = await Promise.all([
+      services.listGrades(),
+      services.listActiveClasses(),
+    ]);
+    return renderPage(request, reply, 'register.pug', {
+      grades: grades.filter((grade) => grade.isActive),
+      classes,
+    });
   });
 
   app.post('/register', async (request, reply) => {

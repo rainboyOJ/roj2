@@ -13,7 +13,7 @@
     name: '请填写姓名。',
     gender: '请选择男或女。',
     grade: '请选择年级。',
-    className: '请填写班级。',
+    className: '请选择班级。',
     password: '密码至少 8 个字符。',
   };
 
@@ -45,6 +45,7 @@
       serverMessageMap: {
         'username already exists': '用户名已存在。',
         'grade not available': '请选择可用的年级。',
+        'class ': '请选择可用的班级。',
       },
       errorMessage: '注册失败，请检查填写内容后重试。',
       submit: async () => {

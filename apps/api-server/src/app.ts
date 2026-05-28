@@ -90,6 +90,9 @@ export interface SessionUser {
   username: string;
   role: 'student' | 'admin';
   approvalStatus: 'pending' | 'approved' | 'rejected';
+  name?: string | undefined;
+  grade?: string | undefined;
+  className?: string | undefined;
 }
 
 export interface SubmissionViewModel {
@@ -134,6 +137,13 @@ export interface PaginatedSubmissionsViewModel {
 }
 
 export interface GradeViewModel {
+  id: string;
+  name: string;
+  isActive: boolean;
+  order: number;
+}
+
+export interface ClassViewModel {
   id: string;
   name: string;
   isActive: boolean;
@@ -236,6 +246,18 @@ export interface ApiServerServices {
     order: number;
   }): Promise<GradeViewModel>;
   updateGrade(id: string, input: {
+    name: string;
+    isActive: boolean;
+    order: number;
+  }): Promise<void>;
+  listClasses(): Promise<ClassViewModel[]>;
+  listActiveClasses(): Promise<ClassViewModel[]>;
+  createClass(input: {
+    name: string;
+    isActive: boolean;
+    order: number;
+  }): Promise<ClassViewModel>;
+  updateClass(id: string, input: {
     name: string;
     isActive: boolean;
     order: number;

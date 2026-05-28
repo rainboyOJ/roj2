@@ -222,6 +222,42 @@ describe('content management routes', () => {
     });
   });
 
+  it('creates a class for admin users', async () => {
+    let receivedClassName = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      createClass: async (input) => {
+        receivedClassName = input.name;
+        return {
+          id: 'class-41',
+          name: input.name,
+          isActive: input.isActive,
+          order: input.order,
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/classes',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        name: '41 班',
+        isActive: true,
+        order: 41,
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(receivedClassName).toBe('41 班');
+    expect(response.json()).toMatchObject({
+      classId: 'class-41',
+      name: '41 班',
+    });
+  });
+
   it('creates a problem for admin users', async () => {
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),
@@ -280,7 +316,12 @@ describe('content management routes', () => {
   });
 
   it('updates a class name for the current student', async () => {
-    const app = buildApp(createTestServices());
+    let receivedClassName = '';
+    const app = buildApp(createTestServices({
+      updateProfileClassName: async (_userId, className) => {
+        receivedClassName = className;
+      },
+    }));
     const response = await app.inject({
       method: 'POST',
       url: '/api/me/class-name',
@@ -293,6 +334,7 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    expect(receivedClassName).toBe('Class 2');
   });
 
   it('updates a grade for admin users', async () => {

@@ -22,6 +22,9 @@ export function studentUser(overrides: Partial<SessionUser> = {}): SessionUser {
     username: 'alice',
     role: 'student',
     approvalStatus: 'approved',
+    name: 'Alice',
+    grade: '2025',
+    className: '1 班',
     ...overrides,
   };
 }
@@ -32,6 +35,9 @@ export function adminUser(overrides: Partial<SessionUser> = {}): SessionUser {
     username: 'admin',
     role: 'admin',
     approvalStatus: 'approved',
+    name: 'Admin',
+    grade: '2025',
+    className: 'System',
     ...overrides,
   };
 }
@@ -124,6 +130,15 @@ export function createTestServices(
       order: 4,
     }),
     updateGrade: async () => undefined,
+    listClasses: async () => [],
+    listActiveClasses: async () => [],
+    createClass: async () => ({
+      id: 'class-1',
+      name: '1 班',
+      isActive: true,
+      order: 1,
+    }),
+    updateClass: async () => undefined,
     getEnabledLanguages: async () => ['cpp', 'python'],
     updateEnabledLanguages: async () => undefined,
     getPaginationSettings: async () => ({

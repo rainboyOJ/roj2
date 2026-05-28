@@ -27,6 +27,12 @@ export const createGradeSchema = z.object({
   order: z.number().int(),
 });
 
+export const createClassSchema = z.object({
+  name: z.string().min(1),
+  isActive: z.boolean(),
+  order: z.number().int(),
+});
+
 export const enabledLanguagesSchema = z.object({
   enabledLanguages: z.array(z.enum(['cpp', 'python'])).min(1),
 });

@@ -19,6 +19,7 @@ import {
   mapJudgeSnapshotToSubmissionState,
   type SubmissionCaseResult,
   type AppLanguage,
+  type ClassDocument,
   type CounterDocument,
   type CreateSubmissionInput,
   type GradeDocument,
@@ -196,6 +197,8 @@ export interface SessionUserRecord {
   role: 'student' | 'admin';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   name: string;
+  grade: string;
+  className: string;
 }
 
 // 密码以 argon2id 形式存储。
@@ -420,6 +423,10 @@ export class RojDb {
     return this.db.collection<GradeDocument>('grades');
   }
 
+  classes() {
+    return this.db.collection<ClassDocument>('classes');
+  }
+
   sessions() {
     return this.db.collection<SessionDocument>('sessions');
   }
@@ -444,6 +451,7 @@ export class RojDb {
   async ensureIndexes() {
     await this.users().createIndex({ username: 1 }, { unique: true });
     await this.grades().createIndex({ name: 1 }, { unique: true });
+    await this.classes().createIndex({ name: 1 }, { unique: true });
     await this.sessions().createIndex({ token: 1 }, { unique: true });
     await this.sessions().createIndex({ expiresAt: 1 });
     await this.problems().createIndex({ pid: 1 }, { unique: true });
@@ -516,6 +524,25 @@ export class RojDb {
       },
       { upsert: true },
     );
+
+    await Promise.all(Array.from({ length: 40 }, (_, index) => {
+      const order = index + 1;
+      const name = `${order} 班`;
+      return this.classes().updateOne(
+        { name },
+        {
+          $setOnInsert: {
+            _id: new ObjectId().toHexString(),
+            name,
+            isActive: true,
+            order,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+        { upsert: true },
+      );
+    }));
 
     await this.users().updateOne(
       { username: 'admin' },
@@ -1051,6 +1078,10 @@ export class RojDb {
     if (!grade) {
       throw new Error(`grade ${input.grade} is not available`);
     }
+    const classRecord = await this.classes().findOne({ name: input.className, isActive: true });
+    if (!classRecord) {
+      throw new Error(`class ${input.className} is not available`);
+    }
 
     const now = new Date();
     const user: UserDocument = {
@@ -1089,6 +1120,8 @@ export class RojDb {
       role: user.role,
       approvalStatus: user.approvalStatus,
       name: user.name,
+      grade: user.grade,
+      className: user.className,
     };
   }
 
@@ -1141,6 +1174,8 @@ export class RojDb {
       role: user.role,
       approvalStatus: user.approvalStatus,
       name: user.name,
+      grade: user.grade,
+      className: user.className,
     };
   }
 
@@ -1150,6 +1185,14 @@ export class RojDb {
 
   async listGrades() {
     return this.grades().find({}).sort({ order: 1 }).toArray();
+  }
+
+  async listClasses() {
+    return this.classes().find({}).sort({ order: 1 }).toArray();
+  }
+
+  async listActiveClasses() {
+    return this.classes().find({ isActive: true }).sort({ order: 1 }).toArray();
   }
 
   // 年级是注册流程依赖的字典表。
@@ -1177,6 +1220,43 @@ export class RojDb {
     order: number;
   }) {
     await this.grades().updateOne(
+      { _id: id },
+      {
+        $set: {
+          name: input.name,
+          isActive: input.isActive,
+          order: input.order,
+          updatedAt: new Date(),
+        },
+      },
+    );
+  }
+
+  // 班级是注册流程依赖的字典表。
+  async createClass(input: {
+    name: string;
+    isActive: boolean;
+    order: number;
+  }) {
+    const now = new Date();
+    const classRecord: ClassDocument = {
+      _id: new ObjectId().toHexString(),
+      name: input.name,
+      isActive: input.isActive,
+      order: input.order,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.classes().insertOne(classRecord);
+    return classRecord;
+  }
+
+  async updateClass(id: string, input: {
+    name: string;
+    isActive: boolean;
+    order: number;
+  }) {
+    await this.classes().updateOne(
       { _id: id },
       {
         $set: {
@@ -1402,6 +1482,11 @@ export class RojDb {
 
   // 用户修改班级后重新回到待审核状态。
   async updateUserClassName(userId: string, className: string) {
+    const classRecord = await this.classes().findOne({ name: className, isActive: true });
+    if (!classRecord) {
+      throw new Error(`class ${className} is not available`);
+    }
+
     const now = new Date();
     await this.users().updateOne(
       { _id: userId },

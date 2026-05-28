@@ -19,7 +19,10 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
       return;
     }
 
-    return renderPage(request, reply, 'profile.pug', { user });
+    return renderPage(request, reply, 'profile.pug', {
+      user,
+      classes: await services.listActiveClasses(),
+    });
   });
 
   app.post('/profile/password', async (request, reply) => {
@@ -37,6 +40,7 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
       reply.code(400);
       return renderPage(request, reply, 'profile.pug', {
         user,
+        classes: await services.listActiveClasses(),
         formError: '密码填写不正确，请检查后重试。',
       });
     }
@@ -51,6 +55,7 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
       reply.code(400);
       return renderPage(request, reply, 'profile.pug', {
         user,
+        classes: await services.listActiveClasses(),
         formError: passwordErrorMessage(messageFromError(error, 'failed to update password')),
       });
     }

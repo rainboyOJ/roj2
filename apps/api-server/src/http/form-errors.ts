@@ -16,6 +16,9 @@ export function registerErrorMessage(message: string) {
   if (message.includes('grade') && message.includes('not available')) {
     return '请选择可用的年级。';
   }
+  if (message.includes('class') && message.includes('not available')) {
+    return '请选择可用的班级。';
+  }
   return '注册失败，请检查填写内容后重试。';
 }
 

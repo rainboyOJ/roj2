@@ -1,0 +1,54 @@
+//- 管理员班级管理页：维护注册页面和个人中心可选班级。
+extends layout.pug
+include mixins/assets.pug
+
+block content
+  section.list-panel
+    header
+      hgroup
+        h1= "班级管理"
+        p.page-lead= "维护注册和个人资料修改时可以选择的班级。"
+    article.panel-card.form-card
+      .panel-body
+        p#adminClassesAlert.form-alert(role="alert" hidden=!formError)= formError || ''
+        form.admin-class-form(method="post" action='/admin/classes')
+          .form-grid
+            div
+              label(for="new-class-name")= "班级"
+              input#new-class-name(type="text" name="name" value=formValues && formValues.name required)
+            div
+              label(for="new-class-order")= "排序"
+              input#new-class-order(type="number" name="order" value=(formValues && formValues.order) || "0" required min="0" step="1")
+          label
+            input(type="checkbox" name="isActive" value="true" checked=!formValues || formValues.isActive === 'true')
+            = "启用"
+          button(type="submit")= "创建班级"
+    if classes.length
+      .table-shell
+        table.data-table
+          thead
+            tr
+              th= "班级"
+              th= "启用"
+              th= "排序"
+              th= "操作"
+          tbody
+            each classRecord in classes
+              tr
+                td
+                  form.admin-class-form(method="post" action=`/admin/classes/${classRecord.id}` id=`class-form-${classRecord.id}` data-class-id=classRecord.id)
+                    input(type="text" name="name" value=classRecord.name required)
+                td
+                  label
+                    input(type="checkbox" name="isActive" value="true" checked=classRecord.isActive form=`class-form-${classRecord.id}`)
+                    = "启用"
+                td
+                  input(type="number" name="order" value=classRecord.order form=`class-form-${classRecord.id}` required min="0" step="1")
+                td
+                  button(type="submit" form=`class-form-${classRecord.id}`)= "保存"
+    else
+      article
+        p= "当前还没有班级。"
+
+block pageScripts
+  +formScripts('admin-grades.js', true)
