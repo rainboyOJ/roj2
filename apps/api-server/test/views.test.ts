@@ -259,6 +259,41 @@ describe('rendered views', () => {
     expect(missing.headers['cache-control']).toBeUndefined();
   });
 
+  it('serves the local problem editor bundle through the asset manifest', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/assets/editor/problem-editor.js',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toContain('application/javascript');
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.body).toContain('CodeMirror');
+    expect(response.body).toContain('/api/submissions');
+  });
+
+  it('serves whitelisted local KaTeX font assets only', async () => {
+    const app = buildApp(createServices());
+
+    const font = await app.inject({
+      method: 'GET',
+      url: '/assets/fonts/KaTeX_Main-Regular.woff2',
+    });
+    const missing = await app.inject({
+      method: 'GET',
+      url: '/assets/fonts/not-found.woff2',
+    });
+
+    expect(font.statusCode).toBe(200);
+    expect(font.headers['content-type']).toContain('font/woff2');
+    expect(font.headers['cache-control']).toBe('no-store');
+    expect(font.rawPayload.length).toBeGreaterThan(0);
+    expect(missing.statusCode).toBe(404);
+    expect(missing.headers['cache-control']).toBeUndefined();
+  });
+
   it('renders registration page with local axios and inline Chinese validation hints', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => null,
