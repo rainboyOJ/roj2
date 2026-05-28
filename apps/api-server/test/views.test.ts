@@ -941,15 +941,25 @@ describe('rendered views', () => {
   it('renders approval actions on the admin users page', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => adminUser(),
-      listAdminUsers: async () => [
-        {
-          id: 'user-2',
-          username: 'alice',
-          role: 'student' as const,
-          approvalStatus: 'pending' as const,
-          name: 'Alice',
+      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }) => ({
+        users: [
+          {
+            id: 'user-2',
+            username: 'alice',
+            role: 'student' as const,
+            approvalStatus: 'pending' as const,
+            name: 'Alice',
+          },
+        ],
+        pagination: {
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: 21,
+          totalPages: 2,
+          previousPage: null,
+          nextPage: 2,
         },
-      ],
+      }),
     }));
 
     const response = await app.inject({
@@ -981,6 +991,8 @@ describe('rendered views', () => {
     expect(response.body).toContain('确定要重置用户 alice 的密码吗？');
     expect(response.body).toContain('确定要删除用户 alice 吗？删除后不可恢复。');
     expect(response.body).toContain('data-require-password="password"');
+    expect(response.body).toContain('用户管理分页');
+    expect(response.body).toContain('/admin/users?page=2');
     expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-users.js"');

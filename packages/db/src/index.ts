@@ -1183,6 +1183,24 @@ export class RojDb {
     return this.users().find({}).sort({ createdAt: -1 }).toArray();
   }
 
+  async listUsersForAdminPaginated(input: {
+    page: number;
+    pageSize: number;
+  }) {
+    const skip = (input.page - 1) * input.pageSize;
+    const [items, total] = await Promise.all([
+      this.users()
+        .find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(input.pageSize)
+        .toArray(),
+      this.users().countDocuments({}),
+    ]);
+
+    return { items, total };
+  }
+
   async listGrades() {
     return this.grades().find({}).sort({ order: 1 }).toArray();
   }

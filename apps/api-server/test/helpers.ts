@@ -116,6 +116,17 @@ export function createTestServices(
     logoutUser: async () => undefined,
     getCurrentUser: async () => studentUser(),
     listAdminUsers: async () => [],
+    listAdminUsersPaginated: async (pagination) => ({
+      users: [],
+      pagination: {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        total: 0,
+        totalPages: 1,
+        previousPage: null,
+        nextPage: null,
+      },
+    }),
     approveUser: async () => undefined,
     rejectUser: async () => undefined,
     listAdminSubmissions: async () => paginated(),

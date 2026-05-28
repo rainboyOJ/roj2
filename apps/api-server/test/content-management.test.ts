@@ -16,7 +16,7 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/users/bulk-approve',
+      url: '/admin/users/bulk-approve?page=2',
       headers: {
         cookie: adminSessionCookie(),
       },
@@ -26,7 +26,7 @@ describe('content management routes', () => {
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/users');
+    expect(response.headers.location).toBe('/admin/users?page=2');
     expect(approved).toEqual([
       { userId: 'user-2', adminUserId: 'admin-1' },
       { userId: 'user-3', adminUserId: 'admin-1' },
@@ -89,6 +89,32 @@ describe('content management routes', () => {
     ]);
   });
 
+  it('approves a single selected user through the admin API flow', async () => {
+    const approved: Array<{ userId: string; adminUserId: string }> = [];
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      approveUser: async (userId: string, adminUserId: string) => {
+        approved.push({ userId, adminUserId });
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/users/bulk-approve',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        userIds: 'user-2',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(approved).toEqual([
+      { userId: 'user-2', adminUserId: 'admin-1' },
+    ]);
+  });
+
   it('rejects selected users through the admin API flow', async () => {
     const rejected: Array<{ userId: string; adminUserId: string }> = [];
     const app = buildApp(createTestServices({
@@ -135,6 +161,66 @@ describe('content management routes', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({ message: 'No users selected' });
+  });
+
+  it('returns paginated admin users through the admin API flow', async () => {
+    let receivedPagination: { page: number; pageSize: number } | null = null;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      getPaginationSettings: async () => ({
+        listPageSize: 50,
+        allowedPageSizes: [20, 50, 100],
+      }),
+      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }) => {
+        receivedPagination = pagination;
+        return {
+          users: [
+            {
+              id: 'user-2',
+              username: 'alice',
+              role: 'student',
+              approvalStatus: 'pending',
+              name: 'Alice',
+            },
+          ],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 101,
+            totalPages: 3,
+            previousPage: 1,
+            nextPage: 3,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/users?page=2&pageSize=500',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPagination).toEqual({
+      page: 2,
+      pageSize: 100,
+    });
+    expect(response.json()).toMatchObject({
+      users: [
+        {
+          id: 'user-2',
+          username: 'alice',
+        },
+      ],
+      pagination: {
+        page: 2,
+        pageSize: 100,
+        total: 101,
+      },
+    });
   });
 
   it('returns a logged-in user submission list', async () => {
@@ -594,20 +680,30 @@ describe('content management routes', () => {
   it('renders user management errors when no user is selected for bulk approve', async () => {
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),
-      listAdminUsers: async () => [
-        {
-          id: 'user-2',
-          username: 'alice',
-          role: 'student',
-          approvalStatus: 'pending',
-          name: 'Alice',
+      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }) => ({
+        users: [
+          {
+            id: 'user-2',
+            username: 'alice',
+            role: 'student',
+            approvalStatus: 'pending',
+            name: 'Alice',
+          },
+        ],
+        pagination: {
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: 1,
+          totalPages: 1,
+          previousPage: null,
+          nextPage: null,
         },
-      ],
+      }),
     }));
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/users/bulk-approve',
+      url: '/admin/users/bulk-approve?page=2',
       headers: {
         cookie: adminSessionCookie(),
       },

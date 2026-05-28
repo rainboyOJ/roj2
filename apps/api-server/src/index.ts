@@ -176,6 +176,26 @@ function mapSessionUser(user: {
   };
 }
 
+function mapAdminUser(user: {
+  _id: string;
+  username: string;
+  role: 'student' | 'admin';
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  name?: string;
+  grade?: string;
+  className?: string;
+}) {
+  return {
+    id: user._id,
+    username: user.username,
+    role: user.role,
+    approvalStatus: user.approvalStatus,
+    name: user.name,
+    grade: user.grade,
+    className: user.className,
+  };
+}
+
 function formatDateTime(value: Date | null): string | null {
   if (!value) {
     return null;
@@ -333,15 +353,18 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     },
     listAdminUsers: async () => {
       const users = await db.listUsersForAdmin();
-      return users.map((user) => ({
-        id: user._id,
-        username: user.username,
-        role: user.role,
-        approvalStatus: user.approvalStatus,
-        name: user.name,
-        grade: user.grade,
-        className: user.className,
-      }));
+      return users.map(mapAdminUser);
+    },
+    listAdminUsersPaginated: async (pagination) => {
+      const result = await db.listUsersForAdminPaginated(pagination);
+      return {
+        users: result.items.map(mapAdminUser),
+        pagination: buildPaginationViewModel({
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: result.total,
+        }),
+      };
     },
     approveUser: async (userId, adminUserId) => {
       await db.approveUser(userId, adminUserId);

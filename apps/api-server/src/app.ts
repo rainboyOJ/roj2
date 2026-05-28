@@ -136,6 +136,11 @@ export interface PaginatedSubmissionsViewModel {
   filters?: SubmissionListFilters;
 }
 
+export interface PaginatedAdminUsersViewModel {
+  users: SessionUser[];
+  pagination: PaginationViewModel;
+}
+
 export interface GradeViewModel {
   id: string;
   name: string;
@@ -229,7 +234,11 @@ export interface ApiServerServices {
   }>;
   logoutUser(token: string | null): Promise<void>;
   getCurrentUser(token: string | null): Promise<SessionUser | null>;
-  listAdminUsers(): Promise<Array<SessionUser & { name?: string }>>;
+  listAdminUsers(): Promise<SessionUser[]>;
+  listAdminUsersPaginated(pagination: {
+    page: number;
+    pageSize: number;
+  }): Promise<PaginatedAdminUsersViewModel>;
   approveUser(userId: string, adminUserId: string): Promise<void>;
   rejectUser(userId: string, adminUserId: string, reason?: string): Promise<void>;
   listAdminSubmissions(pagination: {

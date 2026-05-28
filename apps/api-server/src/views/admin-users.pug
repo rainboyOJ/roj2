@@ -3,8 +3,10 @@
 //- - 行内按钮做单条审核
 extends layout.pug
 include mixins/assets.pug
+include mixins/pagination.pug
 
 block content
+  - const currentPageSuffix = pagination && pagination.page > 1 ? `?page=${pagination.page}` : ''
   section.list-panel
     header
       hgroup
@@ -18,19 +20,19 @@ block content
         button(
           type="submit"
           form="bulk-user-review-form"
-          formaction='/admin/users/bulk-approve'
+          formaction=`/admin/users/bulk-approve${currentPageSuffix}`
           data-confirm-message="确定要通过选中的用户吗？"
         )= "批量通过"
         button(
           type="submit"
           class="secondary"
           form="bulk-user-review-form"
-          formaction='/admin/users/bulk-reject'
+          formaction=`/admin/users/bulk-reject${currentPageSuffix}`
           data-confirm-message="确定要拒绝选中的用户吗？"
         )= "批量拒绝"
       form#bulk-user-review-form(
         method="post"
-        action='/admin/users/bulk-approve'
+        action=`/admin/users/bulk-approve${currentPageSuffix}`
         data-require-checked="userIds"
         data-empty-message="请先选择需要处理的用户"
       )
@@ -65,21 +67,21 @@ block content
                     .table-actions
                       form(
                         method="post"
-                        action='/admin/users/bulk-approve'
+                        action=`/admin/users/bulk-approve${currentPageSuffix}`
                         data-confirm-message=`确定要通过用户 ${user.username} 吗？`
                       )
                         input(type="hidden" name="userIds" value=user.id)
                         button(type="submit" id=`approve-user-${user.id}`)= "通过"
                       form(
                         method="post"
-                        action='/admin/users/bulk-reject'
+                        action=`/admin/users/bulk-reject${currentPageSuffix}`
                         data-confirm-message=`确定要拒绝用户 ${user.username} 吗？`
                       )
                         input(type="hidden" name="userIds" value=user.id)
                         button(type="submit" class="secondary" id=`reject-user-${user.id}`)= "拒绝"
                       form(
                         method="post"
-                        action=`/admin/users/${user.id}/reset-password`
+                        action=`/admin/users/${user.id}/reset-password${currentPageSuffix}`
                         data-confirm-message=`确定要重置用户 ${user.username} 的密码吗？`
                         data-require-password="password"
                         data-password-empty-message="请先输入新密码"
@@ -88,10 +90,11 @@ block content
                         button(type="submit" class="secondary" id=`reset-password-user-${user.id}`)= "重置密码"
                       form(
                         method="post"
-                        action=`/admin/users/${user.id}/delete`
+                        action=`/admin/users/${user.id}/delete${currentPageSuffix}`
                         data-confirm-message=`确定要删除用户 ${user.username} 吗？删除后不可恢复。`
                       )
                         button(type="submit" class="contrast" id=`delete-user-${user.id}`)= "删除用户"
+      +paginationBar('/admin/users', pagination, '用户管理分页')
     else
       article
         p= "没有需要查看的用户。"

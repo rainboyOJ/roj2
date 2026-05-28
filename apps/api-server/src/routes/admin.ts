@@ -59,6 +59,26 @@ function problemSetFormValues(raw: Record<string, string | undefined>, id = '') 
   };
 }
 
+function parseUserIds(value: unknown): string[] {
+  const values = Array.isArray(value) ? value : value ? [value] : [];
+  return values
+    .filter((userId): userId is string => typeof userId === 'string')
+    .map((userId) => userId.trim())
+    .filter(Boolean);
+}
+
+function adminUsersPath(query: unknown) {
+  const page =
+    typeof query === 'object' && query !== null && 'page' in query
+      ? (query as { page?: unknown }).page
+      : undefined;
+  const pageText = Array.isArray(page) ? page[0] : page;
+  const pageNumber = Number(pageText ?? 1);
+  return Number.isInteger(pageNumber) && pageNumber > 1
+    ? `/admin/users?page=${pageNumber}`
+    : '/admin/users';
+}
+
 export function registerAdminRoutes(app: FastifyInstance, context: RouteContext) {
   const {
     parsePage,
@@ -71,11 +91,15 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
   } = context;
 
   async function renderAdminUsersError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, user: { id: string }, formError: string) {
-    const users = await services.listAdminUsers();
+    const paginationSettings = await services.getPaginationSettings();
+    const result = await services.listAdminUsersPaginated({
+      page: parsePage(request.query),
+      pageSize: paginationSettings.listPageSize,
+    });
     reply.code(400);
     return renderPage(request, reply, 'admin-users.pug', {
       currentUser: user,
-      users,
+      ...result,
       formError,
     });
   }
@@ -198,8 +222,12 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const users = await services.listAdminUsers();
-    return renderPage(request, reply, 'admin-users.pug', { currentUser: user, users });
+    const paginationSettings = await services.getPaginationSettings();
+    const result = await services.listAdminUsersPaginated({
+      page: parsePage(request.query),
+      pageSize: paginationSettings.listPageSize,
+    });
+    return renderPage(request, reply, 'admin-users.pug', { currentUser: user, ...result });
   });
 
   app.post('/admin/users/:id/reset-password', async (request, reply) => {
@@ -224,7 +252,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
         messageFromError(error, '重置密码失败，请检查后重试。'),
       );
     }
-    return redirectTo(reply, '/admin/users');
+    return redirectTo(reply, adminUsersPath(request.query));
   });
 
   app.post('/admin/users/:id/delete', async (request, reply) => {
@@ -244,7 +272,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
         messageFromError(error, '删除用户失败，请检查后重试。'),
       );
     }
-    return redirectTo(reply, '/admin/users');
+    return redirectTo(reply, adminUsersPath(request.query));
   });
 
   app.get('/admin/grades', async (request, reply) => {
@@ -405,12 +433,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const raw = request.body as { userIds?: string | string[] };
-    const userIds = Array.isArray(raw.userIds)
-      ? raw.userIds
-      : raw.userIds
-        ? [raw.userIds]
-        : [];
+    const raw = request.body as { userIds?: unknown };
+    const userIds = parseUserIds(raw.userIds);
     if (userIds.length === 0) {
       return renderAdminUsersError(request, reply, user, '请先选择需要通过的用户。');
     }
@@ -429,7 +453,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       );
     }
 
-    return redirectTo(reply, '/admin/users');
+    return redirectTo(reply, adminUsersPath(request.query));
   });
 
   app.post('/admin/users/bulk-reject', async (request, reply) => {
@@ -438,12 +462,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const raw = request.body as { userIds?: string | string[] };
-    const userIds = Array.isArray(raw.userIds)
-      ? raw.userIds
-      : raw.userIds
-        ? [raw.userIds]
-        : [];
+    const raw = request.body as { userIds?: unknown };
+    const userIds = parseUserIds(raw.userIds);
     if (userIds.length === 0) {
       return renderAdminUsersError(request, reply, user, '请先选择需要拒绝的用户。');
     }
@@ -461,7 +481,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       );
     }
 
-    return redirectTo(reply, '/admin/users');
+    return redirectTo(reply, adminUsersPath(request.query));
   });
 
   app.get('/admin/problems', async (request, reply) => {
@@ -574,9 +594,11 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     if (!user) {
       return;
     }
-    return {
-      users: await services.listAdminUsers(),
-    };
+    const paginationSettings = await services.getPaginationSettings();
+    return services.listAdminUsersPaginated({
+      page: parsePage(request.query),
+      pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
+    });
   });
 
   app.post('/api/admin/users/:id/approve', async (request, reply) => {
@@ -608,9 +630,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const raw = request.body as { userIds?: unknown };
-    const userIds = Array.isArray(raw.userIds)
-      ? raw.userIds.filter((userId): userId is string => typeof userId === 'string')
-      : [];
+    const userIds = parseUserIds(raw.userIds);
     if (userIds.length === 0) {
       return reply.code(400).send({ message: 'No users selected' });
     }
@@ -628,9 +648,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const raw = request.body as { userIds?: unknown };
-    const userIds = Array.isArray(raw.userIds)
-      ? raw.userIds.filter((userId): userId is string => typeof userId === 'string')
-      : [];
+    const userIds = parseUserIds(raw.userIds);
     if (userIds.length === 0) {
       return reply.code(400).send({ message: 'No users selected' });
     }

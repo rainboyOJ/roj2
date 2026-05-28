@@ -32,14 +32,16 @@
 
   const actionForForm = (form, submitter) => {
     const action = submitter?.getAttribute('formaction') || form.getAttribute('action') || '';
-    if (action.endsWith('/bulk-approve')) {
+    const url = new URL(action, window.location.origin);
+    const pathname = url.pathname;
+    if (pathname.endsWith('/bulk-approve')) {
       return { method: 'post', url: '/api/admin/users/bulk-approve' };
     }
-    if (action.endsWith('/bulk-reject')) {
+    if (pathname.endsWith('/bulk-reject')) {
       return { method: 'post', url: '/api/admin/users/bulk-reject' };
     }
 
-    const resetMatch = action.match(/^\/admin\/users\/([^/]+)\/reset-password$/);
+    const resetMatch = pathname.match(/^\/admin\/users\/([^/]+)\/reset-password$/);
     if (resetMatch) {
       return {
         method: 'post',
@@ -47,7 +49,7 @@
       };
     }
 
-    const deleteMatch = action.match(/^\/admin\/users\/([^/]+)\/delete$/);
+    const deleteMatch = pathname.match(/^\/admin\/users\/([^/]+)\/delete$/);
     if (deleteMatch) {
       return {
         method: 'delete',
