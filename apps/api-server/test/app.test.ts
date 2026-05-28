@@ -1,7 +1,7 @@
 // 这组测试主要覆盖“最小 JSON API 行为”。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SessionUser } from '../src/app.ts';
+import { buildApp, type SessionUser, type SubmissionListFilters } from '../src/app.ts';
 import { buildProductionServices } from '../src/index.ts';
 import { adminUser, createTestServices, paginated, sessionCookie } from './helpers.ts';
 
@@ -101,10 +101,16 @@ describe('GET /api/problems', () => {
 describe('GET /api/submissions', () => {
   it('passes the requested page to services and returns pagination metadata', async () => {
     let receivedPagination: { page: number; pageSize: number } | null = null;
+    let receivedFilters: unknown = null;
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser({ id: 'user-1', username: 'alice' }),
-      listSubmissions: async (_user: SessionUser, pagination: { page: number; pageSize: number }) => {
+      listSubmissions: async (
+        _user: SessionUser,
+        pagination: { page: number; pageSize: number },
+        filters: SubmissionListFilters = {},
+      ) => {
         receivedPagination = pagination;
+        receivedFilters = filters;
         return {
           submissions: [
             {
@@ -119,6 +125,7 @@ describe('GET /api/submissions', () => {
               displayName: 'Alice',
               language: 'python',
               sourceCode: 'print(1)',
+              canViewSourceCode: true,
               status: 'FINISHED',
               verdict: 'AC',
               score: 100,
@@ -135,13 +142,14 @@ describe('GET /api/submissions', () => {
             previousPage: 1,
             nextPage: 3,
           },
+          filters,
         };
       },
     }));
 
     const response = await app.inject({
       method: 'GET',
-      url: '/api/submissions?page=2',
+      url: '/api/submissions?page=2&pid=1000&user=Alice',
       headers: {
         cookie: sessionCookie(),
       },
@@ -151,6 +159,10 @@ describe('GET /api/submissions', () => {
     expect(receivedPagination).toEqual({
       page: 2,
       pageSize: 20,
+    });
+    expect(receivedFilters).toEqual({
+      pid: '1000',
+      user: 'Alice',
     });
     expect(response.json()).toMatchObject({
       submissions: [
@@ -166,6 +178,51 @@ describe('GET /api/submissions', () => {
         total: 41,
         totalPages: 3,
       },
+      filters: {
+        pid: '1000',
+        user: 'Alice',
+      },
+    });
+  });
+
+  it('hides source code when a student opens another user submission through API', async () => {
+    const app = buildApp(createTestServices({
+      getSubmissionById: async () => ({
+        id: 'sub-1',
+        publicId: '42',
+        submissionNo: 42,
+        userId: 'user-2',
+        pid: '1000',
+        problemTitle: 'A + B Problem',
+        problemLabel: '1000 A + B Problem',
+        username: 'bob',
+        displayName: 'Bob',
+        language: 'python',
+        sourceCode: 'print("secret")',
+        canViewSourceCode: true,
+        status: 'FINISHED',
+        verdict: 'AC',
+        score: 100,
+        judgeStatus: 'FINISHED',
+        message: 'ok',
+        caseResults: [],
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/submissions/42',
+      headers: {
+        cookie: sessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      publicId: '42',
+      username: 'bob',
+      sourceCode: '',
+      canViewSourceCode: false,
     });
   });
 });
@@ -187,7 +244,7 @@ describe('production services', () => {
         items: [],
         total: 0,
       }),
-      listSubmissionsByUserPaginated: async () => ({
+      listSubmissionsWithProblemsPaginated: async () => ({
         items: [
           {
             _id: 'sub-1',
@@ -215,6 +272,10 @@ describe('production services', () => {
           },
         ],
         total: 1,
+      }),
+      listSubmissionsByUserPaginated: async () => ({
+        items: [],
+        total: 0,
       }),
       registerUser: async () => ({
         _id: 'user-1',

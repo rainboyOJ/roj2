@@ -4,7 +4,11 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { isDefaultProblemDirectoryName, readDefaultProblemSeeds } from '../src/index.ts';
+import {
+  isDefaultProblemDirectoryName,
+  parseEnabledLanguagesEnv,
+  readDefaultProblemSeeds,
+} from '../src/index.ts';
 
 describe('default problem seeds', () => {
   it('accepts numeric directory names only', () => {
@@ -58,5 +62,14 @@ describe('default problem seeds', () => {
     } finally {
       await rm(tempDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('enabled language defaults', () => {
+  it('parses enabled languages from environment text', () => {
+    expect(parseEnabledLanguagesEnv(undefined)).toEqual(['cpp', 'python']);
+    expect(parseEnabledLanguagesEnv('python')).toEqual(['python']);
+    expect(parseEnabledLanguagesEnv(' cpp, python,cpp ')).toEqual(['cpp', 'python']);
+    expect(parseEnabledLanguagesEnv('java')).toEqual(['cpp', 'python']);
   });
 });

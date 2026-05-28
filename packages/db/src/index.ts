@@ -9,7 +9,7 @@ import {
   timingSafeEqual,
 } from 'node:crypto';
 
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Filter } from 'mongodb';
 import {
   OJSubmissionStatuses,
   ProblemProgressStatuses,
@@ -90,6 +90,43 @@ export async function readDefaultProblemSeeds(rootDir = defaultProblemsRoot): Pr
   return Promise.all(pids.map((pid) => readDefaultProblemSeed(pid, rootDir)));
 }
 
+export function parseEnabledLanguagesEnv(value: string | undefined): AppLanguage[] {
+  if (!value) {
+    return ['cpp', 'python'];
+  }
+
+  const languages = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item): item is AppLanguage => item === 'cpp' || item === 'python');
+  const uniqueLanguages = Array.from(new Set(languages));
+  return uniqueLanguages.length > 0 ? uniqueLanguages : ['cpp', 'python'];
+}
+
+function escapeRegexText(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildSubmissionListFilter(filters: SubmissionListFilters = {}): Filter<SubmissionDocument> {
+  const query: Filter<SubmissionDocument> = {};
+  const pid = filters.pid?.trim();
+  const user = filters.user?.trim();
+
+  if (pid) {
+    query.pid = pid;
+  }
+
+  if (user) {
+    const userPattern = new RegExp(escapeRegexText(user), 'i');
+    query.$or = [
+      { username: userPattern },
+      { displayName: userPattern },
+    ];
+  }
+
+  return query;
+}
+
 // 抢占待评测 submission 时使用的原子更新。
 export function buildLeaseUpdate(leaseOwner: string, now: Date, leaseMs: number) {
   return {
@@ -106,6 +143,11 @@ export function buildLeaseUpdate(leaseOwner: string, now: Date, leaseMs: number)
 export interface DbConfig {
   uri: string;
   dbName: string;
+}
+
+export interface SubmissionListFilters {
+  pid?: string;
+  user?: string;
 }
 
 // 持久化 judge 返回快照时使用的输入结构。
@@ -544,8 +586,8 @@ export class RojDb {
     await this.settings().updateOne(
       { _id: 'site_settings' },
       {
-        $set: {
-          enabledLanguages: ['cpp', 'python'],
+        $setOnInsert: {
+          enabledLanguages: parseEnabledLanguagesEnv(process.env.ROJ_ENABLED_LANGUAGES),
           updatedAt: now,
         },
       },
@@ -717,6 +759,29 @@ export class RojDb {
     };
   }
 
+  async listSubmissionsWithProblemsPaginated(input: {
+    page: number;
+    pageSize: number;
+    filters?: SubmissionListFilters;
+  }) {
+    const skip = (input.page - 1) * input.pageSize;
+    const query = buildSubmissionListFilter(input.filters);
+    const [items, total] = await Promise.all([
+      this.submissions()
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(input.pageSize)
+        .toArray(),
+      this.submissions().countDocuments(query),
+    ]);
+
+    return {
+      items: await this.attachProblemsToSubmissions(items),
+      total,
+    };
+  }
+
   async listProblemProgressByUser(userId: string) {
     const progressRows = await this.userProblemProgress()
       .find({ userId }, { projection: { pid: 1, status: 1 } })
@@ -758,21 +823,7 @@ export class RojDb {
     page: number;
     pageSize: number;
   }) {
-    const skip = (input.page - 1) * input.pageSize;
-    const [items, total] = await Promise.all([
-      this.submissions()
-        .find({})
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(input.pageSize)
-        .toArray(),
-      this.submissions().countDocuments({}),
-    ]);
-
-    return {
-      items: await this.attachProblemsToSubmissions(items),
-      total,
-    };
+    return this.listSubmissionsWithProblemsPaginated(input);
   }
 
   async buildSimpleRanklist() {

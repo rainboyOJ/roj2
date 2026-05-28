@@ -2,6 +2,39 @@ import type { FastifyInstance } from 'fastify';
 
 import { DEFAULT_PAGE_SIZE, type RouteContext } from '../http/context.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
+import type { SessionUser, SubmissionListFilters, SubmissionViewModel } from '../app.ts';
+
+function parseSubmissionListFilters(query: unknown): SubmissionListFilters {
+  if (typeof query !== 'object' || query === null) {
+    return {};
+  }
+
+  const raw = query as { pid?: unknown; user?: unknown };
+  const pidText = Array.isArray(raw.pid) ? raw.pid[0] : raw.pid;
+  const userText = Array.isArray(raw.user) ? raw.user[0] : raw.user;
+  const filters: SubmissionListFilters = {};
+
+  if (typeof pidText === 'string' && pidText.trim()) {
+    filters.pid = pidText.trim();
+  }
+  if (typeof userText === 'string' && userText.trim()) {
+    filters.user = userText.trim();
+  }
+
+  return filters;
+}
+
+function withSubmissionSourcePermission(
+  submission: SubmissionViewModel,
+  user: SessionUser,
+): SubmissionViewModel {
+  const canViewSourceCode = user.role === 'admin' || submission.userId === user.id;
+  return {
+    ...submission,
+    sourceCode: canViewSourceCode ? submission.sourceCode : '',
+    canViewSourceCode,
+  };
+}
 
 export function registerSubmissionRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -23,11 +56,10 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
     if (!submission) {
       return reply.code(404).send('Submission not found');
     }
-    if (user.role !== 'admin' && submission.userId !== user.id) {
-      return reply.code(403).send('Forbidden');
-    }
 
-    return renderPage(request, reply, 'submission.pug', { submission });
+    return renderPage(request, reply, 'submission.pug', {
+      submission: withSubmissionSourcePermission(submission, user),
+    });
   });
 
   app.get('/submissions', async (request, reply) => {
@@ -36,10 +68,11 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
       return;
     }
 
+    const filters = parseSubmissionListFilters(request.query);
     const result = await services.listSubmissions(user, {
       page: parsePage(request.query),
       pageSize: DEFAULT_PAGE_SIZE,
-    });
+    }, filters);
     return renderPage(request, reply, 'submissions.pug', { ...result });
   });
 
@@ -54,10 +87,7 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
     if (!submission) {
       return reply.code(404).send({ message: 'Submission not found' });
     }
-    if (user.role !== 'admin' && submission.userId !== user.id) {
-      return reply.code(403).send({ message: 'Forbidden' });
-    }
-    return submission;
+    return withSubmissionSourcePermission(submission, user);
   });
 
   app.get('/api/submissions', async (request, reply) => {
@@ -69,7 +99,7 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
     return services.listSubmissions(user, {
       page: parsePage(request.query),
       pageSize: DEFAULT_PAGE_SIZE,
-    });
+    }, parseSubmissionListFilters(request.query));
   });
 
   app.post('/api/submissions', async (request, reply) => {

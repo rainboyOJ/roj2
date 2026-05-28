@@ -36,4 +36,15 @@ describe('workspace smoke', () => {
     expect(workflow).not.toContain('-t judge_server_cpp:ci');
     expect(workflow).toContain('JUDGE_SERVER_IMAGE_NAME: ${{ env.CI_JUDGE_SERVER_IMAGE_NAME }}');
   });
+
+  it('does not overwrite enabled languages during seed', async () => {
+    const dbSource = await readFile(
+      join(process.cwd(), 'packages', 'db', 'src', 'index.ts'),
+      'utf8',
+    );
+
+    expect(dbSource).toContain('parseEnabledLanguagesEnv(process.env.ROJ_ENABLED_LANGUAGES)');
+    expect(dbSource).toContain('$setOnInsert:');
+    expect(dbSource).not.toContain("$set: {\n          enabledLanguages: ['cpp', 'python']");
+  });
 });

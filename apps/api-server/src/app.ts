@@ -100,6 +100,12 @@ export interface SubmissionViewModel {
   judgeStatus?: string | null;
   message?: string;
   caseResults: SubmissionCaseResult[];
+  canViewSourceCode: boolean;
+}
+
+export interface SubmissionListFilters {
+  pid?: string;
+  user?: string;
 }
 
 export interface PaginationViewModel {
@@ -114,6 +120,7 @@ export interface PaginationViewModel {
 export interface PaginatedSubmissionsViewModel {
   submissions: SubmissionViewModel[];
   pagination: PaginationViewModel;
+  filters?: SubmissionListFilters;
 }
 
 export interface GradeViewModel {
@@ -173,7 +180,7 @@ export interface ApiServerServices {
   listSubmissions(user: SessionUser, pagination: {
     page: number;
     pageSize: number;
-  }): Promise<PaginatedSubmissionsViewModel>;
+  }, filters?: SubmissionListFilters): Promise<PaginatedSubmissionsViewModel>;
   registerUser(input: {
     username: string;
     name: string;

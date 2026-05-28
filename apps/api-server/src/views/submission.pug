@@ -49,7 +49,10 @@ block content
           header
             h2= "提交代码"
           .panel-body.statement-block
-            pre.mono-block= submission.sourceCode
+            if submission.canViewSourceCode
+              pre.mono-block= submission.sourceCode
+            else
+              p.soft-note= "无权限查看该提交源码。"
         article.panel-card
           header
             h2= "测试点结果"

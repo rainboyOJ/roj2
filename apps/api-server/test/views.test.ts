@@ -1,7 +1,7 @@
 // 这组测试专门看“渲染出来的 HTML 长什么样”。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SessionUser } from '../src/app.ts';
+import { buildApp, type SessionUser, type SubmissionListFilters } from '../src/app.ts';
 import {
   adminSessionCookie,
   adminUser,
@@ -42,6 +42,7 @@ function createServices(overrides = {}) {
       displayName: 'Demo User',
       language: 'python',
       sourceCode: 'print(1)',
+      canViewSourceCode: true,
       status: 'FINISHED',
       verdict: 'AC',
       score: 100,
@@ -554,9 +555,15 @@ describe('rendered views', () => {
 
   it('renders pagination on the submissions page and requests the selected page', async () => {
     let receivedPagination: { page: number; pageSize: number } | null = null;
+    let receivedFilters: unknown = null;
     const app = buildApp(createServices({
-      listSubmissions: async (_user: SessionUser, pagination: { page: number; pageSize: number }) => {
+      listSubmissions: async (
+        _user: SessionUser,
+        pagination: { page: number; pageSize: number },
+        filters: SubmissionListFilters = {},
+      ) => {
         receivedPagination = pagination;
+        receivedFilters = filters;
         return {
           submissions: [
             {
@@ -571,6 +578,7 @@ describe('rendered views', () => {
               displayName: 'Demo User',
               language: 'python',
               sourceCode: 'print(1)',
+              canViewSourceCode: true,
               status: 'FINISHED',
               verdict: 'AC',
               score: 100,
@@ -587,13 +595,14 @@ describe('rendered views', () => {
             previousPage: 1,
             nextPage: 3,
           },
+          filters,
         };
       },
     }));
 
     const response = await app.inject({
       method: 'GET',
-      url: '/submissions?page=2',
+      url: '/submissions?page=2&pid=1000&user=Demo',
       headers: {
         cookie: sessionCookie(),
       },
@@ -604,10 +613,16 @@ describe('rendered views', () => {
       page: 2,
       pageSize: 20,
     });
+    expect(receivedFilters).toEqual({
+      pid: '1000',
+      user: 'Demo',
+    });
     expect(response.body).toContain('提交列表分页');
     expect(response.body).toContain('第 2 / 3 页，共 41 条');
-    expect(response.body).toContain('/submissions?page=1');
-    expect(response.body).toContain('/submissions?page=3');
+    expect(response.body).toContain('/submissions?page=1&amp;pid=1000&amp;user=Demo');
+    expect(response.body).toContain('/submissions?page=3&amp;pid=1000&amp;user=Demo');
+    expect(response.body).toContain('value="1000"');
+    expect(response.body).toContain('value="Demo"');
   });
 
   it('renders case results on the submission detail page', async () => {
@@ -629,6 +644,43 @@ describe('rendered views', () => {
     expect(response.body).toContain('#1');
     expect(response.body).toContain('3 ms');
     expect(response.body).toContain('1024 KB');
+  });
+
+  it('renders submission detail without source code for other users', async () => {
+    const app = buildApp(createServices({
+      getSubmissionById: async () => ({
+        id: 'sub-1',
+        publicId: '42',
+        submissionNo: 42,
+        userId: 'user-2',
+        pid: '1000',
+        problemTitle: 'A + B Problem',
+        problemLabel: '1000 A + B Problem',
+        username: 'other',
+        displayName: 'Other User',
+        language: 'python',
+        sourceCode: 'print("secret")',
+        canViewSourceCode: true,
+        status: 'FINISHED',
+        verdict: 'AC',
+        score: 100,
+        judgeStatus: 'FINISHED',
+        message: 'ok',
+        caseResults: [],
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/submissions/42',
+      headers: {
+        cookie: sessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('无权限查看该提交源码。');
+    expect(response.body).not.toContain('print(&quot;secret&quot;)');
   });
 
   it('renders login form with Pico-style page content', async () => {

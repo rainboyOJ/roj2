@@ -18,6 +18,7 @@ function createServices() {
       displayName: 'Demo User',
       language: 'python',
       sourceCode: 'print(1)',
+      canViewSourceCode: true,
       status: 'JUDGING',
       verdict: 'PENDING',
       score: 0,

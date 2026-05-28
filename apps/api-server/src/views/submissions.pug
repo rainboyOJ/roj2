@@ -3,13 +3,30 @@ extends layout.pug
 include mixins/pagination.pug
 
 block content
+  - const currentFilters = filters || {}
+  - const filterParts = []
+  - if (currentFilters.pid) filterParts.push(`pid=${encodeURIComponent(currentFilters.pid)}`)
+  - if (currentFilters.user) filterParts.push(`user=${encodeURIComponent(currentFilters.user)}`)
+  - const paginationQuerySuffix = filterParts.join('&')
   section.list-panel
     header
       hgroup
         h1= "提交列表"
-        p.page-lead= "查看最近的评测记录，并重新打开任意提交查看详情。"
+        p.page-lead= "查看全站评测记录，并按题目或用户快速筛选。"
       .page-actions
         a(href='/problems' role="button" class="secondary")= "题目列表"
+    article
+      form(method="get" action="/submissions")
+        .grid
+          label(for="submission-filter-pid")
+            span= "题目编号"
+            input#submission-filter-pid(type="text" name="pid" value=currentFilters.pid || '' placeholder="例如 1000")
+          label(for="submission-filter-user")
+            span= "用户"
+            input#submission-filter-user(type="text" name="user" value=currentFilters.user || '' placeholder="用户名或姓名")
+        .form-actions
+          button(type="submit")= "查询"
+          a(href="/submissions" role="button" class="secondary")= "清空"
     if submissions.length
       .table-shell
         table.data-table
@@ -45,7 +62,7 @@ block content
                     span.status-chip.failed= formatVerdictLabel(submission.verdict)
                 td
                   a(href=`/submissions/${submission.publicId}`)= "查看详情"
-      +paginationBar('/submissions', pagination, '提交列表分页')
+      +paginationBar('/submissions', pagination, '提交列表分页', paginationQuerySuffix)
     else
       article
-        p= "还没有提交记录。"
+        p= "没有找到符合条件的提交记录。"

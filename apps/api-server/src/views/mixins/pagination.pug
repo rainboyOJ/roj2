@@ -1,11 +1,12 @@
-mixin paginationBar(basePath, pagination, ariaLabel)
+mixin paginationBar(basePath, pagination, ariaLabel, querySuffix)
+  - const suffix = querySuffix ? `&${querySuffix}` : ''
   nav.pagination-bar(aria-label=ariaLabel)
     if pagination.previousPage
-      a(href=`${basePath}?page=${pagination.previousPage}` role="button" class="secondary") 上一页
+      a(href=`${basePath}?page=${pagination.previousPage}${suffix}` role="button" class="secondary") 上一页
     else
       span.pagination-disabled 上一页
     span.pagination-summary= `第 ${pagination.page} / ${pagination.totalPages} 页，共 ${pagination.total} 条`
     if pagination.nextPage
-      a(href=`${basePath}?page=${pagination.nextPage}` role="button" class="secondary") 下一页
+      a(href=`${basePath}?page=${pagination.nextPage}${suffix}` role="button" class="secondary") 下一页
     else
       span.pagination-disabled 下一页

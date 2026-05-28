@@ -122,13 +122,16 @@ function mapSubmission(submission: {
     caseResults: SubmissionCaseResult[];
     score?: number;
   };
-}): SubmissionViewModel {
+}, options: {
+  canViewSourceCode?: boolean;
+} = {}): SubmissionViewModel {
   const problemTitle = submission.problem?.title ?? submission.pid;
   const problemLabel = problemTitle.startsWith(submission.pid)
     ? problemTitle
     : `${submission.pid} ${problemTitle}`;
   const submissionNo = submission.submissionNo ?? null;
   const publicId = submissionNo === null ? submission._id : String(submissionNo);
+  const canViewSourceCode = options.canViewSourceCode ?? true;
 
   return {
     id: submission._id,
@@ -141,13 +144,14 @@ function mapSubmission(submission: {
     username: submission.username,
     displayName: submission.displayName,
     language: submission.language,
-    sourceCode: submission.sourceCode,
+    sourceCode: canViewSourceCode ? submission.sourceCode : '',
     status: submission.status,
     verdict: submission.verdict,
     score: submission.score ?? submission.result.score ?? 0,
     judgeStatus: submission.judge.lastStatus,
     message: submission.result.message,
     caseResults: submission.result.caseResults,
+    canViewSourceCode,
   };
 }
 
@@ -198,9 +202,13 @@ function buildPlaceholderContests(): ContestViewModel[] {
 function mapPaginatedSubmissions(input: {
   items: Array<Parameters<typeof mapSubmission>[0]>;
   total: number;
-}, page: number, pageSize: number): PaginatedSubmissionsViewModel {
+}, page: number, pageSize: number, user?: SessionUser): PaginatedSubmissionsViewModel {
   return {
-    submissions: input.items.map(mapSubmission),
+    submissions: input.items.map((submission) =>
+      mapSubmission(submission, {
+        canViewSourceCode: user ? user.role === 'admin' || submission.userId === user.id : true,
+      }),
+    ),
     pagination: buildPaginationViewModel({
       page,
       pageSize,
@@ -268,13 +276,15 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const submission = await db.getSubmissionWithProblemByPublicId(id);
       return submission ? mapSubmission(submission) : null;
     },
-    listSubmissions: async (user, pagination) => {
-      // 管理员看全站提交，学生只看自己的提交。
-      const result =
-        user.role === 'admin'
-          ? await db.listAllSubmissionsWithProblemsPaginated(pagination)
-          : await db.listSubmissionsByUserPaginated(user.id, pagination);
-      return mapPaginatedSubmissions(result, pagination.page, pagination.pageSize);
+    listSubmissions: async (user, pagination, filters = {}) => {
+      const result = await db.listSubmissionsWithProblemsPaginated({
+        ...pagination,
+        filters,
+      });
+      return {
+        ...mapPaginatedSubmissions(result, pagination.page, pagination.pageSize, user),
+        filters,
+      };
     },
     registerUser: async (input) => {
       const user = await db.registerUser(input);

@@ -37,11 +37,16 @@ export function adminUser(overrides: Partial<SessionUser> = {}): SessionUser {
 }
 
 export function paginated(
-  submissions: SubmissionViewModel[] = [],
+  submissions: Array<Omit<SubmissionViewModel, 'canViewSourceCode'> & {
+    canViewSourceCode?: boolean;
+  }> = [],
   total = submissions.length,
 ): PaginatedSubmissionsViewModel {
   return {
-    submissions,
+    submissions: submissions.map((submission) => ({
+      canViewSourceCode: true,
+      ...submission,
+    })),
     pagination: {
       page: 1,
       pageSize: 20,
