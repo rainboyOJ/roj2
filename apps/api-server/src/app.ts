@@ -158,9 +158,15 @@ export interface ClassViewModel {
 export interface RanklistEntryViewModel {
   rank: number;
   username: string;
+  displayName: string;
+  className?: string | undefined;
   acceptedCount: number;
   submissionCount: number;
   lastAcceptedAt: string | null;
+}
+
+export interface RanklistFilters {
+  className?: string;
 }
 
 export interface ContestViewModel {
@@ -245,7 +251,7 @@ export interface ApiServerServices {
     page: number;
     pageSize: number;
   }): Promise<PaginatedSubmissionsViewModel>;
-  listRanklist(): Promise<RanklistEntryViewModel[]>;
+  listRanklist(filters?: RanklistFilters): Promise<RanklistEntryViewModel[]>;
   listContests(): Promise<ContestViewModel[]>;
   getContestById(id: string): Promise<ContestViewModel | null>;
   listGrades(): Promise<GradeViewModel[]>;

@@ -315,12 +315,17 @@ export function buildUserProblemProgressRows(
 
 const NO_ACCEPTED_AT = new Date('9999-12-31T23:59:59.999Z');
 
-export function buildRanklistAggregationPipeline() {
-  return [
+export interface RanklistFilters {
+  className?: string | undefined;
+}
+
+export function buildRanklistAggregationPipeline(filters: RanklistFilters = {}) {
+  const pipeline: object[] = [
     {
       $group: {
-        _id: '$username',
+        _id: '$userId',
         username: { $first: '$username' },
+        displayNameSnapshot: { $first: '$displayName' },
         acceptedCount: {
           $sum: {
             $cond: [{ $eq: ['$verdict', SubmissionVerdicts.AC] }, 1, 0],
@@ -353,6 +358,31 @@ export function buildRanklistAggregationPipeline() {
       },
     },
     {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    {
+      $unwind: {
+        path: '$user',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+  ];
+
+  if (filters.className) {
+    pipeline.push({
+      $match: {
+        'user.className': filters.className,
+      },
+    });
+  }
+
+  pipeline.push(
+    {
       $addFields: {
         lastAcceptedAtSort: '$lastAcceptedAt',
         lastAcceptedAt: {
@@ -376,13 +406,19 @@ export function buildRanklistAggregationPipeline() {
       $project: {
         _id: 0,
         username: 1,
+        displayName: {
+          $ifNull: ['$user.name', '$displayNameSnapshot'],
+        },
+        className: '$user.className',
         acceptedCount: 1,
         submissionCount: 1,
         wrongAttempts: 1,
         lastAcceptedAt: 1,
       },
     },
-  ];
+  );
+
+  return pipeline;
 }
 
 export class RojDb {
@@ -884,14 +920,16 @@ export class RojDb {
     return this.listSubmissionsWithProblemsPaginated(input);
   }
 
-  async buildSimpleRanklist() {
+  async buildSimpleRanklist(filters: RanklistFilters = {}) {
     return this.submissions().aggregate<{
       username: string;
+      displayName?: string;
+      className?: string;
       acceptedCount: number;
       submissionCount: number;
       wrongAttempts: number;
       lastAcceptedAt: Date | null;
-    }>(buildRanklistAggregationPipeline()).toArray();
+    }>(buildRanklistAggregationPipeline(filters)).toArray();
   }
 
   // 原子抢占一条待派发 submission，供 dispatcher 使用。

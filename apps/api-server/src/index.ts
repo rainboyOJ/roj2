@@ -376,11 +376,13 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const result = await db.listAllSubmissionsWithProblemsPaginated(pagination);
       return mapPaginatedSubmissions(result, pagination.page, pagination.pageSize);
     },
-    listRanklist: async () => {
-      const rows = await db.buildSimpleRanklist();
+    listRanklist: async (filters) => {
+      const rows = await db.buildSimpleRanklist(filters);
       return rows.map((row, index): RanklistEntryViewModel => ({
         rank: index + 1,
         username: row.username,
+        displayName: row.displayName || row.username,
+        className: row.className,
         acceptedCount: row.acceptedCount,
         submissionCount: row.submissionCount,
         lastAcceptedAt: formatDateTime(row.lastAcceptedAt),

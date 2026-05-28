@@ -8,8 +8,19 @@ export function registerMiscRoutes(app: FastifyInstance, context: RouteContext) 
   app.get('/', async (request, reply) => renderPage(request, reply, 'home.pug'));
 
   app.get('/ranklist', async (request, reply) => {
-    const entries = await services.listRanklist();
-    return renderPage(request, reply, 'ranklist.pug', { entries });
+    const query = request.query as { className?: string | string[] } | undefined;
+    const rawClassName = Array.isArray(query?.className) ? query?.className[0] : query?.className;
+    const className = rawClassName?.trim() || undefined;
+    const filters = className ? { className } : {};
+    const [entries, classes] = await Promise.all([
+      services.listRanklist(filters),
+      services.listActiveClasses(),
+    ]);
+    return renderPage(request, reply, 'ranklist.pug', {
+      entries,
+      classes,
+      filters,
+    });
   });
 
   app.get('/contests', async (request, reply) => {

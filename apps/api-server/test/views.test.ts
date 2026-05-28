@@ -1,7 +1,12 @@
 // 这组测试专门看“渲染出来的 HTML 长什么样”。
 import { describe, expect, it } from 'vitest';
 
-import { buildApp, type SessionUser, type SubmissionListFilters } from '../src/app.ts';
+import {
+  buildApp,
+  type RanklistFilters,
+  type SessionUser,
+  type SubmissionListFilters,
+} from '../src/app.ts';
 import {
   adminSessionCookie,
   adminUser,
@@ -68,6 +73,8 @@ function createServices(overrides = {}) {
       {
         rank: 1,
         username: 'demo',
+        displayName: 'Demo User',
+        className: '1 班',
         acceptedCount: 3,
         submissionCount: 5,
         lastAcceptedAt: '2026-05-18 11:00',
@@ -100,6 +107,20 @@ function createServices(overrides = {}) {
       description: 'A simple training contest for class practice.',
     }),
     listGrades: async () => [],
+    listActiveClasses: async () => [
+      {
+        id: 'class-1',
+        name: '1 班',
+        isActive: true,
+        order: 1,
+      },
+      {
+        id: 'class-2',
+        name: '2 班',
+        isActive: true,
+        order: 2,
+      },
+    ],
     getAdminProblemById: async () => ({
       id: 'problem-1',
       pid: '1000',
@@ -880,8 +901,44 @@ describe('rendered views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('排行榜');
     expect(response.body).toContain('<table');
+    expect(response.body).toContain('姓名');
+    expect(response.body).toContain('班级');
     expect(response.body).toContain('通过题数');
-    expect(response.body).toContain('demo');
+    expect(response.body).toContain('Demo User (demo)');
+    expect(response.body).toContain('1 班');
+    expect(response.body).toContain('<select id="ranklist-filter-class" name="className">');
+    expect(response.body).toContain('<option value="1 班">1 班</option>');
+    expect(response.body).toContain('href="/ranklist"');
+  });
+
+  it('passes class filter to the ranklist service and keeps it selected', async () => {
+    let receivedFilters: unknown;
+    const app = buildApp(createServices({
+      listRanklist: async (filters?: RanklistFilters) => {
+        receivedFilters = filters;
+        return [
+          {
+            rank: 1,
+            username: 'alice',
+            displayName: 'Alice',
+            className: '2 班',
+            acceptedCount: 1,
+            submissionCount: 2,
+            lastAcceptedAt: null,
+          },
+        ];
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/ranklist?className=2%20%E7%8F%AD',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedFilters).toEqual({ className: '2 班' });
+    expect(response.body).toContain('<option value="2 班" selected>2 班</option>');
+    expect(response.body).toContain('Alice (alice)');
   });
 
   it('renders the contests page', async () => {
