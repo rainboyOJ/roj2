@@ -1,5 +1,5 @@
 // 这个文件是项目的数据访问层，负责所有 MongoDB 读写。
-import { ObjectId, type Filter } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import {
   OJSubmissionStatuses,
   SubmissionVerdicts,
@@ -43,6 +43,14 @@ import {
 } from './settings.ts';
 export { buildLeaseUpdate } from './submission-lease.ts';
 import { buildLeaseUpdate } from './submission-lease.ts';
+export {
+  buildSubmissionListFilter,
+  type SubmissionListFilters,
+} from './submission-filters.ts';
+import {
+  buildSubmissionListFilter,
+  type SubmissionListFilters,
+} from './submission-filters.ts';
 export { calculateSubmissionScore } from './submission-scoring.ts';
 import { calculateSubmissionScore } from './submission-scoring.ts';
 export {
@@ -111,39 +119,10 @@ function debugJudge(message: string, details?: Record<string, unknown>) {
   console.log(`[DEBUG] [db] ${message}${suffix}`);
 }
 
-function escapeRegexText(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildSubmissionListFilter(filters: SubmissionListFilters = {}): Filter<SubmissionDocument> {
-  const query: Filter<SubmissionDocument> = {};
-  const pid = filters.pid?.trim();
-  const user = filters.user?.trim();
-
-  if (pid) {
-    query.pid = pid;
-  }
-
-  if (user) {
-    const userPattern = new RegExp(escapeRegexText(user), 'i');
-    query.$or = [
-      { username: userPattern },
-      { displayName: userPattern },
-    ];
-  }
-
-  return query;
-}
-
 // MongoDB 连接配置。
 export interface DbConfig {
   uri: string;
   dbName: string;
-}
-
-export interface SubmissionListFilters {
-  pid?: string;
-  user?: string;
 }
 
 // 持久化 judge 返回快照时使用的输入结构。
