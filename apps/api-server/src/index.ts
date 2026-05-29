@@ -8,9 +8,9 @@ import { ALLOWED_LIST_PAGE_SIZES } from '@roj/db';
 import {
   buildApp,
   type ApiServerServices,
-  type ContestViewModel,
   type RanklistEntryViewModel,
 } from './app.ts';
+import { buildPlaceholderContests } from './services/contests.ts';
 import {
   formatDateTime,
   mapAdminProblem,
@@ -26,28 +26,6 @@ import {
 import { buildPaginationViewModel } from './services/pagination.ts';
 import type { CreateSubmissionInput } from '@roj/shared';
 import type { AppLanguage } from '@roj/shared';
-
-function buildPlaceholderContests(): ContestViewModel[] {
-  // 比赛页目前还是占位实现，所以这里先直接返回内存中的假数据。
-  return [
-    {
-      id: 'practice-may',
-      title: 'May Practice Contest',
-      status: 'Upcoming',
-      startAtText: '2026-05-20 19:00',
-      endAtText: '2026-05-20 21:00',
-      description: 'A simple training contest for class practice.',
-    },
-    {
-      id: 'weekly-ladder',
-      title: 'Weekly Ladder',
-      status: 'Open Practice',
-      startAtText: 'Every Monday 18:00',
-      endAtText: 'Every Sunday 22:00',
-      description: 'A rolling ladder page used as a placeholder for future contest support.',
-    },
-  ];
-}
 
 export async function buildProductionServices(db: RojDb): Promise<ApiServerServices> {
   return {
