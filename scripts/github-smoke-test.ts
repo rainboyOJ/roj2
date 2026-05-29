@@ -1,5 +1,7 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
+import { extractCookie, readJson } from './http.ts';
+
 const baseUrl = process.env.OJ_BASE_URL ?? 'http://127.0.0.1:3300';
 const pollIntervalMs = Number(process.env.SMOKE_POLL_INTERVAL_MS ?? '500');
 const pollTimeoutMs = Number(process.env.SMOKE_TIMEOUT_MS ?? '120000');
@@ -27,14 +29,6 @@ type SubmissionResponse = {
   score: number;
   judgeStatus?: string | null;
 };
-
-async function readJson<T>(response: Response): Promise<T> {
-  const text = await response.text();
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status} ${response.statusText}: ${text}`);
-  }
-  return JSON.parse(text) as T;
-}
 
 async function postJson<T>(
   path: string,
@@ -64,13 +58,6 @@ async function getJson<T>(path: string, cookie?: string): Promise<T> {
   return readJson<T>(response);
 }
 
-function extractCookie(setCookie: string | undefined): string {
-  if (!setCookie) {
-    throw new Error('missing set-cookie header');
-  }
-  return setCookie.split(';', 1)[0];
-}
-
 async function waitForSubmission(
   submissionId: string,
   cookie: string,
@@ -90,7 +77,7 @@ async function waitForSubmission(
 async function login(username: string, password: string): Promise<{ cookie: string; user: LoginResponse['user'] }> {
   const { data, setCookie } = await postJson<LoginResponse>('/api/login', { username, password });
   return {
-    cookie: extractCookie(setCookie),
+    cookie: extractCookie(setCookie, 'roj_session'),
     user: data.user,
   };
 }
