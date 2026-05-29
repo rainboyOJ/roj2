@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 
 import type { RouteContext } from '../http/context.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
-import type { SessionUser, SubmissionListFilters, SubmissionViewModel } from '../app.ts';
+import type { SessionUser, SubmissionListFilters, SubmissionViewModel } from '../service-types.ts';
 
 function parseSubmissionListFilters(query: unknown): SubmissionListFilters {
   if (typeof query !== 'object' || query === null) {

@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
-import type { ProblemListViewModel, ProblemProgress } from '../app.ts';
 import type { RouteContext } from '../http/context.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
+import type { ProblemListViewModel, ProblemProgress } from '../service-types.ts';
 
 export function registerProblemRoutes(app: FastifyInstance, context: RouteContext) {
   const {

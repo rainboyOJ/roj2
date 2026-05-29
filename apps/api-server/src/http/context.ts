@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { AppLanguage } from '@roj/shared';
 
-import type { ApiServerServices, SessionUser } from '../app.ts';
 import { assetUrl, getAssetCacheControl } from './assets.ts';
 import { createViewHelpers } from '../view-helpers.ts';
+import type { ApiServerServices, SessionUser } from '../service-types.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

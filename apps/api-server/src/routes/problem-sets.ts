@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
-import type { ProblemProgress } from '../app.ts';
 import type { RouteContext } from '../http/context.ts';
+import type { ProblemProgress } from '../service-types.ts';
 
 function escapeHtml(value: string) {
   return value
