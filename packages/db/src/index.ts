@@ -5,7 +5,6 @@ import {
   SubmissionVerdicts,
   createEmptyJudgeState,
   createEmptyResultState,
-  mapJudgeSnapshotToSubmissionState,
   type AppLanguage,
   type ClassDocument,
   type CounterDocument,
@@ -52,7 +51,20 @@ import {
   type SubmissionListFilters,
 } from './submission-filters.ts';
 export { calculateSubmissionScore } from './submission-scoring.ts';
-import { calculateSubmissionScore } from './submission-scoring.ts';
+export {
+  buildClearSubmissionLeaseUpdate,
+  buildJudgeAckUpdate,
+  buildJudgeSnapshotUpdate,
+  buildSubmissionFailedUpdate,
+  type JudgeSnapshotPersistInput,
+} from './submission-updates.ts';
+import {
+  buildClearSubmissionLeaseUpdate,
+  buildJudgeAckUpdate,
+  buildJudgeSnapshotUpdate,
+  buildSubmissionFailedUpdate,
+  type JudgeSnapshotPersistInput,
+} from './submission-updates.ts';
 export {
   buildAcceptedProblemProgressUpdate,
   buildAttemptedProblemProgressUpdate,
@@ -123,24 +135,6 @@ function debugJudge(message: string, details?: Record<string, unknown>) {
 export interface DbConfig {
   uri: string;
   dbName: string;
-}
-
-// 持久化 judge 返回快照时使用的输入结构。
-export interface JudgeSnapshotPersistInput {
-  submissionId: number;
-  status: string;
-  verdict: string;
-  message: string;
-  case_results: Array<{
-    seq_id: number;
-    verdict: string;
-    cpu_time_ms: number;
-    real_time_ms: number;
-    memory_kb: number;
-    signal: number;
-    exit_code: number;
-    error_code: number;
-  }>;
 }
 
 interface ProblemProgressSourceSubmission {
@@ -540,26 +534,18 @@ export class RojDb {
     });
     await this.submissions().updateOne(
       { _id: localSubmissionId },
-      {
-        $set: {
-          status: OJSubmissionStatuses.JUDGING,
-          verdict: ack.verdict,
-          score: 0,
-          'judge.submissionId': ack.submissionId,
-          'judge.lastStatus': ack.status,
-          'judge.lastMessage': ack.message,
-          'judge.ackAt': now,
-          updatedAt: now,
-        },
-      },
+      buildJudgeAckUpdate(ack, now),
     );
   }
 
   // 保存轮询得到的 judge 快照，并同步更新 OJ 内部状态。
   async saveJudgeSnapshot(localSubmissionId: string, snapshot: JudgeSnapshotPersistInput) {
     const now = new Date();
-    const mapped = mapJudgeSnapshotToSubmissionState(snapshot);
-    const score = calculateSubmissionScore(snapshot.case_results);
+    const {
+      mapped,
+      score,
+      update,
+    } = buildJudgeSnapshotUpdate(snapshot, now);
     const submission = await this.submissions().findOne(
       { _id: localSubmissionId },
       { projection: { userId: 1, pid: 1 } },
@@ -575,25 +561,7 @@ export class RojDb {
     });
     await this.submissions().updateOne(
       { _id: localSubmissionId },
-      {
-        $set: {
-          status: mapped.status,
-          verdict: mapped.verdict,
-          score,
-          'judge.lastStatus': snapshot.status,
-          'judge.lastMessage': snapshot.message,
-          'judge.lastPolledAt': now,
-          'judge.finishedAt':
-            mapped.status === OJSubmissionStatuses.FINISHED ||
-            mapped.status === OJSubmissionStatuses.FAILED
-              ? now
-              : null,
-          'result.caseResults': snapshot.case_results,
-          'result.message': snapshot.message,
-          'result.score': score,
-          updatedAt: now,
-        },
-      },
+      update,
     );
 
     if (
@@ -602,12 +570,7 @@ export class RojDb {
     ) {
       await this.submissions().updateOne(
         { _id: localSubmissionId },
-        {
-          $set: {
-            'judge.leaseOwner': null,
-            'judge.leaseExpireAt': null,
-          },
-        },
+        buildClearSubmissionLeaseUpdate(),
       );
     }
 
@@ -625,24 +588,7 @@ export class RojDb {
     });
     await this.submissions().updateOne(
       { _id: localSubmissionId },
-      {
-        $set: {
-          status: OJSubmissionStatuses.FAILED,
-          verdict: SubmissionVerdicts.SYSTEM_ERROR,
-          score: 0,
-          'judge.lastStatus': 'FAILED',
-          'judge.lastMessage': message,
-          'judge.finishedAt': now,
-          'judge.leaseOwner': null,
-          'judge.leaseExpireAt': null,
-          'result.message': message,
-          'result.score': 0,
-          updatedAt: now,
-        },
-        $inc: {
-          'judge.retryCount': 1,
-        },
-      },
+      buildSubmissionFailedUpdate(message, now),
     );
   }
 
