@@ -17,6 +17,7 @@ describe('shared rendered views and assets', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('href="/assets/pico.classless.min.css"');
     expect(response.body).toContain('href="/assets/katex.min.css"');
+    expect(response.body).toContain('href="/assets/site.css"');
     expect(response.body).not.toContain('https://cdn.jsdelivr.net');
     expect(response.body).toContain('href="/favicon.svg"');
     expect(response.body).toContain('<nav');
@@ -75,6 +76,10 @@ describe('shared rendered views and assets', () => {
       method: 'GET',
       url: '/assets/katex.min.css',
     });
+    const site = await app.inject({
+      method: 'GET',
+      url: '/assets/site.css',
+    });
 
     expect(pico.statusCode).toBe(200);
     expect(pico.headers['content-type']).toContain('text/css');
@@ -83,6 +88,11 @@ describe('shared rendered views and assets', () => {
     expect(katex.headers['content-type']).toContain('text/css');
     expect(katex.headers['cache-control']).toBe('no-store');
     expect(katex.body).toContain('katex');
+    expect(site.statusCode).toBe(200);
+    expect(site.headers['content-type']).toContain('text/css');
+    expect(site.headers['cache-control']).toBe('no-store');
+    expect(site.body).toContain('.site-header');
+    expect(site.body).toContain('.data-table');
   });
 
   it('serves local page javascript assets', async () => {

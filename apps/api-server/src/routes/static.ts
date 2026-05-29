@@ -64,6 +64,7 @@ const assetManifest = new Map<string, AssetManifestEntry>([
   ['/favicon.svg', textAsset(['assets', 'favicon.svg'], 'image/svg+xml')],
   ['/assets/pico.classless.min.css', textAsset(['assets', 'pico.classless.min.css'], 'text/css')],
   ['/assets/katex.min.css', textAsset(['assets', 'katex.min.css'], 'text/css')],
+  ['/assets/site.css', textAsset(['assets', 'site.css'], 'text/css')],
   ['/assets/axios.min.js', textAsset(['assets', 'axios.min.js'], 'application/javascript; charset=utf-8')],
   ['/assets/form-utils.js', textAsset(['assets', 'form-utils.js'], 'application/javascript; charset=utf-8')],
   ['/assets/register.js', textAsset(['assets', 'register.js'], 'application/javascript; charset=utf-8')],
