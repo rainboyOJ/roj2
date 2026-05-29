@@ -101,3 +101,41 @@ export function buildSessionDocument(userId: string, now: Date, ttlMs: number): 
     updatedAt: now,
   };
 }
+
+export function buildApproveUserUpdate(adminUserId: string, now: Date) {
+  return {
+    approvalStatus: 'approved' as const,
+    approvedBy: adminUserId,
+    approvedAt: now,
+    rejectedReason: null,
+    updatedAt: now,
+  };
+}
+
+export function buildRejectUserUpdate(adminUserId: string, reason: string, now: Date) {
+  return {
+    approvalStatus: 'rejected' as const,
+    approvedBy: adminUserId,
+    approvedAt: now,
+    rejectedReason: reason,
+    updatedAt: now,
+  };
+}
+
+export function buildUserClassNameUpdate(className: string, now: Date) {
+  return {
+    className,
+    approvalStatus: 'pending' as const,
+    approvedBy: null,
+    approvedAt: null,
+    rejectedReason: null,
+    updatedAt: now,
+  };
+}
+
+export function buildResetPasswordUpdate(password: string, now: Date) {
+  return {
+    passwordHash: hashPassword(password),
+    updatedAt: now,
+  };
+}

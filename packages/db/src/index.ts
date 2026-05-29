@@ -120,8 +120,12 @@ import {
   type ProblemSetInput,
 } from './problem-set-documents.ts';
 export {
+  buildApproveUserUpdate,
+  buildRejectUserUpdate,
+  buildResetPasswordUpdate,
   buildSessionDocument,
   buildStudentUserDocument,
+  buildUserClassNameUpdate,
   hashPassword,
   mapUserToSessionRecord,
   verifyPassword,
@@ -129,9 +133,12 @@ export {
   type SessionUserRecord,
 } from './users.ts';
 import {
+  buildApproveUserUpdate,
+  buildRejectUserUpdate,
+  buildResetPasswordUpdate,
   buildSessionDocument,
   buildStudentUserDocument,
-  hashPassword,
+  buildUserClassNameUpdate,
   mapUserToSessionRecord,
   verifyPassword,
   type RegisterUserInput,
@@ -902,13 +909,7 @@ export class RojDb {
     await this.users().updateOne(
       { _id: userId },
       {
-        $set: {
-          approvalStatus: 'approved',
-          approvedBy: adminUserId,
-          approvedAt: now,
-          rejectedReason: null,
-          updatedAt: now,
-        },
+        $set: buildApproveUserUpdate(adminUserId, now),
       },
     );
   }
@@ -918,13 +919,7 @@ export class RojDb {
     await this.users().updateOne(
       { _id: userId },
       {
-        $set: {
-          approvalStatus: 'rejected',
-          approvedBy: adminUserId,
-          approvedAt: now,
-          rejectedReason: reason,
-          updatedAt: now,
-        },
+        $set: buildRejectUserUpdate(adminUserId, reason, now),
       },
     );
   }
@@ -940,14 +935,7 @@ export class RojDb {
     await this.users().updateOne(
       { _id: userId },
       {
-        $set: {
-          className,
-          approvalStatus: 'pending',
-          approvedBy: null,
-          approvedAt: null,
-          rejectedReason: null,
-          updatedAt: now,
-        },
+        $set: buildUserClassNameUpdate(className, now),
       },
     );
   }
@@ -956,10 +944,7 @@ export class RojDb {
     await this.users().updateOne(
       { _id: userId },
       {
-        $set: {
-          passwordHash: hashPassword(password),
-          updatedAt: new Date(),
-        },
+        $set: buildResetPasswordUpdate(password, new Date()),
       },
     );
   }
