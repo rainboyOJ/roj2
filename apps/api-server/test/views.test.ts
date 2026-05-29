@@ -17,6 +17,7 @@ describe('shared rendered views and assets', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('href="/assets/pico.classless.min.css"');
     expect(response.body).toContain('href="/assets/katex.min.css"');
+    expect(response.body).toContain('href="/assets/notyf.min.css"');
     expect(response.body).toContain('href="/assets/site.css"');
     expect(response.body).not.toContain('https://cdn.jsdelivr.net');
     expect(response.body).toContain('href="/favicon.svg"');
@@ -99,6 +100,9 @@ describe('shared rendered views and assets', () => {
     const app = buildApp(createServices());
 
     const axios = await app.inject({ method: 'GET', url: '/assets/axios.min.js' });
+    const notyf = await app.inject({ method: 'GET', url: '/assets/notyf.min.js' });
+    const notyfCss = await app.inject({ method: 'GET', url: '/assets/notyf.min.css' });
+    const notify = await app.inject({ method: 'GET', url: '/assets/notify.js' });
     const register = await app.inject({ method: 'GET', url: '/assets/register.js' });
     const login = await app.inject({ method: 'GET', url: '/assets/login.js' });
     const formUtils = await app.inject({ method: 'GET', url: '/assets/form-utils.js' });
@@ -113,6 +117,19 @@ describe('shared rendered views and assets', () => {
     expect(axios.statusCode).toBe(200);
     expect(axios.headers['content-type']).toContain('application/javascript');
     expect(axios.body).toContain('axios');
+    expect(notyf.statusCode).toBe(200);
+    expect(notyf.headers['content-type']).toContain('application/javascript');
+    expect(notyf.body).toContain('Notyf');
+    expect(notyfCss.statusCode).toBe(200);
+    expect(notyfCss.headers['content-type']).toContain('text/css');
+    expect(notyfCss.body).toContain('notyf');
+    expect(notify.statusCode).toBe(200);
+    expect(notify.headers['content-type']).toContain('application/javascript');
+    expect(notify.body).toContain('RojNotify');
+    expect(notify.body).toContain('escapeHtml');
+    expect(notify.body).toContain('&lt;');
+    expect(notify.body).toContain("x: 'center'");
+    expect(notify.body).toContain("y: 'top'");
     expect(register.statusCode).toBe(200);
     expect(register.headers['content-type']).toContain('application/javascript');
     expect(register.body).toContain('/api/register');
@@ -156,6 +173,10 @@ describe('shared rendered views and assets', () => {
     expect(adminUsers.body).toContain('/api/admin/users');
     expect(adminUsers.body).toContain('confirmMessage');
     expect(adminUsers.body).toContain('window.confirm');
+    expect(adminUsers.body).toContain('RojNotify');
+    expect(adminUsers.body).not.toContain('window.alert');
+    expect(adminProblems.body).toContain('RojNotify');
+    expect(adminProblems.body).not.toContain('window.alert');
     const missing = await app.inject({ method: 'GET', url: '/assets/missing.js' });
     expect(missing.statusCode).toBe(404);
     expect(missing.headers['cache-control']).toBeUndefined();

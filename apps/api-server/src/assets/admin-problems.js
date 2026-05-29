@@ -3,6 +3,11 @@
     return;
   }
   const formUtils = window.RojFormUtils;
+  const notify = window.RojNotify || {
+    error(message) {
+      window.console.error(message);
+    },
+  };
 
   document.querySelectorAll('.admin-publish-problem-form').forEach((form) => {
     form.addEventListener('submit', async (event) => {
@@ -13,7 +18,7 @@
         await window.axios.post(`/api/admin/problems/${encodeURIComponent(problemId)}/publish`);
         window.location.reload();
       } catch (error) {
-        window.alert(formUtils.serverMessage(
+        notify.error(formUtils.serverMessage(
           error,
           {},
           '发布题目失败，请检查后重试。',

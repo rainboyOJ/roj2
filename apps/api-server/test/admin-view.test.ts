@@ -26,6 +26,8 @@ describe('admin views', () => {
     expect(response.body).toContain('name="pid"');
     expect(response.body).toContain('name="statementMarkdown" required');
     expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/notyf.min.js"');
+    expect(response.body).toContain('src="/assets/notify.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-problem-form.js"');
     expect(response.body).toContain('题目管理');
@@ -72,6 +74,8 @@ describe('admin views', () => {
     expect(response.body).toContain('编辑题目');
     expect(response.body).toContain('A + B Problem');
     expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/notyf.min.js"');
+    expect(response.body).toContain('src="/assets/notify.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-problem-form.js"');
   });
@@ -134,6 +138,8 @@ describe('admin views', () => {
     expect(response.body).toContain('刷新');
     expect(response.body).toContain('href="/admin/users"');
     expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/notyf.min.js"');
+    expect(response.body).toContain('src="/assets/notify.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/admin-users.js"');
   });

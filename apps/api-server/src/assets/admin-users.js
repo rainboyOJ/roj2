@@ -3,6 +3,11 @@
     return;
   }
   const formUtils = window.RojFormUtils;
+  const notify = window.RojNotify || {
+    error(message) {
+      window.console.error(message);
+    },
+  };
 
   const findSubmitter = (event) => {
     if (event.submitter instanceof HTMLElement) {
@@ -96,7 +101,7 @@
 
     const requiredCheckedName = form.dataset.requireChecked;
     if (requiredCheckedName && !hasCheckedInput(form, requiredCheckedName)) {
-      window.alert(form.dataset.emptyMessage || '请先选择需要处理的用户');
+      notify.error(form.dataset.emptyMessage || '请先选择需要处理的用户');
       return;
     }
 
@@ -104,7 +109,7 @@
     if (requiredPasswordName) {
       const input = getPasswordInput(form, requiredPasswordName);
       if (!input || input.value.trim() === '') {
-        window.alert(form.dataset.passwordEmptyMessage || '请先输入新密码');
+        notify.error(form.dataset.passwordEmptyMessage || '请先输入新密码');
         if (input) {
           input.focus();
         }
@@ -125,7 +130,7 @@
       await submitApiAction(action, payloadForForm(form, action));
       window.location.reload();
     } catch (error) {
-      window.alert(formUtils.serverMessage(
+      notify.error(formUtils.serverMessage(
         error,
         {
           'No users selected': '请先选择需要处理的用户。',

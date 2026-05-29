@@ -7,5 +7,7 @@ mixin pageScript(src, type)
 mixin formScripts(pageScriptSrc, needsAxios)
   if needsAxios
     +pageScript('/assets/axios.min.js')
+  +pageScript('/assets/notyf.min.js')
+  +pageScript('/assets/notify.js')
   +pageScript('/assets/form-utils.js')
   +pageScript(`/assets/${pageScriptSrc}`)
