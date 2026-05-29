@@ -36,7 +36,7 @@
 
 ### 2.1 拆分后台 admin 路由
 
-- [ ] 按领域拆分 `apps/api-server/src/routes/admin.ts`
+- [x] 按领域拆分 `apps/api-server/src/routes/admin.ts`
 
 涉及位置：
 
@@ -84,7 +84,7 @@
 
 ### 2.2 提取后台表单解析、分页、错误处理 helper
 
-- [ ] 提取后台通用表单解析、分页解析、错误处理逻辑
+- [x] 提取后台通用表单解析、分页解析、错误处理逻辑
 
 涉及位置：
 
@@ -130,7 +130,7 @@
 
 ### 2.3 拆分 `packages/db/src/index.ts`
 
-- [ ] 逐步拆分 `packages/db/src/index.ts`
+- [x] 逐步拆分 `packages/db/src/index.ts`
 
 涉及位置：
 
@@ -184,7 +184,7 @@
 
 ### 3.1 拆分 `app.ts` 中的类型和服务接口
 
-- [ ] 将 ViewModel 和 `ApiServerServices` 从 `apps/api-server/src/app.ts` 移出
+- [x] 将 ViewModel 和 `ApiServerServices` 从 `apps/api-server/src/app.ts` 移出
 
 涉及位置：
 
@@ -217,7 +217,7 @@
 
 ### 3.2 拆分 `index.ts` 中的 mapper 和 production service adapter
 
-- [ ] 将 DB 文档到 ViewModel 的 mapper 从 `apps/api-server/src/index.ts` 移出
+- [x] 将 DB 文档到 ViewModel 的 mapper 从 `apps/api-server/src/index.ts` 移出
 
 涉及位置：
 
@@ -253,7 +253,7 @@
 
 ### 3.3 将 `layout.pug` 中的大段 CSS 移到静态资源
 
-- [ ] 将 `apps/api-server/src/views/layout.pug` 中的大段 CSS 移到本地 CSS 文件
+- [x] 将 `apps/api-server/src/views/layout.pug` 中的大段 CSS 移到本地 CSS 文件
 
 涉及位置：
 
@@ -288,7 +288,7 @@
 
 ### 3.4 拆分大型页面测试
 
-- [ ] 拆分 `apps/api-server/test/views.test.ts`
+- [x] 拆分 `apps/api-server/test/views.test.ts`
 
 涉及位置：
 
@@ -333,7 +333,7 @@
 
 ### 4.1 提取 Pug 页面中重复的表格、按钮、状态展示结构
 
-- [ ] 增加 Pug mixin，减少页面重复模板
+- [x] 增加 Pug mixin，减少页面重复模板
 
 涉及位置：
 
@@ -374,7 +374,7 @@
 
 ### 4.2 整理 ROJ 题目导入脚本
 
-- [ ] 拆分 `scripts/import_roj_problems.ts`
+- [x] 拆分 `scripts/import_roj_problems.ts`
 
 涉及位置：
 
@@ -410,7 +410,7 @@
 
 ### 4.3 未来拆分 `packages/shared/src/index.ts`
 
-- [ ] 后续按领域拆分 `packages/shared/src/index.ts`
+- [x] 后续按领域拆分 `packages/shared/src/index.ts`
 
 涉及位置：
 
@@ -447,10 +447,10 @@
 
 ### 第一阶段：低风险、高收益，可快速完成
 
-- [ ] 拆分 `views.test.ts`，让后续重构有更清晰的测试保护网。
-- [ ] 提取后台表单解析、分页、错误返回 helper。
-- [ ] 把 `app.ts` 的 ViewModel / Service 类型移出。
-- [ ] 把 `index.ts` 的 mapper 移出。
+- [x] 拆分 `views.test.ts`，让后续重构有更清晰的测试保护网。
+- [x] 提取后台表单解析、分页、错误返回 helper。
+- [x] 把 `app.ts` 的 ViewModel / Service 类型移出。
+- [x] 把 `index.ts` 的 mapper 移出。
 
 目标：
 
@@ -460,9 +460,9 @@
 
 ### 第二阶段：中等风险，需要更多测试覆盖
 
-- [ ] 按领域拆分 `routes/admin.ts`，保持 URL 完全不变。
-- [ ] 把 `layout.pug` 的 CSS 移到静态 CSS 文件。
-- [ ] 给后台列表、状态、按钮补 Pug mixin，减少重复模板。
+- [x] 按领域拆分 `routes/admin.ts`，保持 URL 完全不变。
+- [x] 把 `layout.pug` 的 CSS 移到静态 CSS 文件。
+- [x] 给后台列表、状态、按钮补 Pug mixin，减少重复模板。
 
 目标：
 
@@ -471,10 +471,10 @@
 
 ### 第三阶段：长期结构优化
 
-- [ ] 分领域拆 `packages/db/src/index.ts`。
-- [ ] 逐步把 `ApiServerServices` 从大接口拆成领域服务。
-- [ ] 整理脚本模块，统一导入、迁移、smoke test 的 HTTP/DB helper。
-- [ ] 视情况拆分 `packages/shared/src/index.ts`。
+- [x] 分领域拆 `packages/db/src/index.ts`。
+- [x] 逐步把 `ApiServerServices` 从大接口拆成领域服务。
+- [x] 整理脚本模块，统一导入、迁移、smoke test 的 HTTP/DB helper。
+- [x] 视情况拆分 `packages/shared/src/index.ts`。
 
 目标：
 
@@ -519,4 +519,3 @@
 4. 修改后运行相关测试。
 5. 如涉及页面样式，使用 Playwright 做视觉检查。
 6. 提交时保持单一关注点。
-
