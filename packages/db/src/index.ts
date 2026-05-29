@@ -27,6 +27,18 @@ export {
 } from './default-problems.ts';
 export { seedDemoData } from './demo-seed.ts';
 import { seedDemoData } from './demo-seed.ts';
+export {
+  buildClassDocument,
+  buildDictionaryUpdateFields,
+  buildGradeDocument,
+  type DictionaryInput,
+} from './dictionaries.ts';
+import {
+  buildClassDocument,
+  buildDictionaryUpdateFields,
+  buildGradeDocument,
+  type DictionaryInput,
+} from './dictionaries.ts';
 export { ensureRojIndexes } from './indexes.ts';
 import { ensureRojIndexes } from './indexes.ts';
 export {
@@ -727,75 +739,35 @@ export class RojDb {
   }
 
   // 年级是注册流程依赖的字典表。
-  async createGrade(input: {
-    name: string;
-    isActive: boolean;
-    order: number;
-  }) {
+  async createGrade(input: DictionaryInput) {
     const now = new Date();
-    const grade: GradeDocument = {
-      _id: new ObjectId().toHexString(),
-      name: input.name,
-      isActive: input.isActive,
-      order: input.order,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const grade = buildGradeDocument(input, now);
     await this.grades().insertOne(grade);
     return grade;
   }
 
-  async updateGrade(id: string, input: {
-    name: string;
-    isActive: boolean;
-    order: number;
-  }) {
+  async updateGrade(id: string, input: DictionaryInput) {
     await this.grades().updateOne(
       { _id: id },
       {
-        $set: {
-          name: input.name,
-          isActive: input.isActive,
-          order: input.order,
-          updatedAt: new Date(),
-        },
+        $set: buildDictionaryUpdateFields(input, new Date()),
       },
     );
   }
 
   // 班级是注册流程依赖的字典表。
-  async createClass(input: {
-    name: string;
-    isActive: boolean;
-    order: number;
-  }) {
+  async createClass(input: DictionaryInput) {
     const now = new Date();
-    const classRecord: ClassDocument = {
-      _id: new ObjectId().toHexString(),
-      name: input.name,
-      isActive: input.isActive,
-      order: input.order,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const classRecord = buildClassDocument(input, now);
     await this.classes().insertOne(classRecord);
     return classRecord;
   }
 
-  async updateClass(id: string, input: {
-    name: string;
-    isActive: boolean;
-    order: number;
-  }) {
+  async updateClass(id: string, input: DictionaryInput) {
     await this.classes().updateOne(
       { _id: id },
       {
-        $set: {
-          name: input.name,
-          isActive: input.isActive,
-          order: input.order,
-          updatedAt: new Date(),
-        },
+        $set: buildDictionaryUpdateFields(input, new Date()),
       },
     );
   }
