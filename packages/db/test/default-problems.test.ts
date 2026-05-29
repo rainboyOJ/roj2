@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildEnabledLanguagesUpdate,
+  buildListPageSizeUpdate,
   isDefaultProblemDirectoryName,
   normalizeListPageSize,
   parseEnabledLanguagesEnv,
@@ -82,5 +84,18 @@ describe('pagination settings defaults', () => {
     expect(normalizeListPageSize(100)).toBe(100);
     expect(normalizeListPageSize(500)).toBe(20);
     expect(normalizeListPageSize(undefined)).toBe(20);
+  });
+
+  it('builds site settings update fields', () => {
+    const now = new Date('2026-05-29T13:10:00.000Z');
+
+    expect(buildEnabledLanguagesUpdate(['python'], now)).toEqual({
+      enabledLanguages: ['python'],
+      updatedAt: now,
+    });
+    expect(buildListPageSizeUpdate(500, now)).toEqual({
+      listPageSize: 20,
+      updatedAt: now,
+    });
   });
 });

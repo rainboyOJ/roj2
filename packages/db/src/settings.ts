@@ -23,3 +23,17 @@ export function normalizeListPageSize(value: unknown): ListPageSize {
     ? pageSize as ListPageSize
     : DEFAULT_LIST_PAGE_SIZE;
 }
+
+export function buildEnabledLanguagesUpdate(enabledLanguages: AppLanguage[], now: Date) {
+  return {
+    enabledLanguages,
+    updatedAt: now,
+  };
+}
+
+export function buildListPageSizeUpdate(listPageSize: number, now: Date) {
+  return {
+    listPageSize: normalizeListPageSize(listPageSize),
+    updatedAt: now,
+  };
+}

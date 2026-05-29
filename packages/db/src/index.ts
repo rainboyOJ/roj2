@@ -44,11 +44,15 @@ import { ensureRojIndexes } from './indexes.ts';
 export {
   ALLOWED_LIST_PAGE_SIZES,
   DEFAULT_LIST_PAGE_SIZE,
+  buildEnabledLanguagesUpdate,
+  buildListPageSizeUpdate,
   normalizeListPageSize,
   parseEnabledLanguagesEnv,
   type ListPageSize,
 } from './settings.ts';
 import {
+  buildEnabledLanguagesUpdate,
+  buildListPageSizeUpdate,
   normalizeListPageSize,
   type ListPageSize,
 } from './settings.ts';
@@ -793,10 +797,7 @@ export class RojDb {
     await this.settings().updateOne(
       { _id: 'site_settings' },
       {
-        $set: {
-          enabledLanguages,
-          updatedAt: new Date(),
-        },
+        $set: buildEnabledLanguagesUpdate(enabledLanguages, new Date()),
       },
       { upsert: true },
     );
@@ -806,10 +807,7 @@ export class RojDb {
     await this.settings().updateOne(
       { _id: 'site_settings' },
       {
-        $set: {
-          listPageSize: normalizeListPageSize(listPageSize),
-          updatedAt: new Date(),
-        },
+        $set: buildListPageSizeUpdate(listPageSize, new Date()),
       },
       { upsert: true },
     );
