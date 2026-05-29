@@ -1,8 +1,4 @@
 // 这个文件是项目的数据访问层，负责所有 MongoDB 读写。
-import { readdir, readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import {
   argon2Sync,
   randomBytes,
@@ -35,6 +31,26 @@ import {
 import { extractProblemRefs, renderMarkdown, renderProblemSetMarkdown } from '@roj/markdown-renderer';
 import { MongoClient } from 'mongodb';
 
+export {
+  isDefaultProblemDirectoryName,
+  readDefaultProblemSeeds,
+  type DefaultProblemSeed,
+} from './default-problems.ts';
+import { readDefaultProblemSeeds } from './default-problems.ts';
+export {
+  ALLOWED_LIST_PAGE_SIZES,
+  DEFAULT_LIST_PAGE_SIZE,
+  normalizeListPageSize,
+  parseEnabledLanguagesEnv,
+  type ListPageSize,
+} from './settings.ts';
+import {
+  DEFAULT_LIST_PAGE_SIZE,
+  normalizeListPageSize,
+  parseEnabledLanguagesEnv,
+  type ListPageSize,
+} from './settings.ts';
+
 function debugJudge(message: string, details?: Record<string, unknown>) {
   if (process.env.DEBUG_JUDGE !== '1') {
     return;
@@ -42,66 +58,6 @@ function debugJudge(message: string, details?: Record<string, unknown>) {
 
   const suffix = details ? ` ${JSON.stringify(details)}` : '';
   console.log(`[DEBUG] [db] ${message}${suffix}`);
-}
-
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const defaultProblemsRoot = path.join(packageRoot, 'default_problems');
-
-interface DefaultProblemSeed {
-  pid: string;
-  title: string;
-  statementMarkdown: string;
-  allowLanguages: AppLanguage[];
-}
-
-async function readDefaultProblemSeed(pid: string, rootDir = defaultProblemsRoot): Promise<DefaultProblemSeed> {
-  const problemDir = path.join(rootDir, pid);
-  const metadata = JSON.parse(
-    await readFile(path.join(problemDir, 'metadata.json'), 'utf8'),
-  ) as {
-    title?: unknown;
-    allowLanguages?: unknown;
-  };
-  const statementMarkdown = await readFile(path.join(problemDir, 'content.md'), 'utf8');
-  const allowLanguages = Array.isArray(metadata.allowLanguages)
-    ? metadata.allowLanguages.filter((language): language is AppLanguage => (
-      language === 'cpp' || language === 'python'
-    ))
-    : [];
-
-  return {
-    pid,
-    title: typeof metadata.title === 'string' ? metadata.title : pid,
-    statementMarkdown,
-    allowLanguages: allowLanguages.length > 0 ? allowLanguages : ['cpp', 'python'],
-  };
-}
-
-export function isDefaultProblemDirectoryName(name: string) {
-  return /^[0-9]+$/.test(name);
-}
-
-export async function readDefaultProblemSeeds(rootDir = defaultProblemsRoot): Promise<DefaultProblemSeed[]> {
-  const entries = await readdir(rootDir, { withFileTypes: true });
-  const pids = entries
-    .filter((entry) => entry.isDirectory() && isDefaultProblemDirectoryName(entry.name))
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-  return Promise.all(pids.map((pid) => readDefaultProblemSeed(pid, rootDir)));
-}
-
-export function parseEnabledLanguagesEnv(value: string | undefined): AppLanguage[] {
-  if (!value) {
-    return ['cpp', 'python'];
-  }
-
-  const languages = value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item): item is AppLanguage => item === 'cpp' || item === 'python');
-  const uniqueLanguages = Array.from(new Set(languages));
-  return uniqueLanguages.length > 0 ? uniqueLanguages : ['cpp', 'python'];
 }
 
 function escapeRegexText(value: string) {
@@ -149,17 +105,6 @@ export interface DbConfig {
 export interface SubmissionListFilters {
   pid?: string;
   user?: string;
-}
-
-export const DEFAULT_LIST_PAGE_SIZE = 20;
-export const ALLOWED_LIST_PAGE_SIZES = [20, 50, 100] as const;
-export type ListPageSize = (typeof ALLOWED_LIST_PAGE_SIZES)[number];
-
-export function normalizeListPageSize(value: unknown): ListPageSize {
-  const pageSize = Number(value);
-  return ALLOWED_LIST_PAGE_SIZES.includes(pageSize as ListPageSize)
-    ? pageSize as ListPageSize
-    : DEFAULT_LIST_PAGE_SIZE;
 }
 
 // 持久化 judge 返回快照时使用的输入结构。
