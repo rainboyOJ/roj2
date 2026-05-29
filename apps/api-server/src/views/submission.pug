@@ -1,5 +1,6 @@
 //- 单条提交详情页：展示当前 OJ 状态、judge 状态和 judge message。
 extends layout.pug
+include mixins/assets.pug
 include mixins/status.pug
 
 block content
@@ -95,4 +96,4 @@ block content
             .form-actions
               a(href='/submissions' role="button" class="secondary")= "返回提交列表"
               a(href='/problems' role="button" class="contrast")= "打开题目列表"
-    script(src=assetUrl('/assets/submission-detail.js'))
+    +pageScript('/assets/submission-detail.js')
