@@ -1,10 +1,5 @@
 // 这个文件是项目的数据访问层，负责所有 MongoDB 读写。
-import { ObjectId } from 'mongodb';
 import {
-  OJSubmissionStatuses,
-  SubmissionVerdicts,
-  createEmptyJudgeState,
-  createEmptyResultState,
   type AppLanguage,
   type ClassDocument,
   type CounterDocument,
@@ -75,7 +70,23 @@ import {
   type ListPageSize,
 } from './settings.ts';
 export { buildLeaseUpdate } from './submission-lease.ts';
-import { buildLeaseUpdate } from './submission-lease.ts';
+export {
+  claimPendingSubmission,
+  createSubmission,
+  markSubmissionFailed,
+  saveJudgeAck,
+  saveJudgeSnapshot,
+  type DebugJudge,
+  type SubmissionCommandCollections,
+} from './submission-commands.ts';
+import {
+  claimPendingSubmission,
+  createSubmission,
+  markSubmissionFailed,
+  saveJudgeAck,
+  saveJudgeSnapshot,
+  type SubmissionCommandCollections,
+} from './submission-commands.ts';
 export {
   buildSubmissionListFilter,
   type SubmissionListFilters,
@@ -118,10 +129,6 @@ export {
   type JudgeSnapshotPersistInput,
 } from './submission-updates.ts';
 import {
-  buildClearSubmissionLeaseUpdate,
-  buildJudgeAckUpdate,
-  buildJudgeSnapshotUpdate,
-  buildSubmissionFailedUpdate,
   type JudgeSnapshotPersistInput,
 } from './submission-updates.ts';
 export {
@@ -226,7 +233,6 @@ export {
   type UserCollections,
 } from './users.ts';
 import {
-  buildStudentUserDocument,
   approveUser,
   createSession,
   deleteUser,
@@ -339,6 +345,17 @@ export class RojDb {
     };
   }
 
+  submissionCommandCollections(): SubmissionCommandCollections {
+    return {
+      users: this.users(),
+      problems: this.problems(),
+      counters: this.counters(),
+      settings: this.settings(),
+      submissions: this.submissions(),
+      userProblemProgress: this.userProblemProgress(),
+    };
+  }
+
   // 初始化项目需要的索引。
   async ensureIndexes() {
     await ensureRojIndexes({
@@ -393,54 +410,7 @@ export class RojDb {
 
   // 创建一条等待 dispatcher 派发的 submission。
   async createSubmission(input: CreateSubmissionInput) {
-    const user = await this.users().findOne({ _id: input.userId });
-    if (!user) {
-      throw new Error('user not found');
-    }
-
-    const problem = await this.getProblemByPid(input.pid);
-    if (!problem) {
-      throw new Error(`problem ${input.pid} not found`);
-    }
-    const enabledLanguages = await this.getEnabledLanguages();
-    if (!enabledLanguages.includes(input.language)) {
-      throw new Error(`language ${input.language} is disabled`);
-    }
-    if (!problem.allowLanguages.includes(input.language)) {
-      throw new Error(`language ${input.language} is not allowed for ${input.pid}`);
-    }
-
-    const now = new Date();
-    const submissionNo = await this.nextCounterValue('submissionNo');
-    const submission: SubmissionDocument = {
-      _id: new ObjectId().toHexString(),
-      submissionNo,
-      userId: user._id,
-      problemId: problem._id,
-      pid: problem.pid,
-      username: user.username,
-      displayName: user.name,
-      language: input.language,
-      sourceCode: input.sourceCode,
-      status: OJSubmissionStatuses.PENDING_DISPATCH,
-      verdict: SubmissionVerdicts.PENDING,
-      score: 0,
-      judge: createEmptyJudgeState(),
-      result: createEmptyResultState(),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    await this.submissions().insertOne(submission);
-    await this.markProblemAttempted(submission.userId, submission.pid, now);
-    debugJudge('submission created', {
-      localSubmissionId: submission._id,
-      submissionNo: submission.submissionNo,
-      pid: submission.pid,
-      userId: submission.userId,
-      language: submission.language,
-    });
-    return submission;
+    return createSubmission(this.submissionCommandCollections(), input, debugJudge);
   }
 
   async getSubmissionById(id: string) {
@@ -527,100 +497,36 @@ export class RojDb {
 
   // 原子抢占一条待派发 submission，供 dispatcher 使用。
   async claimPendingSubmission(leaseOwner: string, leaseMs: number) {
-    const now = new Date();
-    const result = await this.submissions().findOneAndUpdate(
-      {
-        status: OJSubmissionStatuses.PENDING_DISPATCH,
-        $or: [
-          { 'judge.leaseExpireAt': null },
-          { 'judge.leaseExpireAt': { $lt: now } },
-        ],
-      },
-      buildLeaseUpdate(leaseOwner, now, leaseMs),
-      {
-        sort: { createdAt: 1 },
-        returnDocument: 'after',
-      },
+    return claimPendingSubmission(
+      this.submissionCommandCollections(),
+      leaseOwner,
+      leaseMs,
+      debugJudge,
     );
-
-    if (result) {
-      debugJudge('submission claimed', {
-        localSubmissionId: result._id,
-        pid: result.pid,
-        leaseOwner,
-      });
-    }
-
-    return result;
   }
 
   // 保存 judge 受理任务后的 ack。
   async saveJudgeAck(localSubmissionId: string, ack: JudgeSnapshotPersistInput) {
-    const now = new Date();
-    debugJudge('save judge ack', {
-      localSubmissionId,
-      judgeSubmissionId: ack.submissionId,
-      status: ack.status,
-      verdict: ack.verdict,
-      cases: ack.case_results.length,
-    });
-    await this.submissions().updateOne(
-      { _id: localSubmissionId },
-      buildJudgeAckUpdate(ack, now),
-    );
+    await saveJudgeAck(this.submissionCommandCollections(), localSubmissionId, ack, debugJudge);
   }
 
   // 保存轮询得到的 judge 快照，并同步更新 OJ 内部状态。
   async saveJudgeSnapshot(localSubmissionId: string, snapshot: JudgeSnapshotPersistInput) {
-    const now = new Date();
-    const {
-      mapped,
-      score,
-      update,
-    } = buildJudgeSnapshotUpdate(snapshot, now);
-    const submission = await this.submissions().findOne(
-      { _id: localSubmissionId },
-      { projection: { userId: 1, pid: 1 } },
-    );
-    debugJudge('save judge snapshot', {
+    await saveJudgeSnapshot(
+      this.submissionCommandCollections(),
       localSubmissionId,
-      judgeSubmissionId: snapshot.submissionId,
-      judgeStatus: snapshot.status,
-      ojStatus: mapped.status,
-      verdict: mapped.verdict,
-      score,
-      cases: snapshot.case_results.length,
-    });
-    await this.submissions().updateOne(
-      { _id: localSubmissionId },
-      update,
+      snapshot,
+      debugJudge,
     );
-
-    if (
-      mapped.status === OJSubmissionStatuses.FINISHED ||
-      mapped.status === OJSubmissionStatuses.FAILED
-    ) {
-      await this.submissions().updateOne(
-        { _id: localSubmissionId },
-        buildClearSubmissionLeaseUpdate(),
-      );
-    }
-
-    if (mapped.verdict === SubmissionVerdicts.AC && submission) {
-      await this.markProblemAccepted(submission.userId, submission.pid, now);
-    }
   }
 
   // 记录系统级失败，例如 judge 通信或 dispatcher 自身异常。
   async markSubmissionFailed(localSubmissionId: string, message: string) {
-    const now = new Date();
-    debugJudge('mark submission failed', {
+    await markSubmissionFailed(
+      this.submissionCommandCollections(),
       localSubmissionId,
       message,
-    });
-    await this.submissions().updateOne(
-      { _id: localSubmissionId },
-      buildSubmissionFailedUpdate(message, now),
+      debugJudge,
     );
   }
 
