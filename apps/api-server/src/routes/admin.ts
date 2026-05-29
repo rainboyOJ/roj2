@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { RouteContext } from '../http/context.ts';
 import { messageFromError } from '../http/form-errors.ts';
+import { sendValidationError } from '../http/validation.ts';
 import {
   createClassSchema,
   createGradeSchema,
@@ -581,10 +582,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = resetPasswordSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid password payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid password payload', parsed.error.issues);
     }
 
     const params = request.params as { id: string };
@@ -635,10 +633,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createGradeSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid grade payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid grade payload', parsed.error.issues);
     }
 
     const created = await services.createGrade(parsed.data);
@@ -658,10 +653,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createGradeSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid grade payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid grade payload', parsed.error.issues);
     }
 
     const params = request.params as { id: string };
@@ -688,10 +680,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createClassSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid class payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid class payload', parsed.error.issues);
     }
 
     const created = await services.createClass(parsed.data);
@@ -711,10 +700,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createClassSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid class payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid class payload', parsed.error.issues);
     }
 
     const params = request.params as { id: string };
@@ -772,10 +758,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = enabledLanguagesSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid language settings payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid language settings payload', parsed.error.issues);
     }
 
     await services.updateEnabledLanguages(parsed.data.enabledLanguages);
@@ -790,10 +773,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = paginationSettingsSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid pagination settings payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid pagination settings payload', parsed.error.issues);
     }
 
     await services.updateListPageSize(parsed.data.listPageSize);
@@ -808,10 +788,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createProblemSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid problem payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid problem payload', parsed.error.issues);
     }
 
     const created = await services.createProblem(parsed.data);
@@ -829,10 +806,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createProblemSetSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid problem set payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid problem set payload', parsed.error.issues);
     }
 
     const created = await services.createProblemSet(parsed.data);
@@ -917,10 +891,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createProblemSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid problem payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid problem payload', parsed.error.issues);
     }
 
     const params = request.params as { id: string };
@@ -936,10 +907,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
 
     const parsed = createProblemSetSchema.safeParse(request.body);
     if (!parsed.success) {
-      return reply.code(400).send({
-        message: 'Invalid problem set payload',
-        issues: parsed.error.issues,
-      });
+      return sendValidationError(reply, 'Invalid problem set payload', parsed.error.issues);
     }
 
     const params = request.params as { id: string };
