@@ -161,13 +161,7 @@ export interface AdminProblemViewModel extends ProblemViewModel {
   isVisible: boolean;
 }
 
-export interface ApiServerServices {
-  createSubmission(input: {
-    userId: string;
-    pid: string;
-    language: 'cpp' | 'python';
-    sourceCode: string;
-  }): Promise<CreateSubmissionResult>;
+export interface ProblemServices {
   listProblems(): Promise<ProblemViewModel[]>;
   listProblemsPaginated(pagination: {
     page: number;
@@ -179,6 +173,26 @@ export interface ApiServerServices {
   listProblemsByPids(pids: string[]): Promise<ProblemViewModel[]>;
   listProblemProgressByUser(userId: string): Promise<Map<string, ProblemProgress>>;
   getProblemByPid(pid: string): Promise<ProblemViewModel | null>;
+  listAdminProblems(): Promise<AdminProblemViewModel[]>;
+  getAdminProblemById(id: string): Promise<AdminProblemViewModel | null>;
+  createProblem(input: {
+    pid: string;
+    title: string;
+    statementMarkdown: string;
+    allowLanguages: Array<'cpp' | 'python'>;
+    isVisible: boolean;
+  }): Promise<{ id: string; pid: string }>;
+  updateProblem(id: string, input: {
+    pid: string;
+    title: string;
+    statementMarkdown: string;
+    allowLanguages: Array<'cpp' | 'python'>;
+    isVisible: boolean;
+  }): Promise<void>;
+  publishProblem(id: string): Promise<void>;
+}
+
+export interface ProblemSetServices {
   listPublishedProblemSets(): Promise<ProblemSetListViewModel[]>;
   getPublishedProblemSetById(id: string): Promise<ProblemSetDetailViewModel | null>;
   listAdminProblemSets(): Promise<AdminProblemSetViewModel[]>;
@@ -192,11 +206,27 @@ export interface ApiServerServices {
     contentMarkdown: string;
   }): Promise<void>;
   publishProblemSet(id: string): Promise<void>;
+}
+
+export interface SubmissionServices {
+  createSubmission(input: {
+    userId: string;
+    pid: string;
+    language: 'cpp' | 'python';
+    sourceCode: string;
+  }): Promise<CreateSubmissionResult>;
   getSubmissionById(id: string): Promise<SubmissionViewModel | null>;
   listSubmissions(user: SessionUser, pagination: {
     page: number;
     pageSize: number;
   }, filters?: SubmissionListFilters): Promise<PaginatedSubmissionsViewModel>;
+  listAdminSubmissions(pagination: {
+    page: number;
+    pageSize: number;
+  }): Promise<PaginatedSubmissionsViewModel>;
+}
+
+export interface UserServices {
   registerUser(input: {
     username: string;
     name: string;
@@ -225,13 +255,13 @@ export interface ApiServerServices {
   }): Promise<PaginatedAdminUsersViewModel>;
   approveUser(userId: string, adminUserId: string): Promise<void>;
   rejectUser(userId: string, adminUserId: string, reason?: string): Promise<void>;
-  listAdminSubmissions(pagination: {
-    page: number;
-    pageSize: number;
-  }): Promise<PaginatedSubmissionsViewModel>;
-  listRanklist(filters?: RanklistFilters): Promise<RanklistEntryViewModel[]>;
-  listContests(): Promise<ContestViewModel[]>;
-  getContestById(id: string): Promise<ContestViewModel | null>;
+  updateProfileClassName(userId: string, className: string): Promise<void>;
+  resetUserPassword(userId: string, password: string): Promise<void>;
+  deleteUser(userId: string): Promise<void>;
+  updateMyPassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
+}
+
+export interface DictionaryServices {
   listGrades(): Promise<GradeViewModel[]>;
   createGrade(input: {
     name: string;
@@ -255,29 +285,30 @@ export interface ApiServerServices {
     isActive: boolean;
     order: number;
   }): Promise<void>;
+}
+
+export interface SettingsServices {
   getEnabledLanguages(): Promise<readonly AppLanguage[]>;
   updateEnabledLanguages(enabledLanguages: AppLanguage[]): Promise<void>;
   getPaginationSettings(): Promise<PaginationSettingsViewModel>;
   updateListPageSize(listPageSize: number): Promise<void>;
-  listAdminProblems(): Promise<AdminProblemViewModel[]>;
-  getAdminProblemById(id: string): Promise<AdminProblemViewModel | null>;
-  createProblem(input: {
-    pid: string;
-    title: string;
-    statementMarkdown: string;
-    allowLanguages: Array<'cpp' | 'python'>;
-    isVisible: boolean;
-  }): Promise<{ id: string; pid: string }>;
-  updateProblem(id: string, input: {
-    pid: string;
-    title: string;
-    statementMarkdown: string;
-    allowLanguages: Array<'cpp' | 'python'>;
-    isVisible: boolean;
-  }): Promise<void>;
-  publishProblem(id: string): Promise<void>;
-  updateProfileClassName(userId: string, className: string): Promise<void>;
-  resetUserPassword(userId: string, password: string): Promise<void>;
-  deleteUser(userId: string): Promise<void>;
-  updateMyPassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
 }
+
+export interface RanklistServices {
+  listRanklist(filters?: RanklistFilters): Promise<RanklistEntryViewModel[]>;
+}
+
+export interface ContestServices {
+  listContests(): Promise<ContestViewModel[]>;
+  getContestById(id: string): Promise<ContestViewModel | null>;
+}
+
+export interface ApiServerServices
+  extends ProblemServices,
+    ProblemSetServices,
+    SubmissionServices,
+    UserServices,
+    DictionaryServices,
+    SettingsServices,
+    RanklistServices,
+    ContestServices {}
