@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -8,79 +8,24 @@ import { createInterface } from 'node:readline/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import {
+  type AdminProblem,
+  type ProblemPayload,
+  extractSessionCookie,
+  normalizeAllowLanguages,
+  normalizeStatement,
+  parsePidSelection,
+  pickConfig,
+  pickStatementFile,
+} from './import_roj/lib.ts';
+
 const execFileAsync = promisify(execFile);
-
-type ProblemPayload = {
-  pid: string;
-  title: string;
-  statementMarkdown: string;
-  allowLanguages: Array<'cpp' | 'python'>;
-  isVisible: boolean;
-};
-
-type AdminProblem = {
-  id: string;
-  pid: string;
-};
-
 const DEFAULT_OJ_URL = 'http://127.0.0.1:3000';
 const DEFAULT_ROJ_ROOT = '/home/rainboy/mycode/problems/roj';
 const DEFAULT_TESTDATA_ROOT = '/home/rainboy/roj_test_dir/judge_server_testData';
 function ask(rl: ReturnType<typeof createInterface>, prompt: string, fallback = ''): Promise<string> {
   const suffix = fallback ? ` [${fallback}]` : '';
   return rl.question(`${prompt}${suffix}: `).then((value) => value.trim() || fallback);
-}
-
-function parsePidSelection(raw: string): string[] {
-  const ids = new Set<number>();
-  for (const part of raw.split(/[\s,，]+/).map((item) => item.trim()).filter(Boolean)) {
-    const rangeMatch = part.match(/^(\d+)\s*[-~]\s*(\d+)$/);
-    if (rangeMatch) {
-      let start = Number(rangeMatch[1]);
-      let end = Number(rangeMatch[2]);
-      if (start > end) {
-        [start, end] = [end, start];
-      }
-      for (let current = start; current <= end; current += 1) {
-        ids.add(current);
-      }
-      continue;
-    }
-
-    if (/^\d+$/.test(part)) {
-      ids.add(Number(part));
-      continue;
-    }
-
-    throw new Error(`invalid problem id expression: ${part}`);
-  }
-  return [...ids].sort((a, b) => a - b).map(String);
-}
-
-function normalizeStatement(text: string): string {
-  const content = text.replace(/^\uFEFF/, '').trim();
-  if (!content) {
-    throw new Error('statement markdown is empty');
-  }
-  return `${content}\n`;
-}
-
-function pickStatementFile(problemDir: string): string {
-  for (const name of ['content.md', 'readme.md', 'statement.md']) {
-    const fullPath = join(problemDir, name);
-    if (existsSync(fullPath) && statSync(fullPath).isFile()) {
-      return fullPath;
-    }
-  }
-  throw new Error(`statement file not found in ${problemDir}`);
-}
-
-function pickConfig(problemDir: string): Record<string, unknown> {
-  const configPath = join(problemDir, 'config.json');
-  if (!existsSync(configPath)) {
-    throw new Error(`config.json not found in ${problemDir}`);
-  }
-  return JSON.parse(readFileSync(configPath, 'utf-8')) as Record<string, unknown>;
 }
 
 async function httpJson<T>(
@@ -127,14 +72,7 @@ async function login(ojUrl: string, username: string, password: string): Promise
     method: 'POST',
     json: { username, password },
   });
-  if (!result.setCookie) {
-    throw new Error('login response did not include session cookie');
-  }
-  const cookieMatch = result.setCookie.match(/roj_session=[^;]+/);
-  if (!cookieMatch) {
-    throw new Error(`unexpected session cookie: ${result.setCookie}`);
-  }
-  return cookieMatch[0];
+  return extractSessionCookie(result.setCookie);
 }
 
 async function listAdminProblems(ojUrl: string, cookie: string): Promise<AdminProblem[]> {
@@ -225,15 +163,12 @@ async function readProblemPayload(rojRoot: string, pid: string): Promise<Problem
   const statementPath = pickStatementFile(problemDir);
   const statementMarkdown = normalizeStatement(await readFile(statementPath, 'utf-8'));
   const title = String(config.title ?? `ROJ ${pid}`);
-  const allowLanguages = Array.isArray(config.allowLanguages)
-    ? config.allowLanguages.filter((item): item is 'cpp' | 'python' => item === 'cpp' || item === 'python')
-    : ['cpp', 'python'];
 
   return {
     pid,
     title,
     statementMarkdown,
-    allowLanguages: allowLanguages.length > 0 ? allowLanguages : ['cpp', 'python'],
+    allowLanguages: normalizeAllowLanguages(config.allowLanguages),
     isVisible: true,
   };
 }
