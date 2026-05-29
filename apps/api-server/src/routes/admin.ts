@@ -8,17 +8,14 @@ import {
   createGradeSchema,
   createProblemSchema,
   createProblemSetSchema,
-  enabledLanguagesSchema,
-  paginationSettingsSchema,
   resetPasswordSchema,
 } from '../http/schemas.ts';
+import { registerAdminSettingsRoutes } from './admin/settings.ts';
 import {
   type AdminFormBody,
   adminUsersPath,
   dictionaryFormValues,
   dictionaryInputFromBody,
-  enabledLanguagesInputFromBody,
-  paginationSettingsInputFromBody,
   parseUserIds,
   problemFormValues,
   problemInputFromBody,
@@ -36,6 +33,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     requireHtmlAdmin,
     services,
   } = context;
+
+  registerAdminSettingsRoutes(app, context);
 
   async function renderAdminUsersError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, user: { id: string }, formError: string) {
     const paginationSettings = await services.getPaginationSettings();
@@ -68,24 +67,6 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       classes,
       formError,
       formValues,
-    });
-  }
-
-  async function renderLanguageSettingsError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, formError: string) {
-    const enabledLanguages = await services.getEnabledLanguages();
-    reply.code(400);
-    return renderPage(request, reply, 'admin-language-settings.pug', {
-      settings: { enabledLanguages },
-      formError,
-    });
-  }
-
-  async function renderPaginationSettingsError(request: Parameters<typeof renderPage>[0], reply: FastifyReply, formError: string) {
-    const settings = await services.getPaginationSettings();
-    reply.code(400);
-    return renderPage(request, reply, 'admin-pagination-settings.pug', {
-      settings,
-      formError,
     });
   }
 
@@ -137,29 +118,6 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     return renderPage(request, reply, 'admin-dashboard.pug');
-  });
-
-  app.get('/admin/settings/languages', async (request, reply) => {
-    const user = await requireHtmlAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const enabledLanguages = await services.getEnabledLanguages();
-    return renderPage(request, reply, 'admin-language-settings.pug', {
-      settings: { enabledLanguages },
-    });
-  });
-
-  app.get('/admin/settings/pagination', async (request, reply) => {
-    const user = await requireHtmlAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    return renderPage(request, reply, 'admin-pagination-settings.pug', {
-      settings: await services.getPaginationSettings(),
-    });
   });
 
   app.get('/admin/users', async (request, reply) => {
@@ -730,56 +688,6 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     };
   });
 
-  app.get('/api/admin/settings/languages', async (request, reply) => {
-    const user = await requireApiAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    return {
-      enabledLanguages: await services.getEnabledLanguages(),
-    };
-  });
-
-  app.get('/api/admin/settings/pagination', async (request, reply) => {
-    const user = await requireApiAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    return services.getPaginationSettings();
-  });
-
-  app.post('/api/admin/settings/languages', async (request, reply) => {
-    const user = await requireApiAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const parsed = enabledLanguagesSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return sendValidationError(reply, 'Invalid language settings payload', parsed.error.issues);
-    }
-
-    await services.updateEnabledLanguages(parsed.data.enabledLanguages);
-    return reply.send({ ok: true });
-  });
-
-  app.post('/api/admin/settings/pagination', async (request, reply) => {
-    const user = await requireApiAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const parsed = paginationSettingsSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return sendValidationError(reply, 'Invalid pagination settings payload', parsed.error.issues);
-    }
-
-    await services.updateListPageSize(parsed.data.listPageSize);
-    return reply.send({ ok: true });
-  });
-
   app.post('/api/admin/problems', async (request, reply) => {
     const user = await requireApiAdmin(request, reply);
     if (!user) {
@@ -1045,51 +953,4 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     return redirectTo(reply, '/admin/problems');
   });
 
-  app.post('/admin/settings/languages', async (request, reply) => {
-    const user = await requireHtmlAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const raw = request.body as AdminFormBody;
-    const parsed = enabledLanguagesSchema.safeParse(enabledLanguagesInputFromBody(raw));
-    if (!parsed.success) {
-      return renderLanguageSettingsError(request, reply, '至少选择一种可用语言。');
-    }
-
-    try {
-      await services.updateEnabledLanguages(parsed.data.enabledLanguages);
-    } catch (error) {
-      return renderLanguageSettingsError(
-        request,
-        reply,
-        messageFromError(error, '保存语言设置失败，请检查后重试。'),
-      );
-    }
-    return redirectTo(reply, '/admin/settings/languages');
-  });
-
-  app.post('/admin/settings/pagination', async (request, reply) => {
-    const user = await requireHtmlAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const raw = request.body as AdminFormBody;
-    const parsed = paginationSettingsSchema.safeParse(paginationSettingsInputFromBody(raw));
-    if (!parsed.success) {
-      return renderPaginationSettingsError(request, reply, '请选择有效的每页数量。');
-    }
-
-    try {
-      await services.updateListPageSize(parsed.data.listPageSize);
-    } catch (error) {
-      return renderPaginationSettingsError(
-        request,
-        reply,
-        messageFromError(error, '保存分页设置失败，请检查后重试。'),
-      );
-    }
-    return redirectTo(reply, '/admin/settings/pagination');
-  });
 }
