@@ -31,12 +31,23 @@ export {
   buildClassDocument,
   buildDictionaryUpdateFields,
   buildGradeDocument,
+  createClass,
+  createGrade,
+  listActiveClasses,
+  listClasses,
+  listGrades,
+  updateClass,
+  updateGrade,
   type DictionaryInput,
 } from './dictionaries.ts';
 import {
-  buildClassDocument,
-  buildDictionaryUpdateFields,
-  buildGradeDocument,
+  createClass,
+  createGrade,
+  listActiveClasses,
+  listClasses,
+  listGrades,
+  updateClass,
+  updateGrade,
   type DictionaryInput,
 } from './dictionaries.ts';
 export { ensureRojIndexes } from './indexes.ts';
@@ -747,49 +758,33 @@ export class RojDb {
   }
 
   async listGrades() {
-    return this.grades().find({}).sort({ order: 1 }).toArray();
+    return listGrades(this.grades());
   }
 
   async listClasses() {
-    return this.classes().find({}).sort({ order: 1 }).toArray();
+    return listClasses(this.classes());
   }
 
   async listActiveClasses() {
-    return this.classes().find({ isActive: true }).sort({ order: 1 }).toArray();
+    return listActiveClasses(this.classes());
   }
 
   // 年级是注册流程依赖的字典表。
   async createGrade(input: DictionaryInput) {
-    const now = new Date();
-    const grade = buildGradeDocument(input, now);
-    await this.grades().insertOne(grade);
-    return grade;
+    return createGrade(this.grades(), input);
   }
 
   async updateGrade(id: string, input: DictionaryInput) {
-    await this.grades().updateOne(
-      { _id: id },
-      {
-        $set: buildDictionaryUpdateFields(input, new Date()),
-      },
-    );
+    await updateGrade(this.grades(), id, input);
   }
 
   // 班级是注册流程依赖的字典表。
   async createClass(input: DictionaryInput) {
-    const now = new Date();
-    const classRecord = buildClassDocument(input, now);
-    await this.classes().insertOne(classRecord);
-    return classRecord;
+    return createClass(this.classes(), input);
   }
 
   async updateClass(id: string, input: DictionaryInput) {
-    await this.classes().updateOne(
-      { _id: id },
-      {
-        $set: buildDictionaryUpdateFields(input, new Date()),
-      },
-    );
+    await updateClass(this.classes(), id, input);
   }
 
   async listAdminProblems() {
