@@ -172,23 +172,46 @@ export {
   buildSessionDocument,
   buildStudentUserDocument,
   buildUserClassNameUpdate,
+  approveUser,
+  createSession,
+  deleteUser,
+  destroySession,
+  getDemoUser,
+  getUserBySessionToken,
   hashPassword,
+  listUsersForAdmin,
+  listUsersForAdminPaginated,
+  loginUser,
   mapUserToSessionRecord,
+  registerUser,
+  rejectUser,
+  resetUserPassword,
+  updateMyPassword,
+  updateUserClassName,
   verifyPassword,
   type RegisterUserInput,
   type SessionUserRecord,
+  type UserCollections,
 } from './users.ts';
 import {
-  buildApproveUserUpdate,
-  buildRejectUserUpdate,
-  buildResetPasswordUpdate,
-  buildSessionDocument,
   buildStudentUserDocument,
-  buildUserClassNameUpdate,
-  mapUserToSessionRecord,
-  verifyPassword,
+  approveUser,
+  createSession,
+  deleteUser,
+  destroySession,
+  getDemoUser,
+  getUserBySessionToken,
+  listUsersForAdmin,
+  listUsersForAdminPaginated,
+  loginUser,
+  registerUser,
+  rejectUser,
+  resetUserPassword,
+  updateMyPassword,
+  updateUserClassName,
   type RegisterUserInput,
   type SessionUserRecord,
+  type UserCollections,
 } from './users.ts';
 
 function debugJudge(message: string, details?: Record<string, unknown>) {
@@ -275,6 +298,15 @@ export class RojDb {
     return this.db.collection<UserProblemProgressDocument>('user_problem_progress');
   }
 
+  userCollections(): UserCollections {
+    return {
+      users: this.users(),
+      sessions: this.sessions(),
+      grades: this.grades(),
+      classes: this.classes(),
+    };
+  }
+
   // 初始化项目需要的索引。
   async ensureIndexes() {
     await ensureRojIndexes({
@@ -320,7 +352,7 @@ export class RojDb {
   }
 
   async getDemoUser() {
-    return this.users().findOne({ username: 'demo' });
+    return getDemoUser(this.userCollections());
   }
 
   async nextCounterValue(counterId: string) {
@@ -677,93 +709,36 @@ export class RojDb {
 
   // 学生注册后默认进入待审核状态。
   async registerUser(input: RegisterUserInput) {
-    const grade = await this.grades().findOne({ name: input.grade, isActive: true });
-    if (!grade) {
-      throw new Error(`grade ${input.grade} is not available`);
-    }
-    const classRecord = await this.classes().findOne({ name: input.className, isActive: true });
-    if (!classRecord) {
-      throw new Error(`class ${input.className} is not available`);
-    }
-
-    const now = new Date();
-    const user = buildStudentUserDocument(input, now);
-
-    await this.users().insertOne(user);
-    return user;
+    return registerUser(this.userCollections(), input);
   }
 
   async loginUser(username: string, password: string): Promise<SessionUserRecord | null> {
-    const user = await this.users().findOne({ username });
-    if (!user) {
-      return null;
-    }
-    if (!verifyPassword(password, user.passwordHash)) {
-      return null;
-    }
-
-    return mapUserToSessionRecord(user);
+    return loginUser(this.userCollections(), username, password);
   }
 
   // 创建服务端 session。
   async createSession(userId: string, ttlMs = 7 * 24 * 60 * 60 * 1000) {
-    const now = new Date();
-    const session = buildSessionDocument(userId, now, ttlMs);
-
-    await this.sessions().insertOne(session);
-    return session;
+    return createSession(this.userCollections(), userId, ttlMs);
   }
 
   async destroySession(token: string | null) {
-    if (!token) {
-      return;
-    }
-    await this.sessions().deleteOne({ token });
+    await destroySession(this.userCollections(), token);
   }
 
   // 用 session token 反查当前登录用户，并顺便过滤过期 session。
   async getUserBySessionToken(token: string | null): Promise<SessionUserRecord | null> {
-    if (!token) {
-      return null;
-    }
-
-    const now = new Date();
-    const session = await this.sessions().findOne({
-      token,
-      expiresAt: { $gt: now },
-    });
-    if (!session) {
-      return null;
-    }
-
-    const user = await this.users().findOne({ _id: session.userId });
-    if (!user) {
-      return null;
-    }
-
-    return mapUserToSessionRecord(user);
+    return getUserBySessionToken(this.userCollections(), token);
   }
 
   async listUsersForAdmin() {
-    return this.users().find({}).sort({ createdAt: -1 }).toArray();
+    return listUsersForAdmin(this.userCollections());
   }
 
   async listUsersForAdminPaginated(input: {
     page: number;
     pageSize: number;
   }) {
-    const skip = (input.page - 1) * input.pageSize;
-    const [items, total] = await Promise.all([
-      this.users()
-        .find({})
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(input.pageSize)
-        .toArray(),
-      this.users().countDocuments({}),
-    ]);
-
-    return { items, total };
+    return listUsersForAdminPaginated(this.userCollections(), input);
   }
 
   async listGrades() {
@@ -864,67 +839,28 @@ export class RojDb {
 
   // 审核通过时记录审核人和审核时间。
   async approveUser(userId: string, adminUserId: string) {
-    const now = new Date();
-    await this.users().updateOne(
-      { _id: userId },
-      {
-        $set: buildApproveUserUpdate(adminUserId, now),
-      },
-    );
+    await approveUser(this.userCollections(), userId, adminUserId);
   }
 
   async rejectUser(userId: string, adminUserId: string, reason = 'Rejected by admin') {
-    const now = new Date();
-    await this.users().updateOne(
-      { _id: userId },
-      {
-        $set: buildRejectUserUpdate(adminUserId, reason, now),
-      },
-    );
+    await rejectUser(this.userCollections(), userId, adminUserId, reason);
   }
 
   // 用户修改班级后重新回到待审核状态。
   async updateUserClassName(userId: string, className: string) {
-    const classRecord = await this.classes().findOne({ name: className, isActive: true });
-    if (!classRecord) {
-      throw new Error(`class ${className} is not available`);
-    }
-
-    const now = new Date();
-    await this.users().updateOne(
-      { _id: userId },
-      {
-        $set: buildUserClassNameUpdate(className, now),
-      },
-    );
+    await updateUserClassName(this.userCollections(), userId, className);
   }
 
   async resetUserPassword(userId: string, password: string) {
-    await this.users().updateOne(
-      { _id: userId },
-      {
-        $set: buildResetPasswordUpdate(password, new Date()),
-      },
-    );
+    await resetUserPassword(this.userCollections(), userId, password);
   }
 
   async updateMyPassword(userId: string, currentPassword: string, newPassword: string) {
-    const user = await this.users().findOne({ _id: userId });
-    if (!user || !verifyPassword(currentPassword, user.passwordHash)) {
-      throw new Error('invalid current password');
-    }
-
-    await this.resetUserPassword(userId, newPassword);
+    await updateMyPassword(this.userCollections(), userId, currentPassword, newPassword);
   }
 
   async deleteUser(userId: string) {
-    const user = await this.users().findOne({ _id: userId });
-    if (user?.role === 'admin') {
-      throw new Error('cannot delete admin user');
-    }
-
-    await this.users().deleteOne({ _id: userId });
-    await this.sessions().deleteMany({ userId });
+    await deleteUser(this.userCollections(), userId);
   }
 }
 

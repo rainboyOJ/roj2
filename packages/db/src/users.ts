@@ -5,7 +5,13 @@ import {
 } from 'node:crypto';
 
 import { ObjectId } from 'mongodb';
-import type { SessionDocument, UserDocument } from '@roj/shared';
+import type { Collection } from 'mongodb';
+import type {
+  ClassDocument,
+  GradeDocument,
+  SessionDocument,
+  UserDocument,
+} from '@roj/shared';
 
 // 注册用户时的输入结构。
 export interface RegisterUserInput {
@@ -138,4 +144,211 @@ export function buildResetPasswordUpdate(password: string, now: Date) {
     passwordHash: hashPassword(password),
     updatedAt: now,
   };
+}
+
+export interface UserCollections {
+  users: Collection<UserDocument>;
+  sessions: Collection<SessionDocument>;
+  grades: Collection<GradeDocument>;
+  classes: Collection<ClassDocument>;
+}
+
+export async function getDemoUser(collections: Pick<UserCollections, 'users'>) {
+  return collections.users.findOne({ username: 'demo' });
+}
+
+export async function registerUser(collections: UserCollections, input: RegisterUserInput) {
+  const grade = await collections.grades.findOne({ name: input.grade, isActive: true });
+  if (!grade) {
+    throw new Error(`grade ${input.grade} is not available`);
+  }
+  const classRecord = await collections.classes.findOne({
+    name: input.className,
+    isActive: true,
+  });
+  if (!classRecord) {
+    throw new Error(`class ${input.className} is not available`);
+  }
+
+  const now = new Date();
+  const user = buildStudentUserDocument(input, now);
+
+  await collections.users.insertOne(user);
+  return user;
+}
+
+export async function loginUser(
+  collections: Pick<UserCollections, 'users'>,
+  username: string,
+  password: string,
+): Promise<SessionUserRecord | null> {
+  const user = await collections.users.findOne({ username });
+  if (!user) {
+    return null;
+  }
+  if (!verifyPassword(password, user.passwordHash)) {
+    return null;
+  }
+
+  return mapUserToSessionRecord(user);
+}
+
+export async function createSession(
+  collections: Pick<UserCollections, 'sessions'>,
+  userId: string,
+  ttlMs = 7 * 24 * 60 * 60 * 1000,
+) {
+  const now = new Date();
+  const session = buildSessionDocument(userId, now, ttlMs);
+
+  await collections.sessions.insertOne(session);
+  return session;
+}
+
+export async function destroySession(
+  collections: Pick<UserCollections, 'sessions'>,
+  token: string | null,
+) {
+  if (!token) {
+    return;
+  }
+  await collections.sessions.deleteOne({ token });
+}
+
+export async function getUserBySessionToken(
+  collections: Pick<UserCollections, 'sessions' | 'users'>,
+  token: string | null,
+): Promise<SessionUserRecord | null> {
+  if (!token) {
+    return null;
+  }
+
+  const now = new Date();
+  const session = await collections.sessions.findOne({
+    token,
+    expiresAt: { $gt: now },
+  });
+  if (!session) {
+    return null;
+  }
+
+  const user = await collections.users.findOne({ _id: session.userId });
+  if (!user) {
+    return null;
+  }
+
+  return mapUserToSessionRecord(user);
+}
+
+export async function listUsersForAdmin(collections: Pick<UserCollections, 'users'>) {
+  return collections.users.find({}).sort({ createdAt: -1 }).toArray();
+}
+
+export async function listUsersForAdminPaginated(
+  collections: Pick<UserCollections, 'users'>,
+  input: {
+    page: number;
+    pageSize: number;
+  },
+) {
+  const skip = (input.page - 1) * input.pageSize;
+  const [items, total] = await Promise.all([
+    collections.users
+      .find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(input.pageSize)
+      .toArray(),
+    collections.users.countDocuments({}),
+  ]);
+
+  return { items, total };
+}
+
+export async function approveUser(
+  collections: Pick<UserCollections, 'users'>,
+  userId: string,
+  adminUserId: string,
+) {
+  const now = new Date();
+  await collections.users.updateOne(
+    { _id: userId },
+    {
+      $set: buildApproveUserUpdate(adminUserId, now),
+    },
+  );
+}
+
+export async function rejectUser(
+  collections: Pick<UserCollections, 'users'>,
+  userId: string,
+  adminUserId: string,
+  reason = 'Rejected by admin',
+) {
+  const now = new Date();
+  await collections.users.updateOne(
+    { _id: userId },
+    {
+      $set: buildRejectUserUpdate(adminUserId, reason, now),
+    },
+  );
+}
+
+export async function updateUserClassName(
+  collections: Pick<UserCollections, 'users' | 'classes'>,
+  userId: string,
+  className: string,
+) {
+  const classRecord = await collections.classes.findOne({ name: className, isActive: true });
+  if (!classRecord) {
+    throw new Error(`class ${className} is not available`);
+  }
+
+  const now = new Date();
+  await collections.users.updateOne(
+    { _id: userId },
+    {
+      $set: buildUserClassNameUpdate(className, now),
+    },
+  );
+}
+
+export async function resetUserPassword(
+  collections: Pick<UserCollections, 'users'>,
+  userId: string,
+  password: string,
+) {
+  await collections.users.updateOne(
+    { _id: userId },
+    {
+      $set: buildResetPasswordUpdate(password, new Date()),
+    },
+  );
+}
+
+export async function updateMyPassword(
+  collections: Pick<UserCollections, 'users'>,
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  const user = await collections.users.findOne({ _id: userId });
+  if (!user || !verifyPassword(currentPassword, user.passwordHash)) {
+    throw new Error('invalid current password');
+  }
+
+  await resetUserPassword(collections, userId, newPassword);
+}
+
+export async function deleteUser(
+  collections: Pick<UserCollections, 'users' | 'sessions'>,
+  userId: string,
+) {
+  const user = await collections.users.findOne({ _id: userId });
+  if (user?.role === 'admin') {
+    throw new Error('cannot delete admin user');
+  }
+
+  await collections.users.deleteOne({ _id: userId });
+  await collections.sessions.deleteMany({ userId });
 }
