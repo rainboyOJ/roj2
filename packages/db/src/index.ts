@@ -52,6 +52,8 @@ import {
 } from './dictionaries.ts';
 export { ensureRojIndexes } from './indexes.ts';
 import { ensureRojIndexes } from './indexes.ts';
+export { nextCounterValue } from './counters.ts';
+import { nextCounterValue } from './counters.ts';
 export {
   ALLOWED_LIST_PAGE_SIZES,
   DEFAULT_LIST_PAGE_SIZE,
@@ -125,12 +127,17 @@ import {
 export {
   buildAcceptedProblemProgressUpdate,
   buildAttemptedProblemProgressUpdate,
+  listProblemProgressByUser,
+  markProblemAccepted,
+  markProblemAttempted,
+  rebuildUserProblemProgress,
   buildUserProblemProgressRows,
 } from './problem-progress.ts';
 import {
-  buildAcceptedProblemProgressUpdate,
-  buildAttemptedProblemProgressUpdate,
-  buildUserProblemProgressRows,
+  listProblemProgressByUser,
+  markProblemAccepted,
+  markProblemAttempted,
+  rebuildUserProblemProgress,
 } from './problem-progress.ts';
 export {
   buildRanklistAggregationPipeline,
@@ -252,13 +259,6 @@ function debugJudge(message: string, details?: Record<string, unknown>) {
 export interface DbConfig {
   uri: string;
   dbName: string;
-}
-
-interface ProblemProgressSourceSubmission {
-  userId: string;
-  pid: string;
-  verdict: string;
-  updatedAt: Date;
 }
 
 export class RojDb {
@@ -388,23 +388,7 @@ export class RojDb {
   }
 
   async nextCounterValue(counterId: string) {
-    const now = new Date();
-    const result = await this.counters().findOneAndUpdate(
-      { _id: counterId },
-      {
-        $inc: { value: 1 },
-        $set: { updatedAt: now },
-      },
-      {
-        upsert: true,
-        returnDocument: 'after',
-      },
-    );
-
-    if (!result) {
-      throw new Error(`failed to allocate counter ${counterId}`);
-    }
-    return result.value;
+    return nextCounterValue(this.counters(), counterId);
   }
 
   // 创建一条等待 dispatcher 派发的 submission。
@@ -503,32 +487,15 @@ export class RojDb {
   }
 
   async listProblemProgressByUser(userId: string) {
-    const progressRows = await this.userProblemProgress()
-      .find({ userId }, { projection: { pid: 1, status: 1 } })
-      .toArray();
-    const progressByPid = new Map<string, 'accepted' | 'attempted'>();
-
-    for (const progress of progressRows) {
-      progressByPid.set(progress.pid, progress.status);
-    }
-
-    return progressByPid;
+    return listProblemProgressByUser(this.userProblemProgress(), userId);
   }
 
   async markProblemAttempted(userId: string, pid: string, now = new Date()) {
-    await this.userProblemProgress().updateOne(
-      { userId, pid },
-      buildAttemptedProblemProgressUpdate(userId, pid, now),
-      { upsert: true },
-    );
+    await markProblemAttempted(this.userProblemProgress(), userId, pid, now);
   }
 
   async markProblemAccepted(userId: string, pid: string, now = new Date()) {
-    await this.userProblemProgress().updateOne(
-      { userId, pid },
-      buildAcceptedProblemProgressUpdate(userId, pid, now),
-      { upsert: true },
-    );
+    await markProblemAccepted(this.userProblemProgress(), userId, pid, now);
   }
 
   async listAllSubmissions() {
@@ -658,34 +625,7 @@ export class RojDb {
   }
 
   async rebuildUserProblemProgress() {
-    const submissions: ProblemProgressSourceSubmission[] = [];
-
-    const cursor = this.submissions()
-      .find({}, { projection: { userId: 1, pid: 1, verdict: 1, updatedAt: 1 } })
-      .sort({ createdAt: 1 });
-
-    for await (const submission of cursor) {
-      submissions.push(submission);
-    }
-
-    const progressRows = buildUserProblemProgressRows(submissions);
-    await this.userProblemProgress().deleteMany({});
-    if (progressRows.length === 0) {
-      return { rebuilt: 0 };
-    }
-
-    await this.userProblemProgress().bulkWrite(
-      progressRows.map((progress) => ({
-        insertOne: {
-          document: {
-            _id: new ObjectId().toHexString(),
-            ...progress,
-          },
-        },
-      })),
-    );
-
-    return { rebuilt: progressRows.length };
+    return rebuildUserProblemProgress(this.submissions(), this.userProblemProgress());
   }
 
   // 学生注册后默认进入待审核状态。
