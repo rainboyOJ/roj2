@@ -28,6 +28,8 @@ export {
 } from './default-problems.ts';
 export { seedDemoData } from './demo-seed.ts';
 import { seedDemoData } from './demo-seed.ts';
+export { ensureRojIndexes } from './indexes.ts';
+import { ensureRojIndexes } from './indexes.ts';
 export {
   ALLOWED_LIST_PAGE_SIZES,
   DEFAULT_LIST_PAGE_SIZE,
@@ -233,22 +235,16 @@ export class RojDb {
 
   // 初始化项目需要的索引。
   async ensureIndexes() {
-    await this.users().createIndex({ username: 1 }, { unique: true });
-    await this.grades().createIndex({ name: 1 }, { unique: true });
-    await this.classes().createIndex({ name: 1 }, { unique: true });
-    await this.sessions().createIndex({ token: 1 }, { unique: true });
-    await this.sessions().createIndex({ expiresAt: 1 });
-    await this.problems().createIndex({ pid: 1 }, { unique: true });
-    await this.problemSets().createIndex({ isPublished: 1, publishedAt: -1 });
-    await this.problemSets().createIndex({ createdAt: -1 });
-    await this.submissions().createIndex({ userId: 1, createdAt: -1 });
-    await this.submissions().createIndex({ pid: 1, createdAt: -1 });
-    await this.submissions().createIndex({ username: 1, verdict: 1, updatedAt: 1 });
-    await this.submissions().createIndex({ submissionNo: 1 }, { unique: true, sparse: true });
-    await this.submissions().createIndex({ status: 1, 'judge.leaseExpireAt': 1 });
-    await this.submissions().createIndex({ 'judge.submissionId': 1 });
-    await this.userProblemProgress().createIndex({ userId: 1, pid: 1 }, { unique: true });
-    await this.userProblemProgress().createIndex({ userId: 1, status: 1 });
+    await ensureRojIndexes({
+      users: this.users(),
+      grades: this.grades(),
+      classes: this.classes(),
+      sessions: this.sessions(),
+      problems: this.problems(),
+      problemSets: this.problemSets(),
+      submissions: this.submissions(),
+      userProblemProgress: this.userProblemProgress(),
+    });
   }
 
   // 初始化演示数据。
