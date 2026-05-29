@@ -26,3 +26,11 @@ export function buildProblemSetUpdateFields(input: ProblemSetInput, now: Date) {
     updatedAt: now,
   };
 }
+
+export function buildPublishProblemSetUpdate(now: Date) {
+  return {
+    isPublished: true,
+    publishedAt: now,
+    updatedAt: now,
+  };
+}

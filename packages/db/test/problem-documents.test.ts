@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildProblemDocument,
+  buildPublishProblemSetUpdate,
+  buildPublishProblemUpdate,
   buildProblemSetDocument,
   buildProblemSetUpdateFields,
   buildProblemUpdateFields,
@@ -53,6 +55,15 @@ describe('problem document builders', () => {
     expect(update).not.toHaveProperty('createdAt');
     expect(update.statementHtml).toContain('<strong>bold</strong>');
   });
+
+  it('builds publish update fields', () => {
+    const now = new Date('2026-05-29T00:00:00.000Z');
+
+    expect(buildPublishProblemUpdate(now)).toEqual({
+      isVisible: true,
+      updatedAt: now,
+    });
+  });
 });
 
 describe('problem set document builders', () => {
@@ -92,5 +103,15 @@ describe('problem set document builders', () => {
     expect(update).not.toHaveProperty('createdAt');
     expect(update).not.toHaveProperty('isPublished');
     expect(update.contentHtml).toContain('data-pid="1002"');
+  });
+
+  it('builds publish update fields', () => {
+    const now = new Date('2026-05-29T00:00:00.000Z');
+
+    expect(buildPublishProblemSetUpdate(now)).toEqual({
+      isPublished: true,
+      publishedAt: now,
+      updatedAt: now,
+    });
   });
 });

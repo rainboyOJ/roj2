@@ -29,3 +29,10 @@ export function buildProblemUpdateFields(input: ProblemInput, now: Date) {
     updatedAt: now,
   };
 }
+
+export function buildPublishProblemUpdate(now: Date) {
+  return {
+    isVisible: true,
+    updatedAt: now,
+  };
+}

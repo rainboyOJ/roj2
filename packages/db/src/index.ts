@@ -101,21 +101,25 @@ import {
 } from './ranklist.ts';
 export {
   buildProblemDocument,
+  buildPublishProblemUpdate,
   buildProblemUpdateFields,
   type ProblemInput,
 } from './problem-documents.ts';
 import {
   buildProblemDocument,
+  buildPublishProblemUpdate,
   buildProblemUpdateFields,
   type ProblemInput,
 } from './problem-documents.ts';
 export {
   buildProblemSetDocument,
+  buildPublishProblemSetUpdate,
   buildProblemSetUpdateFields,
   type ProblemSetInput,
 } from './problem-set-documents.ts';
 import {
   buildProblemSetDocument,
+  buildPublishProblemSetUpdate,
   buildProblemSetUpdateFields,
   type ProblemSetInput,
 } from './problem-set-documents.ts';
@@ -846,10 +850,7 @@ export class RojDb {
     await this.problems().updateOne(
       { _id: id },
       {
-        $set: {
-          isVisible: true,
-          updatedAt: new Date(),
-        },
+        $set: buildPublishProblemUpdate(new Date()),
       },
     );
   }
@@ -894,11 +895,7 @@ export class RojDb {
     await this.problemSets().updateOne(
       { _id: id },
       {
-        $set: {
-          isPublished: true,
-          publishedAt: now,
-          updatedAt: now,
-        },
+        $set: buildPublishProblemSetUpdate(now),
       },
     );
   }
