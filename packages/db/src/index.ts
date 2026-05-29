@@ -46,14 +46,19 @@ export {
   DEFAULT_LIST_PAGE_SIZE,
   buildEnabledLanguagesUpdate,
   buildListPageSizeUpdate,
+  getEnabledLanguages,
+  getListPageSize,
   normalizeListPageSize,
   parseEnabledLanguagesEnv,
+  updateEnabledLanguages,
+  updateListPageSize,
   type ListPageSize,
 } from './settings.ts';
 import {
-  buildEnabledLanguagesUpdate,
-  buildListPageSizeUpdate,
-  normalizeListPageSize,
+  getEnabledLanguages,
+  getListPageSize,
+  updateEnabledLanguages,
+  updateListPageSize,
   type ListPageSize,
 } from './settings.ts';
 export { buildLeaseUpdate } from './submission-lease.ts';
@@ -792,36 +797,19 @@ export class RojDb {
   }
 
   async getEnabledLanguages(): Promise<readonly AppLanguage[]> {
-    const settings = await this.settings().findOne({ _id: 'site_settings' });
-    if (!settings || settings.enabledLanguages.length === 0) {
-      return ['cpp', 'python'];
-    }
-    return settings.enabledLanguages;
+    return getEnabledLanguages(this.settings());
   }
 
   async getListPageSize(): Promise<ListPageSize> {
-    const settings = await this.settings().findOne({ _id: 'site_settings' });
-    return normalizeListPageSize(settings?.listPageSize);
+    return getListPageSize(this.settings());
   }
 
   async updateEnabledLanguages(enabledLanguages: AppLanguage[]) {
-    await this.settings().updateOne(
-      { _id: 'site_settings' },
-      {
-        $set: buildEnabledLanguagesUpdate(enabledLanguages, new Date()),
-      },
-      { upsert: true },
-    );
+    await updateEnabledLanguages(this.settings(), enabledLanguages);
   }
 
   async updateListPageSize(listPageSize: number) {
-    await this.settings().updateOne(
-      { _id: 'site_settings' },
-      {
-        $set: buildListPageSizeUpdate(listPageSize, new Date()),
-      },
-      { upsert: true },
-    );
+    await updateListPageSize(this.settings(), listPageSize);
   }
 
   async getAdminProblemById(id: string) {
