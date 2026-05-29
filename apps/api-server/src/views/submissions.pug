@@ -1,6 +1,7 @@
 //- 提交列表页：查看自己的提交历史和结果概览。
 extends layout.pug
 include mixins/pagination.pug
+include mixins/status.pug
 
 block content
   - const currentFilters = filters || {}
@@ -54,12 +55,7 @@ block content
                 td= formatStatusLabel(submission.status)
                 td= submission.judgeStatus ? formatJudgeStatusLabel(submission.judgeStatus) : '-'
                 td
-                  if submission.verdict === 'AC'
-                    span.status-chip.ac= formatVerdictLabel(submission.verdict)
-                  else if submission.verdict === 'PENDING'
-                    span.status-chip.pending= formatVerdictLabel(submission.verdict)
-                  else
-                    span.status-chip.failed= formatVerdictLabel(submission.verdict)
+                  +verdictChip(submission.verdict)
                 td
                   a(href=`/submissions/${submission.publicId}`)= "查看详情"
       +paginationBar('/submissions', pagination, '提交列表分页', paginationQuerySuffix)

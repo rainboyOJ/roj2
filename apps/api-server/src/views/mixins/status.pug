@@ -1,0 +1,22 @@
+mixin statusChip(label, tone)
+  span.status-chip(class=tone)= label
+
+mixin verdictChip(verdict)
+  - const tone = verdict === 'AC' ? 'ac' : verdict === 'PENDING' ? 'pending' : 'failed';
+  +statusChip(formatVerdictLabel(verdict), tone)
+
+mixin approvalStatusChip(approvalStatus)
+  - const tone = approvalStatus === 'approved' ? 'ac' : approvalStatus === 'rejected' ? 'failed' : 'pending';
+  +statusChip(formatApprovalStatusLabel(approvalStatus), tone)
+
+mixin problemVisibilityChip(isVisible)
+  if isVisible
+    +statusChip("可见", "ac")
+  else
+    +statusChip("隐藏", "pending")
+
+mixin problemSetPublishChip(isPublished)
+  if isPublished
+    +statusChip("已发布", "ac")
+  else
+    +statusChip("草稿", "pending")

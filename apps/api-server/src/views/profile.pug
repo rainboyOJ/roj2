@@ -1,6 +1,7 @@
 //- 个人中心页：展示最基础的账号信息。
 extends layout.pug
 include mixins/assets.pug
+include mixins/status.pug
 
 block content
   section.detail-panel
@@ -35,12 +36,7 @@ block content
           header
             h3= "审核状态"
           .panel-body
-            if user.approvalStatus === 'approved'
-              span.status-chip.ac= formatApprovalStatusLabel(user.approvalStatus)
-            else if user.approvalStatus === 'rejected'
-              span.status-chip.failed= formatApprovalStatusLabel(user.approvalStatus)
-            else
-              span.status-chip.pending= formatApprovalStatusLabel(user.approvalStatus)
+            +approvalStatusChip(user.approvalStatus)
         article.panel-card
           header
             h3= "修改密码"

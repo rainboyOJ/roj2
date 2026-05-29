@@ -1,5 +1,6 @@
 //- 单条提交详情页：展示当前 OJ 状态、judge 状态和 judge message。
 extends layout.pug
+include mixins/status.pug
 
 block content
   section.detail-panel#submissionDetail(
@@ -77,7 +78,7 @@ block content
                         td.table-code= `#${item.seq_id}`
                         td
                           - const verdictClass = item.verdict === 'AC' ? 'ac' : (item.verdict === 'PENDING' ? 'pending' : 'failed')
-                          span(class=`status-chip ${verdictClass}`)= formatVerdictLabel(item.verdict)
+                          +statusChip(formatVerdictLabel(item.verdict), verdictClass)
                         td.table-code= `${item.cpu_time_ms} ms`
                         td.table-code= `${item.real_time_ms} ms`
                         td.table-code= `${item.memory_kb} KB`

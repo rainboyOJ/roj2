@@ -1,6 +1,7 @@
 //- 管理员题目列表页：用于查看、编辑、发布题目。
 extends layout.pug
 include mixins/assets.pug
+include mixins/status.pug
 
 block content
   section.list-panel
@@ -30,10 +31,7 @@ block content
                 td= problem.title
                 td= problem.allowLanguages.join(', ')
                 td
-                  if problem.isVisible
-                    span.status-chip.ac= "可见"
-                  else
-                    span.status-chip.pending= "隐藏"
+                  +problemVisibilityChip(problem.isVisible)
                 td
                   .table-actions
                     a(href=`/admin/problems/${problem.id}/edit`)= "编辑"

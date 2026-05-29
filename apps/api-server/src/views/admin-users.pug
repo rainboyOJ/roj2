@@ -4,6 +4,7 @@
 extends layout.pug
 include mixins/assets.pug
 include mixins/pagination.pug
+include mixins/status.pug
 
 block content
   - const currentPageSuffix = pagination && pagination.page > 1 ? `?page=${pagination.page}` : ''
@@ -57,12 +58,7 @@ block content
                 td= user.name || "没有显示姓名"
                 td= formatRoleLabel(user.role)
                 td
-                  if user.approvalStatus === 'approved'
-                    span.status-chip.ac= formatApprovalStatusLabel(user.approvalStatus)
-                  else if user.approvalStatus === 'rejected'
-                    span.status-chip.failed= formatApprovalStatusLabel(user.approvalStatus)
-                  else
-                    span.status-chip.pending= formatApprovalStatusLabel(user.approvalStatus)
+                  +approvalStatusChip(user.approvalStatus)
                 td
                   if user.role !== 'admin'
                     .table-actions

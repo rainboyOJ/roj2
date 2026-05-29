@@ -1,5 +1,6 @@
 //- 管理员题目单列表页。
 extends layout.pug
+include mixins/status.pug
 
 block content
   section.list-panel
@@ -28,10 +29,7 @@ block content
                 td= problemSet.title
                 td= problemSet.problemRefs.length
                 td
-                  if problemSet.isPublished
-                    span.status-chip.ac= "已发布"
-                  else
-                    span.status-chip.pending= "草稿"
+                  +problemSetPublishChip(problemSet.isPublished)
                 td= problemSet.updatedAtText
                 td
                   .table-actions
