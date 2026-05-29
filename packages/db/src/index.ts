@@ -8,12 +8,10 @@ import {
 import { ObjectId, type Filter } from 'mongodb';
 import {
   OJSubmissionStatuses,
-  ProblemProgressStatuses,
   SubmissionVerdicts,
   createEmptyJudgeState,
   createEmptyResultState,
   mapJudgeSnapshotToSubmissionState,
-  type SubmissionCaseResult,
   type AppLanguage,
   type ClassDocument,
   type CounterDocument,
@@ -25,7 +23,6 @@ import {
   type SiteSettingsDocument,
   type SubmissionDocument,
   type UserDocument,
-  type ProblemProgressStatus,
   type UserProblemProgressDocument,
 } from '@roj/shared';
 import { extractProblemRefs, renderMarkdown, renderProblemSetMarkdown } from '@roj/markdown-renderer';
@@ -50,6 +47,28 @@ import {
   parseEnabledLanguagesEnv,
   type ListPageSize,
 } from './settings.ts';
+export { buildLeaseUpdate } from './submission-lease.ts';
+import { buildLeaseUpdate } from './submission-lease.ts';
+export { calculateSubmissionScore } from './submission-scoring.ts';
+import { calculateSubmissionScore } from './submission-scoring.ts';
+export {
+  buildAcceptedProblemProgressUpdate,
+  buildAttemptedProblemProgressUpdate,
+  buildUserProblemProgressRows,
+} from './problem-progress.ts';
+import {
+  buildAcceptedProblemProgressUpdate,
+  buildAttemptedProblemProgressUpdate,
+  buildUserProblemProgressRows,
+} from './problem-progress.ts';
+export {
+  buildRanklistAggregationPipeline,
+  type RanklistFilters,
+} from './ranklist.ts';
+import {
+  buildRanklistAggregationPipeline,
+  type RanklistFilters,
+} from './ranklist.ts';
 
 function debugJudge(message: string, details?: Record<string, unknown>) {
   if (process.env.DEBUG_JUDGE !== '1') {
@@ -82,18 +101,6 @@ function buildSubmissionListFilter(filters: SubmissionListFilters = {}): Filter<
   }
 
   return query;
-}
-
-// 抢占待评测 submission 时使用的原子更新。
-export function buildLeaseUpdate(leaseOwner: string, now: Date, leaseMs: number) {
-  return {
-    $set: {
-      status: OJSubmissionStatuses.SENT_TO_JUDGE,
-      'judge.leaseOwner': leaseOwner,
-      'judge.leaseExpireAt': new Date(now.getTime() + leaseMs),
-      updatedAt: now,
-    },
-  };
 }
 
 // MongoDB 连接配置。
@@ -178,192 +185,11 @@ function verifyPassword(password: string, passwordHash: string): boolean {
   return timingSafeEqual(actual, expected);
 }
 
-export function calculateSubmissionScore(
-  caseResults: readonly SubmissionCaseResult[],
-): number {
-  if (caseResults.length === 0) {
-    return 0;
-  }
-
-  const acceptedCount = caseResults.filter((item) => item.verdict === SubmissionVerdicts.AC).length;
-  return Math.round((acceptedCount / caseResults.length) * 100);
-}
-
 interface ProblemProgressSourceSubmission {
   userId: string;
   pid: string;
   verdict: string;
   updatedAt: Date;
-}
-
-export function buildAttemptedProblemProgressUpdate(userId: string, pid: string, now: Date) {
-  return {
-    $setOnInsert: {
-      _id: new ObjectId().toHexString(),
-      userId,
-      pid,
-      status: ProblemProgressStatuses.ATTEMPTED,
-      updatedAt: now,
-    },
-  };
-}
-
-export function buildAcceptedProblemProgressUpdate(userId: string, pid: string, now: Date) {
-  return {
-    $set: {
-      status: ProblemProgressStatuses.ACCEPTED,
-      updatedAt: now,
-    },
-    $setOnInsert: {
-      _id: new ObjectId().toHexString(),
-      userId,
-      pid,
-    },
-  };
-}
-
-export function buildUserProblemProgressRows(
-  submissions: Iterable<ProblemProgressSourceSubmission>,
-) {
-  const progressByKey = new Map<string, {
-    userId: string;
-    pid: string;
-    status: ProblemProgressStatus;
-    updatedAt: Date;
-  }>();
-
-  for (const submission of submissions) {
-    const key = `${submission.userId}:${submission.pid}`;
-    const existing = progressByKey.get(key);
-    const status = submission.verdict === SubmissionVerdicts.AC
-      ? ProblemProgressStatuses.ACCEPTED
-      : ProblemProgressStatuses.ATTEMPTED;
-
-    if (!existing) {
-      progressByKey.set(key, {
-        userId: submission.userId,
-        pid: submission.pid,
-        status,
-        updatedAt: submission.updatedAt,
-      });
-      continue;
-    }
-
-    existing.updatedAt = submission.updatedAt;
-    if (status === ProblemProgressStatuses.ACCEPTED) {
-      existing.status = ProblemProgressStatuses.ACCEPTED;
-    }
-  }
-
-  return Array.from(progressByKey.values());
-}
-
-const NO_ACCEPTED_AT = new Date('9999-12-31T23:59:59.999Z');
-
-export interface RanklistFilters {
-  className?: string | undefined;
-}
-
-export function buildRanklistAggregationPipeline(filters: RanklistFilters = {}) {
-  const pipeline: object[] = [
-    {
-      $group: {
-        _id: '$userId',
-        username: { $first: '$username' },
-        displayNameSnapshot: { $first: '$displayName' },
-        acceptedCount: {
-          $sum: {
-            $cond: [{ $eq: ['$verdict', SubmissionVerdicts.AC] }, 1, 0],
-          },
-        },
-        submissionCount: { $sum: 1 },
-        wrongAttempts: {
-          $sum: {
-            $cond: [
-              {
-                $and: [
-                  { $ne: ['$verdict', SubmissionVerdicts.PENDING] },
-                  { $ne: ['$verdict', SubmissionVerdicts.AC] },
-                ],
-              },
-              1,
-              0,
-            ],
-          },
-        },
-        lastAcceptedAt: {
-          $min: {
-            $cond: [
-              { $eq: ['$verdict', SubmissionVerdicts.AC] },
-              '$updatedAt',
-              NO_ACCEPTED_AT,
-            ],
-          },
-        },
-      },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'user',
-      },
-    },
-    {
-      $unwind: {
-        path: '$user',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-  ];
-
-  if (filters.className) {
-    pipeline.push({
-      $match: {
-        'user.className': filters.className,
-      },
-    });
-  }
-
-  pipeline.push(
-    {
-      $addFields: {
-        lastAcceptedAtSort: '$lastAcceptedAt',
-        lastAcceptedAt: {
-          $cond: [
-            { $eq: ['$lastAcceptedAt', NO_ACCEPTED_AT] },
-            null,
-            '$lastAcceptedAt',
-          ],
-        },
-      },
-    },
-    {
-      $sort: {
-        acceptedCount: -1,
-        wrongAttempts: 1,
-        lastAcceptedAtSort: 1,
-        username: 1,
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        username: 1,
-        displayName: {
-          $ifNull: ['$user.name', '$displayNameSnapshot'],
-        },
-        className: '$user.className',
-        acceptedCount: 1,
-        submissionCount: 1,
-        wrongAttempts: 1,
-        lastAcceptedAt: 1,
-      },
-    },
-  );
-
-  return pipeline;
 }
 
 export class RojDb {
