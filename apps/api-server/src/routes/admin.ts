@@ -11,73 +11,19 @@ import {
   paginationSettingsSchema,
   resetPasswordSchema,
 } from '../http/schemas.ts';
-
-function asStringArray(value: string | string[] | undefined) {
-  if (Array.isArray(value)) {
-    return value;
-  }
-  return value ? [value] : [];
-}
-
-function problemInputFromBody(raw: Record<string, string | string[] | undefined>) {
-  return {
-    pid: raw.pid,
-    title: raw.title,
-    statementMarkdown: raw.statementMarkdown,
-    allowLanguages: asStringArray(raw.allowLanguages),
-    isVisible: raw.isVisible === 'true',
-  };
-}
-
-function problemFormValues(raw: Record<string, string | string[] | undefined>, id = '') {
-  return {
-    id,
-    pid: String(raw.pid || ''),
-    title: String(raw.title || ''),
-    statementMarkdown: String(raw.statementMarkdown || ''),
-    allowLanguages: asStringArray(raw.allowLanguages),
-    isVisible: raw.isVisible === 'true',
-  };
-}
-
-function problemSetInputFromBody(raw: Record<string, string | undefined>) {
-  return {
-    title: raw.title,
-    contentMarkdown: raw.contentMarkdown,
-  };
-}
-
-function problemSetFormValues(raw: Record<string, string | undefined>, id = '') {
-  return {
-    id,
-    title: String(raw.title || ''),
-    contentMarkdown: String(raw.contentMarkdown || ''),
-    problemRefs: [],
-    isPublished: false,
-    publishedAtText: null,
-    updatedAtText: '',
-  };
-}
-
-function parseUserIds(value: unknown): string[] {
-  const values = Array.isArray(value) ? value : value ? [value] : [];
-  return values
-    .filter((userId): userId is string => typeof userId === 'string')
-    .map((userId) => userId.trim())
-    .filter(Boolean);
-}
-
-function adminUsersPath(query: unknown) {
-  const page =
-    typeof query === 'object' && query !== null && 'page' in query
-      ? (query as { page?: unknown }).page
-      : undefined;
-  const pageText = Array.isArray(page) ? page[0] : page;
-  const pageNumber = Number(pageText ?? 1);
-  return Number.isInteger(pageNumber) && pageNumber > 1
-    ? `/admin/users?page=${pageNumber}`
-    : '/admin/users';
-}
+import {
+  type AdminFormBody,
+  adminUsersPath,
+  dictionaryFormValues,
+  dictionaryInputFromBody,
+  enabledLanguagesInputFromBody,
+  paginationSettingsInputFromBody,
+  parseUserIds,
+  problemFormValues,
+  problemInputFromBody,
+  problemSetFormValues,
+  problemSetInputFromBody,
+} from './admin/form-parsers.ts';
 
 export function registerAdminRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -291,18 +237,10 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const raw = request.body as Record<string, string | undefined>;
-    const parsed = createGradeSchema.safeParse({
-      name: raw.name,
-      isActive: raw.isActive === 'true',
-      order: Number(raw.order ?? '0'),
-    });
+    const raw = request.body as AdminFormBody;
+    const parsed = createGradeSchema.safeParse(dictionaryInputFromBody(raw));
     if (!parsed.success) {
-      return renderAdminGradesError(request, reply, '年级信息填写不正确。', {
-        name: String(raw.name || ''),
-        isActive: String(raw.isActive || ''),
-        order: String(raw.order || '0'),
-      });
+      return renderAdminGradesError(request, reply, '年级信息填写不正确。', dictionaryFormValues(raw));
     }
 
     try {
@@ -312,11 +250,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
         request,
         reply,
         messageFromError(error, '创建年级失败，请检查后重试。'),
-        {
-          name: String(raw.name || ''),
-          isActive: String(raw.isActive || ''),
-          order: String(raw.order || '0'),
-        },
+        dictionaryFormValues(raw),
       );
     }
     return redirectTo(reply, '/admin/grades');
@@ -329,12 +263,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const params = request.params as { id: string };
-    const raw = request.body as Record<string, string | undefined>;
-    const parsed = createGradeSchema.safeParse({
-      name: raw.name,
-      isActive: raw.isActive === 'true',
-      order: Number(raw.order ?? '0'),
-    });
+    const raw = request.body as AdminFormBody;
+    const parsed = createGradeSchema.safeParse(dictionaryInputFromBody(raw));
     if (!parsed.success) {
       return renderAdminGradesError(request, reply, '年级信息填写不正确。');
     }
@@ -367,18 +297,10 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const raw = request.body as Record<string, string | undefined>;
-    const parsed = createClassSchema.safeParse({
-      name: raw.name,
-      isActive: raw.isActive === 'true',
-      order: Number(raw.order ?? '0'),
-    });
+    const raw = request.body as AdminFormBody;
+    const parsed = createClassSchema.safeParse(dictionaryInputFromBody(raw));
     if (!parsed.success) {
-      return renderAdminClassesError(request, reply, '班级信息填写不正确。', {
-        name: String(raw.name || ''),
-        isActive: String(raw.isActive || ''),
-        order: String(raw.order || '0'),
-      });
+      return renderAdminClassesError(request, reply, '班级信息填写不正确。', dictionaryFormValues(raw));
     }
 
     try {
@@ -388,11 +310,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
         request,
         reply,
         messageFromError(error, '创建班级失败，请检查后重试。'),
-        {
-          name: String(raw.name || ''),
-          isActive: String(raw.isActive || ''),
-          order: String(raw.order || '0'),
-        },
+        dictionaryFormValues(raw),
       );
     }
     return redirectTo(reply, '/admin/classes');
@@ -405,12 +323,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     }
 
     const params = request.params as { id: string };
-    const raw = request.body as Record<string, string | undefined>;
-    const parsed = createClassSchema.safeParse({
-      name: raw.name,
-      isActive: raw.isActive === 'true',
-      order: Number(raw.order ?? '0'),
-    });
+    const raw = request.body as AdminFormBody;
+    const parsed = createClassSchema.safeParse(dictionaryInputFromBody(raw));
     if (!parsed.success) {
       return renderAdminClassesError(request, reply, '班级信息填写不正确。');
     }
@@ -1169,14 +1083,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const raw = request.body as { enabledLanguages?: string | string[] };
-    const enabledLanguages = Array.isArray(raw.enabledLanguages)
-      ? raw.enabledLanguages
-      : raw.enabledLanguages
-        ? [raw.enabledLanguages]
-        : [];
-
-    const parsed = enabledLanguagesSchema.safeParse({ enabledLanguages });
+    const raw = request.body as AdminFormBody;
+    const parsed = enabledLanguagesSchema.safeParse(enabledLanguagesInputFromBody(raw));
     if (!parsed.success) {
       return renderLanguageSettingsError(request, reply, '至少选择一种可用语言。');
     }
@@ -1199,10 +1107,8 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
       return;
     }
 
-    const raw = request.body as { listPageSize?: string };
-    const parsed = paginationSettingsSchema.safeParse({
-      listPageSize: Number(raw.listPageSize),
-    });
+    const raw = request.body as AdminFormBody;
+    const parsed = paginationSettingsSchema.safeParse(paginationSettingsInputFromBody(raw));
     if (!parsed.success) {
       return renderPaginationSettingsError(request, reply, '请选择有效的每页数量。');
     }
