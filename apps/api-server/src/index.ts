@@ -7,202 +7,25 @@ import { ALLOWED_LIST_PAGE_SIZES } from '@roj/db';
 
 import {
   buildApp,
-  type AdminProblemViewModel,
   type ApiServerServices,
-  type AdminProblemSetViewModel,
   type ContestViewModel,
-  type PaginatedSubmissionsViewModel,
-  type ProblemSetDetailViewModel,
-  type ProblemSetListViewModel,
-  type ProblemViewModel,
   type RanklistEntryViewModel,
-  type SessionUser,
-  type SubmissionViewModel,
-  buildPaginationViewModel,
 } from './app.ts';
-import type { CreateSubmissionInput, SubmissionCaseResult } from '@roj/shared';
+import {
+  formatDateTime,
+  mapAdminProblem,
+  mapAdminProblemSet,
+  mapAdminUser,
+  mapPaginatedSubmissions,
+  mapProblem,
+  mapProblemSetBase,
+  mapProblemSetDetail,
+  mapSessionUser,
+  mapSubmission,
+} from './services/mappers.ts';
+import { buildPaginationViewModel } from './services/pagination.ts';
+import type { CreateSubmissionInput } from '@roj/shared';
 import type { AppLanguage } from '@roj/shared';
-
-// 这一组 map* 函数的作用，是把 DB 文档转换成前端视图模型。
-// 这样 app.ts 不需要直接依赖 MongoDB 文档的完整结构。
-function mapProblem(problem: {
-  pid: string;
-  title: string;
-  statementMarkdown: string;
-  statementHtml?: string;
-  allowLanguages: string[];
-}): ProblemViewModel {
-  return {
-    pid: problem.pid,
-    title: problem.title,
-    statementMarkdown: problem.statementMarkdown,
-    statementHtml: problem.statementHtml ?? '',
-    allowLanguages: problem.allowLanguages,
-  };
-}
-
-function mapAdminProblem(problem: {
-  _id: string;
-  pid: string;
-  title: string;
-  statementMarkdown: string;
-  statementHtml?: string;
-  allowLanguages: string[];
-  isVisible: boolean;
-}): AdminProblemViewModel {
-  return {
-    id: problem._id,
-    pid: problem.pid,
-    title: problem.title,
-    statementMarkdown: problem.statementMarkdown,
-    statementHtml: problem.statementHtml ?? '',
-    allowLanguages: problem.allowLanguages,
-    isVisible: problem.isVisible,
-  };
-}
-
-function mapProblemSetBase(problemSet: {
-  _id: string;
-  title: string;
-  problemRefs: string[];
-  isPublished: boolean;
-  publishedAt: Date | null;
-  updatedAt: Date;
-}): ProblemSetListViewModel {
-  return {
-    id: problemSet._id,
-    title: problemSet.title,
-    problemRefs: problemSet.problemRefs,
-    isPublished: problemSet.isPublished,
-    publishedAtText: formatDateTime(problemSet.publishedAt),
-    updatedAtText: formatDateTime(problemSet.updatedAt) ?? '',
-  };
-}
-
-function mapAdminProblemSet(problemSet: Parameters<typeof mapProblemSetBase>[0] & {
-  contentMarkdown: string;
-}): AdminProblemSetViewModel {
-  return {
-    ...mapProblemSetBase(problemSet),
-    contentMarkdown: problemSet.contentMarkdown,
-  };
-}
-
-function mapProblemSetDetail(problemSet: Parameters<typeof mapProblemSetBase>[0] & {
-  contentMarkdown: string;
-  contentHtml: string;
-}): ProblemSetDetailViewModel {
-  return {
-    ...mapProblemSetBase(problemSet),
-    contentMarkdown: problemSet.contentMarkdown,
-    contentHtml: problemSet.contentHtml,
-    problemRefsView: [],
-  };
-}
-
-function mapSubmission(submission: {
-  _id: string;
-  submissionNo?: number;
-  userId: string;
-  pid: string;
-  problem?: {
-    title: string;
-  } | null;
-  username: string;
-  displayName?: string;
-  language: string;
-  sourceCode: string;
-  status: string;
-  verdict: string;
-  score?: number;
-  judge: {
-    lastStatus: string | null;
-  };
-  result: {
-    message: string;
-    caseResults: SubmissionCaseResult[];
-    score?: number;
-  };
-}, options: {
-  canViewSourceCode?: boolean;
-} = {}): SubmissionViewModel {
-  const problemTitle = submission.problem?.title ?? submission.pid;
-  const problemLabel = problemTitle.startsWith(submission.pid)
-    ? problemTitle
-    : `${submission.pid} ${problemTitle}`;
-  const submissionNo = submission.submissionNo ?? null;
-  const publicId = submissionNo === null ? submission._id : String(submissionNo);
-  const canViewSourceCode = options.canViewSourceCode ?? true;
-
-  return {
-    id: submission._id,
-    publicId,
-    submissionNo,
-    userId: submission.userId,
-    pid: submission.pid,
-    problemTitle,
-    problemLabel,
-    username: submission.username,
-    displayName: submission.displayName,
-    language: submission.language,
-    sourceCode: canViewSourceCode ? submission.sourceCode : '',
-    status: submission.status,
-    verdict: submission.verdict,
-    score: submission.score ?? submission.result.score ?? 0,
-    judgeStatus: submission.judge.lastStatus,
-    message: submission.result.message,
-    caseResults: submission.result.caseResults,
-    canViewSourceCode,
-  };
-}
-
-function mapSessionUser(user: {
-  id: string;
-  username: string;
-  role: 'student' | 'admin';
-  approvalStatus: 'pending' | 'approved' | 'rejected';
-  name?: string;
-  grade?: string;
-  className?: string;
-}): SessionUser {
-  return {
-    id: user.id,
-    username: user.username,
-    role: user.role,
-    approvalStatus: user.approvalStatus,
-    name: user.name,
-    grade: user.grade,
-    className: user.className,
-  };
-}
-
-function mapAdminUser(user: {
-  _id: string;
-  username: string;
-  role: 'student' | 'admin';
-  approvalStatus: 'pending' | 'approved' | 'rejected';
-  name?: string;
-  grade?: string;
-  className?: string;
-}) {
-  return {
-    id: user._id,
-    username: user.username,
-    role: user.role,
-    approvalStatus: user.approvalStatus,
-    name: user.name,
-    grade: user.grade,
-    className: user.className,
-  };
-}
-
-function formatDateTime(value: Date | null): string | null {
-  if (!value) {
-    return null;
-  }
-
-  return value.toISOString().slice(0, 16).replace('T', ' ');
-}
 
 function buildPlaceholderContests(): ContestViewModel[] {
   // 比赛页目前还是占位实现，所以这里先直接返回内存中的假数据。
@@ -224,24 +47,6 @@ function buildPlaceholderContests(): ContestViewModel[] {
       description: 'A rolling ladder page used as a placeholder for future contest support.',
     },
   ];
-}
-
-function mapPaginatedSubmissions(input: {
-  items: Array<Parameters<typeof mapSubmission>[0]>;
-  total: number;
-}, page: number, pageSize: number, user?: SessionUser): PaginatedSubmissionsViewModel {
-  return {
-    submissions: input.items.map((submission) =>
-      mapSubmission(submission, {
-        canViewSourceCode: user ? user.role === 'admin' || submission.userId === user.id : true,
-      }),
-    ),
-    pagination: buildPaginationViewModel({
-      page,
-      pageSize,
-      total: input.total,
-    }),
-  };
 }
 
 export async function buildProductionServices(db: RojDb): Promise<ApiServerServices> {

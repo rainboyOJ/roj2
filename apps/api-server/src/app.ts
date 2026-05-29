@@ -20,30 +20,12 @@ import { registerStaticRoutes } from './routes/static.ts';
 import { registerSubmissionRoutes } from './routes/submissions.ts';
 import type {
   ApiServerServices,
-  PaginationViewModel,
 } from './service-types.ts';
+export { buildPaginationViewModel } from './services/pagination.ts';
 
 export type * from './service-types.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export function buildPaginationViewModel(input: {
-  page: number;
-  pageSize: number;
-  total: number;
-}): PaginationViewModel {
-  const totalPages = Math.max(1, Math.ceil(input.total / input.pageSize));
-  const page = Math.min(Math.max(input.page, 1), totalPages);
-
-  return {
-    page,
-    pageSize: input.pageSize,
-    total: input.total,
-    totalPages,
-    previousPage: page > 1 ? page - 1 : null,
-    nextPage: page < totalPages ? page + 1 : null,
-  };
-}
 
 export function buildApp(services: ApiServerServices) {
   const app = Fastify();
