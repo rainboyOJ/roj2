@@ -119,24 +119,50 @@ export {
   buildProblemDocument,
   buildPublishProblemUpdate,
   buildProblemUpdateFields,
+  createProblem,
+  getAdminProblemById,
+  getProblemByPid,
+  listAdminProblems,
+  listVisibleProblems,
+  listVisibleProblemsByPids,
+  listVisibleProblemsPaginated,
+  publishProblem,
+  updateProblem,
   type ProblemInput,
 } from './problem-documents.ts';
 import {
-  buildProblemDocument,
-  buildPublishProblemUpdate,
-  buildProblemUpdateFields,
+  createProblem,
+  getAdminProblemById,
+  getProblemByPid,
+  listAdminProblems,
+  listVisibleProblems,
+  listVisibleProblemsByPids,
+  listVisibleProblemsPaginated,
+  publishProblem,
+  updateProblem,
   type ProblemInput,
 } from './problem-documents.ts';
 export {
   buildProblemSetDocument,
   buildPublishProblemSetUpdate,
   buildProblemSetUpdateFields,
+  createProblemSet,
+  getAdminProblemSetById,
+  getPublishedProblemSetById,
+  listAdminProblemSets,
+  listPublishedProblemSets,
+  publishProblemSet,
+  updateProblemSet,
   type ProblemSetInput,
 } from './problem-set-documents.ts';
 import {
-  buildProblemSetDocument,
-  buildPublishProblemSetUpdate,
-  buildProblemSetUpdateFields,
+  createProblemSet,
+  getAdminProblemSetById,
+  getPublishedProblemSetById,
+  listAdminProblemSets,
+  listPublishedProblemSets,
+  publishProblemSet,
+  updateProblemSet,
   type ProblemSetInput,
 } from './problem-set-documents.ts';
 export {
@@ -275,39 +301,22 @@ export class RojDb {
   }
 
   async listVisibleProblems() {
-    return this.problems().find({ isVisible: true }).sort({ pid: 1 }).toArray();
+    return listVisibleProblems(this.problems());
   }
 
   async listVisibleProblemsPaginated(input: {
     page: number;
     pageSize: number;
   }) {
-    const skip = (input.page - 1) * input.pageSize;
-    const query = { isVisible: true };
-    const [items, total] = await Promise.all([
-      this.problems()
-        .find(query)
-        .sort({ pid: 1 })
-        .skip(skip)
-        .limit(input.pageSize)
-        .toArray(),
-      this.problems().countDocuments(query),
-    ]);
-
-    return { items, total };
+    return listVisibleProblemsPaginated(this.problems(), input);
   }
 
   async getProblemByPid(pid: string) {
-    return this.problems().findOne({ pid, isVisible: true });
+    return getProblemByPid(this.problems(), pid);
   }
 
   async listVisibleProblemsByPids(pids: string[]) {
-    if (pids.length === 0) {
-      return [];
-    }
-    return this.problems()
-      .find({ pid: { $in: pids }, isVisible: true })
-      .toArray();
+    return listVisibleProblemsByPids(this.problems(), pids);
   }
 
   async getDemoUser() {
@@ -788,7 +797,7 @@ export class RojDb {
   }
 
   async listAdminProblems() {
-    return this.problems().find({}).sort({ pid: 1 }).toArray();
+    return listAdminProblems(this.problems());
   }
 
   async getEnabledLanguages(): Promise<readonly AppLanguage[]> {
@@ -808,79 +817,49 @@ export class RojDb {
   }
 
   async getAdminProblemById(id: string) {
-    return this.problems().findOne({ _id: id });
+    return getAdminProblemById(this.problems(), id);
   }
 
   // 创建站内题目元数据，不涉及 judge 机测试数据目录。
   async createProblem(input: ProblemInput) {
-    const now = new Date();
-    const problem = buildProblemDocument(input, now);
-    await this.problems().insertOne(problem);
-    return problem;
+    return createProblem(this.problems(), input);
   }
 
   async updateProblem(id: string, input: ProblemInput) {
-    await this.problems().updateOne(
-      { _id: id },
-      {
-        $set: buildProblemUpdateFields(input, new Date()),
-      },
-    );
+    await updateProblem(this.problems(), id, input);
   }
 
   // 当前最小实现里，发布题目就是把 isVisible 设为 true。
   async publishProblem(id: string) {
-    await this.problems().updateOne(
-      { _id: id },
-      {
-        $set: buildPublishProblemUpdate(new Date()),
-      },
-    );
+    await publishProblem(this.problems(), id);
   }
 
   async listPublishedProblemSets() {
-    return this.problemSets()
-      .find({ isPublished: true })
-      .sort({ publishedAt: -1, createdAt: -1 })
-      .toArray();
+    return listPublishedProblemSets(this.problemSets());
   }
 
   async getPublishedProblemSetById(id: string) {
-    return this.problemSets().findOne({ _id: id, isPublished: true });
+    return getPublishedProblemSetById(this.problemSets(), id);
   }
 
   async listAdminProblemSets() {
-    return this.problemSets().find({}).sort({ createdAt: -1 }).toArray();
+    return listAdminProblemSets(this.problemSets());
   }
 
   async getAdminProblemSetById(id: string) {
-    return this.problemSets().findOne({ _id: id });
+    return getAdminProblemSetById(this.problemSets(), id);
   }
 
   async createProblemSet(input: ProblemSetInput) {
-    const now = new Date();
-    const problemSet = buildProblemSetDocument(input, now);
-    await this.problemSets().insertOne(problemSet);
-    return problemSet;
+    return createProblemSet(this.problemSets(), input);
   }
 
   async updateProblemSet(id: string, input: ProblemSetInput) {
-    await this.problemSets().updateOne(
-      { _id: id },
-      {
-        $set: buildProblemSetUpdateFields(input, new Date()),
-      },
-    );
+    await updateProblemSet(this.problemSets(), id, input);
   }
 
   async publishProblemSet(id: string) {
-    const now = new Date();
-    await this.problemSets().updateOne(
-      { _id: id },
-      {
-        $set: buildPublishProblemSetUpdate(now),
-      },
-    );
+    await publishProblemSet(this.problemSets(), id);
   }
 
   // 审核通过时记录审核人和审核时间。
