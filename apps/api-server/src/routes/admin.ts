@@ -9,9 +9,9 @@ import {
 } from '../http/schemas.ts';
 import { registerAdminDictionaryRoutes } from './admin/dictionaries.ts';
 import { registerAdminSettingsRoutes } from './admin/settings.ts';
+import { registerAdminSubmissionRoutes } from './admin/submissions.ts';
 import { registerAdminUserRoutes } from './admin/users.ts';
 import {
-  type AdminFormBody,
   problemFormValues,
   problemInputFromBody,
   problemSetFormValues,
@@ -20,8 +20,6 @@ import {
 
 export function registerAdminRoutes(app: FastifyInstance, context: RouteContext) {
   const {
-    parsePage,
-    parsePageSize,
     redirectTo,
     renderPage,
     requireApiAdmin,
@@ -32,6 +30,7 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
   registerAdminSettingsRoutes(app, context);
   registerAdminUserRoutes(app, context);
   registerAdminDictionaryRoutes(app, context);
+  registerAdminSubmissionRoutes(app, context);
 
   function renderProblemFormError(
     request: Parameters<typeof renderPage>[0],
@@ -171,33 +170,6 @@ export function registerAdminRoutes(app: FastifyInstance, context: RouteContext)
     return renderPage(request, reply, 'admin-problem-form.pug', {
       mode: 'edit',
       problem,
-    });
-  });
-
-  app.get('/admin/submissions', async (request, reply) => {
-    const user = await requireHtmlAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const paginationSettings = await services.getPaginationSettings();
-    const result = await services.listAdminSubmissions({
-      page: parsePage(request.query),
-      pageSize: paginationSettings.listPageSize,
-    });
-    return renderPage(request, reply, 'admin-submissions.pug', { ...result });
-  });
-
-  app.get('/api/admin/submissions', async (request, reply) => {
-    const user = await requireApiAdmin(request, reply);
-    if (!user) {
-      return;
-    }
-
-    const paginationSettings = await services.getPaginationSettings();
-    return services.listAdminSubmissions({
-      page: parsePage(request.query),
-      pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
     });
   });
 
