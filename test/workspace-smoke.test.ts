@@ -38,13 +38,13 @@ describe('workspace smoke', () => {
   });
 
   it('does not overwrite enabled languages during seed', async () => {
-    const dbSource = await readFile(
-      join(process.cwd(), 'packages', 'db', 'src', 'index.ts'),
+    const seedSource = await readFile(
+      join(process.cwd(), 'packages', 'db', 'src', 'demo-seed.ts'),
       'utf8',
     );
 
-    expect(dbSource).toContain('parseEnabledLanguagesEnv(process.env.ROJ_ENABLED_LANGUAGES)');
-    expect(dbSource).toContain('$setOnInsert:');
-    expect(dbSource).not.toContain("$set: {\n          enabledLanguages: ['cpp', 'python']");
+    expect(seedSource).toContain('parseEnabledLanguagesEnv(process.env.ROJ_ENABLED_LANGUAGES)');
+    expect(seedSource).toContain('$setOnInsert:');
+    expect(seedSource).not.toContain("$set: {\n          enabledLanguages: ['cpp', 'python']");
   });
 });
