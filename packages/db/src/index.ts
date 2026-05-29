@@ -78,10 +78,35 @@ export {
   buildSubmissionListFilter,
   type SubmissionListFilters,
 } from './submission-filters.ts';
+import type { SubmissionListFilters } from './submission-filters.ts';
+export {
+  attachProblemsToSubmissions,
+  getSubmissionById,
+  getSubmissionByNo,
+  getSubmissionByPublicId,
+  getSubmissionWithProblemByPublicId,
+  listAllSubmissions,
+  listAllSubmissionsWithProblems,
+  listSubmissionsByUser,
+  listSubmissionsByUserPaginated,
+  listSubmissionsWithProblemsByUser,
+  listSubmissionsWithProblemsPaginated,
+  type SubmissionQueryCollections,
+} from './submission-queries.ts';
 import {
-  buildSubmissionListFilter,
-  type SubmissionListFilters,
-} from './submission-filters.ts';
+  attachProblemsToSubmissions,
+  getSubmissionById,
+  getSubmissionByNo,
+  getSubmissionByPublicId,
+  getSubmissionWithProblemByPublicId,
+  listAllSubmissions,
+  listAllSubmissionsWithProblems,
+  listSubmissionsByUser,
+  listSubmissionsByUserPaginated,
+  listSubmissionsWithProblemsByUser,
+  listSubmissionsWithProblemsPaginated,
+  type SubmissionQueryCollections,
+} from './submission-queries.ts';
 export { calculateSubmissionScore } from './submission-scoring.ts';
 export {
   buildClearSubmissionLeaseUpdate,
@@ -307,6 +332,13 @@ export class RojDb {
     };
   }
 
+  submissionQueryCollections(): SubmissionQueryCollections {
+    return {
+      submissions: this.submissions(),
+      problems: this.problems(),
+    };
+  }
+
   // 初始化项目需要的索引。
   async ensureIndexes() {
     await ensureRojIndexes({
@@ -428,74 +460,38 @@ export class RojDb {
   }
 
   async getSubmissionById(id: string) {
-    return this.submissions().findOne({ _id: id });
+    return getSubmissionById(this.submissionQueryCollections(), id);
   }
 
   async getSubmissionByNo(submissionNo: number) {
-    return this.submissions().findOne({ submissionNo });
+    return getSubmissionByNo(this.submissionQueryCollections(), submissionNo);
   }
 
   async getSubmissionByPublicId(publicId: string) {
-    if (/^\d+$/.test(publicId)) {
-      const byNo = await this.getSubmissionByNo(Number(publicId));
-      if (byNo) {
-        return byNo;
-      }
-    }
-    return this.getSubmissionById(publicId);
+    return getSubmissionByPublicId(this.submissionQueryCollections(), publicId);
   }
 
   async getSubmissionWithProblemByPublicId(publicId: string) {
-    const submission = await this.getSubmissionByPublicId(publicId);
-    if (!submission) {
-      return null;
-    }
-
-    const problem = await this.problems().findOne({ _id: submission.problemId });
-    return {
-      ...submission,
-      problem,
-    };
+    return getSubmissionWithProblemByPublicId(this.submissionQueryCollections(), publicId);
   }
 
   async attachProblemsToSubmissions(submissions: SubmissionDocument[]) {
-    const problemIds = [...new Set(submissions.map((submission) => submission.problemId))];
-    const problems = await this.problems().find({ _id: { $in: problemIds } }).toArray();
-    const problemById = new Map(problems.map((problem) => [problem._id, problem]));
-
-    return submissions.map((submission) => ({
-      ...submission,
-      problem: problemById.get(submission.problemId) ?? null,
-    }));
+    return attachProblemsToSubmissions(this.submissionQueryCollections(), submissions);
   }
 
   async listSubmissionsByUser(userId: string) {
-    return this.submissions().find({ userId }).sort({ createdAt: -1 }).toArray();
+    return listSubmissionsByUser(this.submissionQueryCollections(), userId);
   }
 
   async listSubmissionsWithProblemsByUser(userId: string) {
-    return this.attachProblemsToSubmissions(await this.listSubmissionsByUser(userId));
+    return listSubmissionsWithProblemsByUser(this.submissionQueryCollections(), userId);
   }
 
   async listSubmissionsByUserPaginated(userId: string, input: {
     page: number;
     pageSize: number;
   }) {
-    const skip = (input.page - 1) * input.pageSize;
-    const [items, total] = await Promise.all([
-      this.submissions()
-        .find({ userId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(input.pageSize)
-        .toArray(),
-      this.submissions().countDocuments({ userId }),
-    ]);
-
-    return {
-      items: await this.attachProblemsToSubmissions(items),
-      total,
-    };
+    return listSubmissionsByUserPaginated(this.submissionQueryCollections(), userId, input);
   }
 
   async listSubmissionsWithProblemsPaginated(input: {
@@ -503,22 +499,7 @@ export class RojDb {
     pageSize: number;
     filters?: SubmissionListFilters;
   }) {
-    const skip = (input.page - 1) * input.pageSize;
-    const query = buildSubmissionListFilter(input.filters);
-    const [items, total] = await Promise.all([
-      this.submissions()
-        .find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(input.pageSize)
-        .toArray(),
-      this.submissions().countDocuments(query),
-    ]);
-
-    return {
-      items: await this.attachProblemsToSubmissions(items),
-      total,
-    };
+    return listSubmissionsWithProblemsPaginated(this.submissionQueryCollections(), input);
   }
 
   async listProblemProgressByUser(userId: string) {
@@ -551,18 +532,18 @@ export class RojDb {
   }
 
   async listAllSubmissions() {
-    return this.submissions().find({}).sort({ createdAt: -1 }).toArray();
+    return listAllSubmissions(this.submissionQueryCollections());
   }
 
   async listAllSubmissionsWithProblems() {
-    return this.attachProblemsToSubmissions(await this.listAllSubmissions());
+    return listAllSubmissionsWithProblems(this.submissionQueryCollections());
   }
 
   async listAllSubmissionsWithProblemsPaginated(input: {
     page: number;
     pageSize: number;
   }) {
-    return this.listSubmissionsWithProblemsPaginated(input);
+    return listSubmissionsWithProblemsPaginated(this.submissionQueryCollections(), input);
   }
 
   async buildSimpleRanklist(filters: RanklistFilters = {}) {
