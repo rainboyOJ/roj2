@@ -25,7 +25,7 @@ import {
   type UserDocument,
   type UserProblemProgressDocument,
 } from '@roj/shared';
-import { extractProblemRefs, renderMarkdown, renderProblemSetMarkdown } from '@roj/markdown-renderer';
+import { renderMarkdown } from '@roj/markdown-renderer';
 import { MongoClient } from 'mongodb';
 
 export {
@@ -69,6 +69,26 @@ import {
   buildRanklistAggregationPipeline,
   type RanklistFilters,
 } from './ranklist.ts';
+export {
+  buildProblemDocument,
+  buildProblemUpdateFields,
+  type ProblemInput,
+} from './problem-documents.ts';
+import {
+  buildProblemDocument,
+  buildProblemUpdateFields,
+  type ProblemInput,
+} from './problem-documents.ts';
+export {
+  buildProblemSetDocument,
+  buildProblemSetUpdateFields,
+  type ProblemSetInput,
+} from './problem-set-documents.ts';
+import {
+  buildProblemSetDocument,
+  buildProblemSetUpdateFields,
+  type ProblemSetInput,
+} from './problem-set-documents.ts';
 
 function debugJudge(message: string, details?: Record<string, unknown>) {
   if (process.env.DEBUG_JUDGE !== '1') {
@@ -1144,48 +1164,18 @@ export class RojDb {
   }
 
   // 创建站内题目元数据，不涉及 judge 机测试数据目录。
-  async createProblem(input: {
-    pid: string;
-    title: string;
-    statementMarkdown: string;
-    allowLanguages: AppLanguage[];
-    isVisible: boolean;
-  }) {
+  async createProblem(input: ProblemInput) {
     const now = new Date();
-    const problem: ProblemDocument = {
-      _id: new ObjectId().toHexString(),
-      pid: input.pid,
-      title: input.title,
-      statementMarkdown: input.statementMarkdown,
-      statementHtml: renderMarkdown(input.statementMarkdown),
-      allowLanguages: input.allowLanguages,
-      isVisible: input.isVisible,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const problem = buildProblemDocument(input, now);
     await this.problems().insertOne(problem);
     return problem;
   }
 
-  async updateProblem(id: string, input: {
-    pid: string;
-    title: string;
-    statementMarkdown: string;
-    allowLanguages: AppLanguage[];
-    isVisible: boolean;
-  }) {
+  async updateProblem(id: string, input: ProblemInput) {
     await this.problems().updateOne(
       { _id: id },
       {
-        $set: {
-          pid: input.pid,
-          title: input.title,
-          statementMarkdown: input.statementMarkdown,
-          statementHtml: renderMarkdown(input.statementMarkdown),
-          allowLanguages: input.allowLanguages,
-          isVisible: input.isVisible,
-          updatedAt: new Date(),
-        },
+        $set: buildProblemUpdateFields(input, new Date()),
       },
     );
   }
@@ -1222,40 +1212,18 @@ export class RojDb {
     return this.problemSets().findOne({ _id: id });
   }
 
-  async createProblemSet(input: {
-    title: string;
-    contentMarkdown: string;
-  }) {
+  async createProblemSet(input: ProblemSetInput) {
     const now = new Date();
-    const problemSet: ProblemSetDocument = {
-      _id: new ObjectId().toHexString(),
-      title: input.title,
-      contentMarkdown: input.contentMarkdown,
-      contentHtml: renderProblemSetMarkdown(input.contentMarkdown),
-      problemRefs: extractProblemRefs(input.contentMarkdown),
-      isPublished: false,
-      publishedAt: null,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const problemSet = buildProblemSetDocument(input, now);
     await this.problemSets().insertOne(problemSet);
     return problemSet;
   }
 
-  async updateProblemSet(id: string, input: {
-    title: string;
-    contentMarkdown: string;
-  }) {
+  async updateProblemSet(id: string, input: ProblemSetInput) {
     await this.problemSets().updateOne(
       { _id: id },
       {
-        $set: {
-          title: input.title,
-          contentMarkdown: input.contentMarkdown,
-          contentHtml: renderProblemSetMarkdown(input.contentMarkdown),
-          problemRefs: extractProblemRefs(input.contentMarkdown),
-          updatedAt: new Date(),
-        },
+        $set: buildProblemSetUpdateFields(input, new Date()),
       },
     );
   }
