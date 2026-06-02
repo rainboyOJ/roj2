@@ -6,6 +6,7 @@ import { sendValidationError } from '../../http/validation.ts';
 import { createProblemSchema } from '../../http/schemas.ts';
 import type { AdminProblemListFilters } from '../../service-types.ts';
 import {
+  adminProblemsPath,
   problemFormValues,
   problemInputFromBody,
 } from './form-parsers.ts';
@@ -58,6 +59,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
       mode,
       problem,
       formError,
+      returnPath: adminProblemsPath(request.query),
     });
   }
 
@@ -88,6 +90,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
         allowLanguages: ['cpp', 'python'],
         isVisible: false,
       },
+      returnPath: adminProblemsPath(request.query),
     });
   });
 
@@ -106,6 +109,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
     return renderPage(request, reply, 'admin-problem-form.pug', {
       mode: 'edit',
       problem,
+      returnPath: adminProblemsPath(request.query),
     });
   });
 
@@ -168,7 +172,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
         messageFromError(error, '创建题目失败，请检查后重试。'),
       );
     }
-    return redirectTo(reply, '/admin/problems');
+    return redirectTo(reply, adminProblemsPath(request.query));
   });
 
   app.put('/api/admin/problems/:id', async (request, reply) => {
@@ -218,7 +222,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
         messageFromError(error, '保存题目失败，请检查后重试。'),
       );
     }
-    return redirectTo(reply, '/admin/problems');
+    return redirectTo(reply, adminProblemsPath(request.query));
   });
 
   app.post('/api/admin/problems/:id/publish', async (request, reply) => {
@@ -251,6 +255,6 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
         formError: messageFromError(error, '发布题目失败，请检查后重试。'),
       });
     }
-    return redirectTo(reply, '/admin/problems');
+    return redirectTo(reply, adminProblemsPath(request.query));
   });
 }

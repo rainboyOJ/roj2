@@ -4,7 +4,9 @@ include mixins/assets.pug
 
 block content
   - const isCreate = mode === 'create';
-  - const actionPath = isCreate ? '/admin/problems' : `/admin/problems/${problem.id}`;
+  - const listReturnPath = returnPath || '/admin/problems';
+  - const actionQuery = listReturnPath.includes('?') ? `?${listReturnPath.split('?')[1]}` : '';
+  - const actionPath = isCreate ? `/admin/problems${actionQuery}` : `/admin/problems/${problem.id}${actionQuery}`;
   section.auth-panel
     header
       if isCreate
@@ -47,10 +49,10 @@ block content
               option(value="true" selected=problem.isVisible)= "可见"
           .form-actions
             button(type="submit")= "保存题目"
-            a(href='/admin/problems' role="button" class="secondary")= "返回"
+            a(href=listReturnPath role="button" class="secondary")= "返回"
         if !isCreate
           hr
-          form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish` data-problem-id=problem.id)
+          form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish${actionQuery}` data-problem-id=problem.id)
             button(type="submit" class="contrast")= "发布题目"
 
 block pageScripts

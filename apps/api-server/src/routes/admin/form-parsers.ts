@@ -85,6 +85,50 @@ export function adminUsersPath(query: unknown) {
   return queryParts.length ? `/admin/users?${queryParts.join('&')}` : '/admin/users';
 }
 
+function pageQueryPart(query: unknown) {
+  const raw = typeof query === 'object' && query !== null
+    ? query as { page?: unknown }
+    : {};
+  const pageText = Array.isArray(raw.page) ? raw.page[0] : raw.page;
+  const pageNumber = Number(pageText ?? 1);
+  return Number.isInteger(pageNumber) && pageNumber > 1 ? `page=${pageNumber}` : null;
+}
+
+export function adminProblemsPath(query: unknown) {
+  const raw = typeof query === 'object' && query !== null
+    ? query as { q?: unknown; visibility?: unknown }
+    : {};
+  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
+  const visibility = Array.isArray(raw.visibility) ? raw.visibility[0] : raw.visibility;
+  const queryParts = [];
+  const pagePart = pageQueryPart(query);
+
+  if (pagePart) {
+    queryParts.push(pagePart);
+  }
+  if (typeof q === 'string' && q.trim()) {
+    queryParts.push(`q=${encodeURIComponent(q.trim())}`);
+  }
+  if (visibility === 'visible' || visibility === 'hidden') {
+    queryParts.push(`visibility=${encodeURIComponent(visibility)}`);
+  }
+
+  return queryParts.length ? `/admin/problems?${queryParts.join('&')}` : '/admin/problems';
+}
+
+export function adminProblemSetsPath(query: unknown) {
+  const queryParts = [];
+  const pagePart = pageQueryPart(query);
+
+  if (pagePart) {
+    queryParts.push(pagePart);
+  }
+
+  return queryParts.length
+    ? `/admin/problem-sets?${queryParts.join('&')}`
+    : '/admin/problem-sets';
+}
+
 export function problemInputFromBody(raw: AdminFormBody) {
   return {
     pid: raw.pid,

@@ -15,7 +15,7 @@ block content
         h1= "题目管理"
         p.page-lead= "按 OJ 管理员常见的方式浏览、搜索和维护题目目录。"
       .page-actions
-        a(href='/admin/problems/new' role="button")= "创建题目"
+        a(href=`/admin/problems/new${currentQuerySuffix}` role="button")= "创建题目"
     if formError
       article
         p.form-alert(role="alert")= formError
@@ -54,7 +54,7 @@ block content
                   +problemVisibilityChip(problem.isVisible)
                 td
                   .table-actions
-                    a(href=`/admin/problems/${problem.id}/edit`)= "编辑"
+                    a(href=`/admin/problems/${problem.id}/edit${currentQuerySuffix}`)= "编辑"
                     if !problem.isVisible
                       form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish${currentQuerySuffix}` data-problem-id=problem.id)
                         button(type="submit" class="secondary")= "发布"

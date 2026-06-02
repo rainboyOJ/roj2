@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  adminProblemsPath,
+  adminProblemSetsPath,
   adminUsersPath,
   asStringArray,
   dictionaryFormValues,
@@ -59,6 +61,14 @@ describe('admin form parsers', () => {
       approvalStatus: 'pending',
       className: '1 班',
     })).toBe('/admin/users?page=2&q=alice&approvalStatus=pending&className=1%20%E7%8F%AD');
+    expect(adminProblemsPath({
+      page: '2',
+      q: ' A+B ',
+      visibility: 'hidden',
+    })).toBe('/admin/problems?page=2&q=A%2BB&visibility=hidden');
+    expect(adminProblemsPath({ page: '1', visibility: 'bad' })).toBe('/admin/problems');
+    expect(adminProblemSetsPath({ page: '3' })).toBe('/admin/problem-sets?page=3');
+    expect(adminProblemSetsPath({ page: 'bad' })).toBe('/admin/problem-sets');
   });
 
   it('parses problem form input and preserves invalid form values', () => {

@@ -5,6 +5,7 @@ import { messageFromError } from '../../http/form-errors.ts';
 import { sendValidationError } from '../../http/validation.ts';
 import { createProblemSetSchema } from '../../http/schemas.ts';
 import {
+  adminProblemSetsPath,
   problemSetFormValues,
   problemSetInputFromBody,
 } from './form-parsers.ts';
@@ -34,6 +35,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
       mode,
       problemSet,
       formError,
+      returnPath: adminProblemSetsPath(request.query),
     });
   }
 
@@ -60,6 +62,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         title: '',
         contentMarkdown: '',
       },
+      returnPath: adminProblemSetsPath(request.query),
     });
   });
 
@@ -78,6 +81,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
     return renderPage(request, reply, 'admin-problem-set-form.pug', {
       mode: 'edit',
       problemSet,
+      returnPath: adminProblemSetsPath(request.query),
     });
   });
 
@@ -139,7 +143,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         messageFromError(error, '创建题目单失败，请检查后重试。'),
       );
     }
-    return redirectTo(reply, '/admin/problem-sets');
+    return redirectTo(reply, adminProblemSetsPath(request.query));
   });
 
   app.put('/api/admin/problem-sets/:id', async (request, reply) => {
@@ -189,7 +193,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         messageFromError(error, '保存题目单失败，请检查后重试。'),
       );
     }
-    return redirectTo(reply, '/admin/problem-sets');
+    return redirectTo(reply, adminProblemSetsPath(request.query));
   });
 
   app.post('/api/admin/problem-sets/:id/publish', async (request, reply) => {
@@ -242,7 +246,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         formError: messageFromError(error, '发布题目单失败，请检查后重试。'),
       });
     }
-    return redirectTo(reply, '/admin/problem-sets');
+    return redirectTo(reply, adminProblemSetsPath(request.query));
   });
 
   app.post('/admin/problem-sets/:id/hide', async (request, reply) => {
@@ -262,7 +266,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         formError: messageFromError(error, '隐藏题目单失败，请检查后重试。'),
       });
     }
-    return redirectTo(reply, '/admin/problem-sets');
+    return redirectTo(reply, adminProblemSetsPath(request.query));
   });
 
   app.post('/admin/problem-sets/:id/delete', async (request, reply) => {
@@ -282,6 +286,6 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         formError: messageFromError(error, '删除题目单失败，请检查后重试。'),
       });
     }
-    return redirectTo(reply, '/admin/problem-sets');
+    return redirectTo(reply, adminProblemSetsPath(request.query));
   });
 }

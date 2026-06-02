@@ -422,6 +422,49 @@ describe('content management routes', () => {
     });
   });
 
+  it('preserves admin problem list context after HTML problem actions', async () => {
+    let updatedId = '';
+    let publishedId = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      updateProblem: async (id) => {
+        updatedId = id;
+      },
+      publishProblem: async (id) => {
+        publishedId = id;
+      },
+    }));
+
+    const updateResponse = await app.inject({
+      method: 'POST',
+      url: '/admin/problems/problem-1?q=Hidden&visibility=hidden',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        pid: '1001',
+        title: 'Hidden Problem',
+        statementMarkdown: 'desc',
+        allowLanguages: ['python'],
+        isVisible: 'false',
+      },
+    });
+    const publishResponse = await app.inject({
+      method: 'POST',
+      url: '/admin/problems/problem-1/publish?q=Hidden&visibility=hidden',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(updateResponse.statusCode).toBe(302);
+    expect(updateResponse.headers.location).toBe('/admin/problems?q=Hidden&visibility=hidden');
+    expect(updatedId).toBe('problem-1');
+    expect(publishResponse.statusCode).toBe(302);
+    expect(publishResponse.headers.location).toBe('/admin/problems?q=Hidden&visibility=hidden');
+    expect(publishedId).toBe('problem-1');
+  });
+
   it('creates a problem set draft for admin users', async () => {
     let receivedPayload: { title: string; contentMarkdown: string } | null = null;
     const app = buildApp(createTestServices({
@@ -522,14 +565,14 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/problem-sets/set-1/publish',
+      url: '/admin/problem-sets/set-1/publish?page=2',
       headers: {
         cookie: adminSessionCookie(),
       },
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/problem-sets');
+    expect(response.headers.location).toBe('/admin/problem-sets?page=2');
     expect(publishedId).toBe('set-1');
   });
 
@@ -588,14 +631,14 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/problem-sets/set-1/hide',
+      url: '/admin/problem-sets/set-1/hide?page=2',
       headers: {
         cookie: adminSessionCookie(),
       },
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/problem-sets');
+    expect(response.headers.location).toBe('/admin/problem-sets?page=2');
     expect(hiddenId).toBe('set-1');
   });
 
@@ -610,14 +653,14 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/problem-sets/set-1/delete',
+      url: '/admin/problem-sets/set-1/delete?page=2',
       headers: {
         cookie: adminSessionCookie(),
       },
     });
 
     expect(response.statusCode).toBe(302);
-    expect(response.headers.location).toBe('/admin/problem-sets');
+    expect(response.headers.location).toBe('/admin/problem-sets?page=2');
     expect(deletedId).toBe('set-1');
   });
 

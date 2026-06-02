@@ -2,18 +2,20 @@
 extends layout.pug
 
 block content
+  - const listReturnPath = returnPath || '/admin/problem-sets'
+  - const actionQuery = listReturnPath.includes('?') ? `?${listReturnPath.split('?')[1]}` : ''
   section.detail-panel
     header
       hgroup
         h1= mode === 'create' ? "创建题目单" : "编辑题目单"
         p.page-lead= "使用 Markdown 编写训练说明，用 [[pid:1000]] 引用题目。"
       .page-actions
-        a(href='/admin/problem-sets' role="button" class="secondary")= "返回列表"
+        a(href=listReturnPath role="button" class="secondary")= "返回列表"
     article
       .panel-body
         if formError
           p.form-alert(role="alert")= formError
-        form(method="post" action=mode === 'create' ? '/admin/problem-sets' : `/admin/problem-sets/${problemSet.id}`)
+        form(method="post" action=mode === 'create' ? `/admin/problem-sets${actionQuery}` : `/admin/problem-sets/${problemSet.id}${actionQuery}`)
           label(for="title")= "标题"
           input#title(type="text" name="title" required value=problemSet.title placeholder="例如：第一周基础训练")
           label(for="contentMarkdown")= "内容"

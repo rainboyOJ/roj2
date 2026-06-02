@@ -3,13 +3,14 @@ extends layout.pug
 include mixins/status.pug
 
 block content
+  - const currentPageSuffix = pagination && pagination.page > 1 ? `?page=${pagination.page}` : ''
   section.list-panel
     header
       hgroup
         h1= "题目单管理"
         p.page-lead= "创建、编辑和发布面向学生的训练题目单。"
       .page-actions
-        a(href='/admin/problem-sets/new' role="button")= "创建题目单"
+        a(href=`/admin/problem-sets/new${currentPageSuffix}` role="button")= "创建题目单"
     if formError
       article
         p.form-alert(role="alert")= formError
@@ -33,21 +34,21 @@ block content
                 td= problemSet.updatedAtText
                 td
                   .table-actions
-                    a(href=`/admin/problem-sets/${problemSet.id}/edit`)= "编辑"
+                    a(href=`/admin/problem-sets/${problemSet.id}/edit${currentPageSuffix}`)= "编辑"
                     if !problemSet.isPublished
-                      form(method="post" action=`/admin/problem-sets/${problemSet.id}/publish`)
+                      form(method="post" action=`/admin/problem-sets/${problemSet.id}/publish${currentPageSuffix}`)
                         button(type="submit" class="secondary")= "发布"
                     else
                       form(
                         method="post"
-                        action=`/admin/problem-sets/${problemSet.id}/hide`
+                        action=`/admin/problem-sets/${problemSet.id}/hide${currentPageSuffix}`
                         data-confirm-message=`确定要隐藏题目单 ${problemSet.title} 吗？隐藏后学生将无法看到。`
                         onsubmit="return window.confirm(this.dataset.confirmMessage)"
                       )
                         button(type="submit" class="secondary")= "隐藏"
                     form(
                       method="post"
-                      action=`/admin/problem-sets/${problemSet.id}/delete`
+                      action=`/admin/problem-sets/${problemSet.id}/delete${currentPageSuffix}`
                       data-confirm-message=`确定要删除题目单 ${problemSet.title} 吗？删除后不可恢复。`
                       onsubmit="return window.confirm(this.dataset.confirmMessage)"
                     )
