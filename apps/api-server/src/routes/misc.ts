@@ -3,9 +3,21 @@ import type { FastifyInstance } from 'fastify';
 import type { RouteContext } from '../http/context.ts';
 
 export function registerMiscRoutes(app: FastifyInstance, context: RouteContext) {
-  const { renderPage, services } = context;
+  const { redirectTo, renderPage, services } = context;
 
   app.get('/', async (request, reply) => renderPage(request, reply, 'home.pug'));
+
+  app.get('/problem-jump', async (request, reply) => {
+    const query = request.query as { pid?: string | string[] } | undefined;
+    const rawPid = Array.isArray(query?.pid) ? query?.pid[0] : query?.pid;
+    const pid = rawPid?.trim();
+
+    if (!pid) {
+      return redirectTo(reply, '/');
+    }
+
+    return redirectTo(reply, `/problem/${encodeURIComponent(pid)}`);
+  });
 
   app.get('/ranklist', async (request, reply) => {
     const query = request.query as { className?: string | string[] } | undefined;

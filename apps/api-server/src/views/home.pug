@@ -14,6 +14,11 @@ block content
             a(href='/problems' role="button")= "进入题目列表"
             a(href='/submissions' role="button" class="secondary")= "查看提交记录"
             a(href='/ranklist' role="button" class="contrast")= "打开排行榜"
+          form.quick-problem-jump(method="get" action="/problem-jump")
+            label(for="quick-problem-pid")
+              span= "输入题号快速打开题目"
+              input#quick-problem-pid(type="text" name="pid" placeholder="例如 1000" inputmode="numeric" autocomplete="off" required)
+            button(type="submit")= "跳转"
       .feature-grid
         article.feature-card
           h3= "开始做题"

@@ -26,9 +26,37 @@ describe('shared rendered views and assets', () => {
     expect(response.body).toContain('首页');
     expect(response.body).toContain('题目单');
     expect(response.body).toContain('学校 OJ 练习平台');
+    expect(response.body).toContain('action="/problem-jump"');
+    expect(response.body).toContain('id="quick-problem-pid"');
+    expect(response.body).toContain('输入题号快速打开题目');
+    expect(response.body).toContain('跳转');
     expect(response.body).toContain('登录');
     expect(response.body).toContain('注册');
     expect(response.body).not.toContain('题目管理');
+  });
+
+  it('redirects the home quick jump form to the problem detail page', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problem-jump?pid=1000',
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/problem/1000');
+  });
+
+  it('redirects an empty home quick jump back to the home page', async () => {
+    const app = buildApp(createServices());
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problem-jump?pid=',
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/');
   });
 
   it('shows one admin entry in the public navigation for admin users', async () => {

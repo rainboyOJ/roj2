@@ -126,6 +126,20 @@ main.container {
   padding: 1.4rem 1.5rem;
 }
 
+.quick-problem-jump {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin: 1rem 0 0;
+}
+
+.quick-problem-jump label,
+.quick-problem-jump input,
+.quick-problem-jump button {
+  margin-bottom: 0;
+}
+
 .hero-panel article,
 .list-panel article,
 .detail-panel article,
