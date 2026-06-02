@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildAdminProblemListFilter,
+  buildVisibleProblemListFilter,
   buildProblemDocument,
   buildHideProblemSetUpdate,
   buildPublishProblemSetUpdate,
@@ -88,6 +89,38 @@ describe('buildAdminProblemListFilter', () => {
 
   it('ignores blank filters', () => {
     expect(buildAdminProblemListFilter({ q: ' ' })).toEqual({});
+  });
+});
+
+describe('buildVisibleProblemListFilter', () => {
+  it('always limits results to visible problems', () => {
+    expect(buildVisibleProblemListFilter()).toEqual({
+      isVisible: true,
+    });
+  });
+
+  it('matches visible problems by pid or title', () => {
+    const filter = buildVisibleProblemListFilter({ q: ' A+B ' });
+
+    expect(filter.isVisible).toBe(true);
+    expect(filter.$or).toHaveLength(2);
+    expect(filter.$or?.[0]).toEqual({ pid: /A\+B/i });
+    expect(filter.$or?.[1]).toEqual({ title: /A\+B/i });
+  });
+
+  it('supports include and exclude pid filters', () => {
+    expect(buildVisibleProblemListFilter({ pidIn: ['1000'] })).toEqual({
+      isVisible: true,
+      pid: {
+        $in: ['1000'],
+      },
+    });
+    expect(buildVisibleProblemListFilter({ pidNin: ['1001'] })).toEqual({
+      isVisible: true,
+      pid: {
+        $nin: ['1001'],
+      },
+    });
   });
 });
 

@@ -12,6 +12,27 @@ block content
         a(href='/submissions' role="button" class="secondary")= "提交列表"
         if !currentUser
           a(href='/login' role="button" class="contrast")= "登录"
+    form.filter-form(method="get" action="/problems" aria-label="题目筛选")
+      label
+        span= "搜索"
+        input(
+          type="search"
+          name="q"
+          placeholder="题号或标题"
+          value=filters && filters.q ? filters.q : ''
+        )
+      if currentUser
+        label
+          span= "状态"
+          select(name="progress")
+            option(value="" selected=!(filters && filters.progress)) 全部
+            option(value="accepted" selected=filters && filters.progress === 'accepted') 已通过
+            option(value="attempted" selected=filters && filters.progress === 'attempted') 已尝试
+            option(value="empty" selected=filters && filters.progress === 'empty') 未开始
+      .filter-actions
+        button(type="submit")= "筛选"
+        if (filters && (filters.q || filters.progress))
+          a(href="/problems" role="button" class="secondary")= "清空"
     if problems.length
       .table-shell
         table.data-table
@@ -41,7 +62,7 @@ block content
                 td= problem.allowLanguages.join(', ')
                 td
                   a(href=`/problem/${problem.pid}`)= "提交代码"
-      +paginationBar('/problems', pagination, '题目列表分页')
+      +paginationBar('/problems', pagination, '题目列表分页', paginationQuerySuffix)
     else
       article
-        p= "目前还没有可见题目。"
+        p= filters && (filters.q || filters.progress) ? "没有找到符合条件的题目。" : "目前还没有可见题目。"

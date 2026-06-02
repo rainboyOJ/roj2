@@ -17,6 +17,18 @@ export interface ProblemViewModel {
 }
 
 export type ProblemProgress = 'accepted' | 'attempted';
+export type ProblemListProgressFilter = 'accepted' | 'attempted' | 'empty';
+
+export interface ProblemListFilters {
+  q?: string;
+  progress?: ProblemListProgressFilter;
+}
+
+export interface ProblemListQueryFilters {
+  q?: string;
+  pidIn?: string[];
+  pidNin?: string[];
+}
 
 export interface ProblemListViewModel extends ProblemViewModel {
   progress: ProblemProgress | null;
@@ -179,6 +191,7 @@ export interface ProblemServices {
   listProblemsPaginated(pagination: {
     page: number;
     pageSize: number;
+    filters?: ProblemListQueryFilters;
   }): Promise<{
     problems: ProblemViewModel[];
     pagination: PaginationViewModel;

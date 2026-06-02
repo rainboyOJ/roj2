@@ -2,7 +2,76 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { RouteContext } from '../http/context.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
-import type { ProblemListViewModel, ProblemProgress } from '../service-types.ts';
+import type {
+  ProblemListFilters,
+  ProblemListQueryFilters,
+  ProblemListViewModel,
+  ProblemProgress,
+} from '../service-types.ts';
+
+function parseProblemListFilters(query: unknown): ProblemListFilters {
+  if (typeof query !== 'object' || query === null) {
+    return {};
+  }
+
+  const raw = query as { q?: unknown; progress?: unknown };
+  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
+  const progress = Array.isArray(raw.progress) ? raw.progress[0] : raw.progress;
+  const filters: ProblemListFilters = {};
+
+  if (typeof q === 'string' && q.trim()) {
+    filters.q = q.trim();
+  }
+  if (progress === 'accepted' || progress === 'attempted' || progress === 'empty') {
+    filters.progress = progress;
+  }
+
+  return filters;
+}
+
+function buildProblemListQueryFilters(
+  filters: ProblemListFilters,
+  progressByPid: Map<string, ProblemProgress>,
+): ProblemListQueryFilters {
+  const queryFilters: ProblemListQueryFilters = {};
+  const progressEntries = Array.from(progressByPid.entries());
+
+  if (filters.q) {
+    queryFilters.q = filters.q;
+  }
+  if (filters.progress === 'accepted') {
+    queryFilters.pidIn = progressEntries
+      .filter(([, progress]) => progress === 'accepted')
+      .map(([pid]) => pid);
+  } else if (filters.progress === 'attempted') {
+    queryFilters.pidIn = progressEntries
+      .filter(([, progress]) => progress === 'attempted')
+      .map(([pid]) => pid);
+  } else if (filters.progress === 'empty') {
+    queryFilters.pidNin = progressEntries.map(([pid]) => pid);
+  }
+
+  return queryFilters;
+}
+
+function buildProblemListQuerySuffix(filters: ProblemListFilters) {
+  const params = new URLSearchParams();
+  if (filters.q) {
+    params.set('q', filters.q);
+  }
+  if (filters.progress) {
+    params.set('progress', filters.progress);
+  }
+  return params.toString();
+}
+
+function searchOnlyProblemListFilters(filters: ProblemListFilters): ProblemListFilters {
+  const searchFilters: ProblemListFilters = {};
+  if (filters.q) {
+    searchFilters.q = filters.q;
+  }
+  return searchFilters;
+}
 
 export function registerProblemRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -44,15 +113,20 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
     const currentUser = await services.getCurrentUser(token);
     const paginationSettings = await services.getPaginationSettings();
     const pageSize = paginationSettings.listPageSize;
-    const [result, enabledLanguages, progressByPid] = await Promise.all([
+    const filters = parseProblemListFilters(request.query);
+    const progressByPid = currentUser
+      ? await services.listProblemProgressByUser(currentUser.id)
+      : new Map<string, ProblemProgress>();
+    const queryFilters = currentUser
+      ? buildProblemListQueryFilters(filters, progressByPid)
+      : buildProblemListQueryFilters(searchOnlyProblemListFilters(filters), progressByPid);
+    const [result, enabledLanguages] = await Promise.all([
       services.listProblemsPaginated({
         page: parsePage(request.query),
         pageSize,
+        filters: queryFilters,
       }),
       services.getEnabledLanguages(),
-      currentUser
-        ? services.listProblemProgressByUser(currentUser.id)
-        : Promise.resolve(new Map<string, ProblemProgress>()),
     ]);
 
     return renderPage(request, reply, 'problems.pug', {
@@ -62,6 +136,8 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
         progress: progressByPid.get(problem.pid) ?? null,
       })),
       pagination: result.pagination,
+      filters,
+      paginationQuerySuffix: buildProblemListQuerySuffix(filters),
     });
   });
 
@@ -82,11 +158,21 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
   });
 
   app.get('/api/problems', async (request) => {
+    const token = parseSessionToken(request.headers.cookie);
+    const currentUser = await services.getCurrentUser(token);
     const paginationSettings = await services.getPaginationSettings();
+    const filters = parseProblemListFilters(request.query);
+    const progressByPid = currentUser
+      ? await services.listProblemProgressByUser(currentUser.id)
+      : new Map<string, ProblemProgress>();
+    const queryFilters = currentUser
+      ? buildProblemListQueryFilters(filters, progressByPid)
+      : buildProblemListQueryFilters(searchOnlyProblemListFilters(filters), progressByPid);
     const [result, enabledLanguages] = await Promise.all([
       services.listProblemsPaginated({
         page: parsePage(request.query),
         pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
+        filters: queryFilters,
       }),
       services.getEnabledLanguages(),
     ]);
@@ -95,8 +181,10 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
       problems: result.problems.map((problem) => ({
         ...problem,
         allowLanguages: filterAllowedLanguages(problem.allowLanguages, enabledLanguages),
+        progress: progressByPid.get(problem.pid) ?? null,
       })),
       pagination: result.pagination,
+      filters,
     };
   });
 

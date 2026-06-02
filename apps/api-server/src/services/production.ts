@@ -38,7 +38,12 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       return problems.map(mapProblem);
     },
     listProblemsPaginated: async (pagination) => {
-      const result = await db.listVisibleProblemsPaginated(pagination);
+      const input = {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        ...(pagination.filters ? { filters: pagination.filters } : {}),
+      };
+      const result = await db.listVisibleProblemsPaginated(input);
       return {
         problems: result.items.map(mapProblem),
         pagination: buildPaginationViewModel({

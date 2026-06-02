@@ -159,6 +159,7 @@ export {
   buildProblemDocument,
   buildPublishProblemUpdate,
   buildProblemUpdateFields,
+  buildVisibleProblemListFilter,
   createProblem,
   getAdminProblemById,
   getProblemByPid,
@@ -170,6 +171,7 @@ export {
   updateProblem,
   type AdminProblemListFilters,
   type ProblemInput,
+  type VisibleProblemListFilters,
 } from './problem-documents.ts';
 import {
   createProblem,
@@ -183,6 +185,7 @@ import {
   updateProblem,
   type AdminProblemListFilters,
   type ProblemInput,
+  type VisibleProblemListFilters,
 } from './problem-documents.ts';
 export {
   buildProblemSetDocument,
@@ -399,6 +402,7 @@ export class RojDb {
   async listVisibleProblemsPaginated(input: {
     page: number;
     pageSize: number;
+    filters?: VisibleProblemListFilters;
   }) {
     return listVisibleProblemsPaginated(this.problems(), input);
   }

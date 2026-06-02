@@ -17,15 +17,18 @@ export interface AdminProblemListFilters {
   visibility?: 'visible' | 'hidden';
 }
 
+export interface VisibleProblemListFilters {
+  q?: string;
+  pidIn?: string[];
+  pidNin?: string[];
+}
+
 function escapeRegexText(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function buildAdminProblemListFilter(
-  filters: AdminProblemListFilters = {},
-): Filter<ProblemDocument> {
-  const query: Filter<ProblemDocument> = {};
-  const text = filters.q?.trim();
+function applyProblemSearchFilter(query: Filter<ProblemDocument>, q?: string) {
+  const text = q?.trim();
 
   if (text) {
     const searchPattern = new RegExp(escapeRegexText(text), 'i');
@@ -34,11 +37,40 @@ export function buildAdminProblemListFilter(
       { title: searchPattern },
     ];
   }
+}
+
+export function buildAdminProblemListFilter(
+  filters: AdminProblemListFilters = {},
+): Filter<ProblemDocument> {
+  const query: Filter<ProblemDocument> = {};
+
+  applyProblemSearchFilter(query, filters.q);
 
   if (filters.visibility === 'visible') {
     query.isVisible = true;
   } else if (filters.visibility === 'hidden') {
     query.isVisible = false;
+  }
+
+  return query;
+}
+
+export function buildVisibleProblemListFilter(
+  filters: VisibleProblemListFilters = {},
+): Filter<ProblemDocument> {
+  const query: Filter<ProblemDocument> = { isVisible: true };
+  const pidFilter: { $in?: string[]; $nin?: string[] } = {};
+
+  applyProblemSearchFilter(query, filters.q);
+
+  if (filters.pidIn) {
+    pidFilter.$in = filters.pidIn;
+  }
+  if (filters.pidNin && filters.pidNin.length > 0) {
+    pidFilter.$nin = filters.pidNin;
+  }
+  if (Object.keys(pidFilter).length > 0) {
+    query.pid = pidFilter;
   }
 
   return query;
@@ -80,10 +112,11 @@ export async function listVisibleProblemsPaginated(
   input: {
     page: number;
     pageSize: number;
+    filters?: VisibleProblemListFilters;
   },
 ) {
   const skip = (input.page - 1) * input.pageSize;
-  const query = { isVisible: true };
+  const query = buildVisibleProblemListFilter(input.filters);
   const [items, total] = await Promise.all([
     problems
       .find(query)

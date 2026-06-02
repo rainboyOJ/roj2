@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildApp } from '../src/app.ts';
+import type { ProblemListQueryFilters } from '../src/service-types.ts';
 import { sessionCookie } from './helpers.ts';
 import { createViewTestServices as createServices } from './view-test-services.ts';
 
@@ -24,18 +25,23 @@ describe('problem views', () => {
     expect(response.body).toContain('提交代码');
     expect(response.body).toContain('href="/login"');
     expect(response.body).toContain('题目列表分页');
+    expect(response.body).toContain('aria-label="题目筛选"');
     expect(response.body).not.toContain('已通过');
     expect(response.body).not.toContain('已尝试');
   });
 
   it('uses pagination settings on the problems page', async () => {
-    let receivedPagination: { page: number; pageSize: number } | null = null;
+    let receivedPagination: {
+      page: number;
+      pageSize: number;
+      filters?: ProblemListQueryFilters;
+    } | null = null;
     const app = buildApp(createServices({
       getPaginationSettings: async () => ({
         listPageSize: 50,
         allowedPageSizes: [20, 50, 100],
       }),
-      listProblemsPaginated: async (pagination: { page: number; pageSize: number }) => {
+      listProblemsPaginated: async (pagination) => {
         receivedPagination = pagination;
         return {
           problems: [
@@ -68,6 +74,7 @@ describe('problem views', () => {
     expect(receivedPagination).toEqual({
       page: 2,
       pageSize: 50,
+      filters: {},
     });
     expect(response.body).toContain('Second Problem');
     expect(response.body).toContain('共有 2 页');
@@ -90,6 +97,123 @@ describe('problem views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('题目列表');
     expect(response.body).not.toContain('href="/login"');
+  });
+
+  it('passes problem search filters and keeps them in pagination links', async () => {
+    const receivedPaginations: Array<{
+      page: number;
+      pageSize: number;
+      filters?: ProblemListQueryFilters;
+    }> = [];
+    const app = buildApp(createServices({
+      listProblemsPaginated: async (pagination) => {
+        receivedPaginations.push(pagination);
+        return {
+          problems: [
+            {
+              pid: '1001',
+              title: 'Filtered Problem',
+              statementMarkdown: 'Filtered.',
+              statementHtml: '<p>Filtered.</p>',
+              allowLanguages: ['python'],
+            },
+          ],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 40,
+            totalPages: 2,
+            previousPage: null,
+            nextPage: 2,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems?q=Filter&page=1',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPaginations.at(-1)?.filters).toEqual({ q: 'Filter' });
+    expect(response.body).toContain('value="Filter"');
+    expect(response.body).toContain('href="/problems?page=2&amp;q=Filter"');
+  });
+
+  it('filters problems by current user progress', async () => {
+    const receivedPaginations: Array<{
+      page: number;
+      pageSize: number;
+      filters?: ProblemListQueryFilters;
+    }> = [];
+    const app = buildApp(createServices({
+      listProblemProgressByUser: async () => new Map([
+        ['1000', 'accepted'],
+        ['1001', 'attempted'],
+      ]),
+      listProblemsPaginated: async (pagination) => {
+        receivedPaginations.push(pagination);
+        return {
+          problems: [],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 0,
+            totalPages: 1,
+            previousPage: null,
+            nextPage: null,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems?progress=accepted',
+      headers: {
+        cookie: sessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPaginations.at(-1)?.filters).toEqual({ pidIn: ['1000'] });
+    expect(response.body).toContain('<option value="accepted" selected>已通过</option>');
+    expect(response.body).toContain('没有找到符合条件的题目。');
+  });
+
+  it('ignores progress filters for anonymous users', async () => {
+    const receivedPaginations: Array<{
+      page: number;
+      pageSize: number;
+      filters?: ProblemListQueryFilters;
+    }> = [];
+    const app = buildApp(createServices({
+      getCurrentUser: async () => null,
+      listProblemsPaginated: async (pagination) => {
+        receivedPaginations.push(pagination);
+        return {
+          problems: [],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 0,
+            totalPages: 1,
+            previousPage: null,
+            nextPage: null,
+          },
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problems?progress=accepted&q=1000',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedPaginations.at(-1)?.filters).toEqual({ q: '1000' });
+    expect(response.body).not.toContain('<select name="progress">');
   });
 
   it('renders current user problem progress on the problems page', async () => {
