@@ -42,6 +42,8 @@ block content
           div.metric-card
             span.soft-note= "评测机状态"
             strong#submissionJudgeStatus= submission.judgeStatus ? formatJudgeStatusLabel(submission.judgeStatus) : "等待中"
+        p#submissionPendingHint.soft-note(hidden=submission.status === 'FINISHED' || submission.status === 'FAILED')
+          | 系统已经收到提交，正在等待评测机返回结果；本页会自动更新。
         article.panel-card#submissionMessagePanel(hidden=!submission.message)
           header
             h2= "评测信息"

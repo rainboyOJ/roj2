@@ -138,6 +138,13 @@
     messageBlock.textContent = hasMessage ? message : '';
   };
 
+  const renderPendingHint = (isTerminal) => {
+    const hint = document.querySelector('#submissionPendingHint');
+    if (hint) {
+      hint.hidden = isTerminal;
+    }
+  };
+
   const applySubmission = (submission) => {
     setText('#submissionStatus', textOrRaw(statusText, submission.status, '未知'));
     setText('#submissionVerdict', textOrRaw(verdictText, submission.verdict, '等待评测'));
@@ -145,7 +152,9 @@
     setText('#submissionJudgeStatus', textOrRaw(judgeStatusText, submission.judgeStatus, '等待评测'));
     renderMessage(submission.message);
     renderCaseResults(submission.caseResults);
-    root.dataset.terminal = terminalStatuses.has(submission.status) ? 'true' : 'false';
+    const isTerminal = terminalStatuses.has(submission.status);
+    root.dataset.terminal = isTerminal ? 'true' : 'false';
+    renderPendingHint(isTerminal);
     return root.dataset.terminal === 'true';
   };
 

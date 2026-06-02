@@ -51,6 +51,8 @@ describe('submission detail polling', () => {
     expect(response.body).toContain('id="submissionJudgeStatus"');
     expect(response.body).toContain('id="submissionMessagePanel"');
     expect(response.body).toContain('id="submissionCaseResults"');
+    expect(response.body).toContain('id="submissionPendingHint"');
+    expect(response.body).toContain('正在等待评测机返回结果');
     expect(response.body).toContain('src="/assets/submission-detail.js"');
     expect(response.body).not.toContain('setTimeout');
     expect(response.body).not.toContain('window.location.href');
@@ -69,5 +71,6 @@ describe('submission detail polling', () => {
     expect(response.body).toContain('/api/submissions/');
     expect(response.body).toContain('window.setInterval');
     expect(response.body).toContain('terminalStatuses');
+    expect(response.body).toContain('submissionPendingHint');
   });
 });

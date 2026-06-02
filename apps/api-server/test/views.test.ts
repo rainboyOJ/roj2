@@ -223,6 +223,8 @@ describe('shared rendered views and assets', () => {
     expect(response.headers['cache-control']).toBe('no-store');
     expect(response.body).toContain('CodeMirror');
     expect(response.body).toContain('/api/submissions');
+    expect(response.body).toContain('RojNotify');
+    expect(response.body).toContain('setTimeout');
   });
 
   it('serves whitelisted local KaTeX font assets only', async () => {

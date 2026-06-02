@@ -297,6 +297,8 @@ describe('problem views', () => {
     expect(response.body).toContain('name="sourceCode"');
     expect(response.body).toContain('select name="language" id="language" required');
     expect(response.body).toContain('src="/assets/axios.min.js"');
+    expect(response.body).toContain('src="/assets/notyf.min.js"');
+    expect(response.body).toContain('src="/assets/notify.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
     expect(response.body).toContain('src="/assets/editor/problem-editor.js"');
     expect(response.body).not.toContain('<pre class="mono-block">');

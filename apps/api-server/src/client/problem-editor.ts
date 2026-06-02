@@ -18,6 +18,11 @@ declare global {
         fallbackMessage: string,
       ) => string;
     };
+    RojNotify?: {
+      success: (message: string) => void;
+      error: (message: string) => void;
+      info: (message: string) => void;
+    };
   }
 }
 
@@ -99,6 +104,11 @@ function initProblemEditor() {
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (submitButton?.disabled) {
+      return;
+    }
+
     hiddenInput.value = editor.state.doc.toString();
     if (alertBox && window.RojFormUtils) {
       window.RojFormUtils.hideAlert(alertBox);
@@ -120,7 +130,7 @@ function initProblemEditor() {
     }
 
     const formData = new FormData(form);
-    const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    let isRedirecting = false;
     try {
       window.RojFormUtils?.setSubmitting(form, true);
       const response = await window.axios?.post<CreateSubmissionResponse>('/api/submissions', {
@@ -129,11 +139,17 @@ function initProblemEditor() {
         sourceCode: hiddenInput.value,
       });
       const submissionId = response?.data.submissionId;
+      window.RojNotify?.success('提交成功，正在查看评测结果');
+      isRedirecting = true;
       if (submissionId) {
-        window.location.href = `/submissions/${encodeURIComponent(submissionId)}`;
+        window.setTimeout(() => {
+          window.location.href = `/submissions/${encodeURIComponent(submissionId)}`;
+        }, 300);
         return;
       }
-      window.location.href = '/submissions';
+      window.setTimeout(() => {
+        window.location.href = '/submissions';
+      }, 300);
     } catch (error) {
       if (alertBox) {
         window.RojFormUtils?.showAlert(
@@ -150,9 +166,11 @@ function initProblemEditor() {
       }
       editor.focus();
     } finally {
-      window.RojFormUtils?.setSubmitting(form, false);
-      if (submitButton) {
-        submitButton.disabled = languageSelect.disabled;
+      if (!isRedirecting) {
+        window.RojFormUtils?.setSubmitting(form, false);
+        if (submitButton) {
+          submitButton.disabled = languageSelect.disabled;
+        }
       }
     }
   });
