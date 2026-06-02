@@ -139,4 +139,14 @@ describe('buildAdminUserListFilter', () => {
     expect(buildAdminUserListFilter({ q: ' ' })).toEqual({});
     expect(buildAdminUserListFilter()).toEqual({});
   });
+
+  it('filters by approval status and class name', () => {
+    expect(buildAdminUserListFilter({
+      approvalStatus: 'pending',
+      className: ' 1 班 ',
+    })).toEqual({
+      approvalStatus: 'pending',
+      className: '1 班',
+    });
+  });
 });

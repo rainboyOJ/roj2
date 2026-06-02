@@ -27,10 +27,12 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
       page: parsePage(request.query),
       pageSize: paginationSettings.listPageSize,
     }, parseAdminUserListFilters(request.query));
+    const classes = await services.listClasses();
     reply.code(400);
     return renderPage(request, reply, 'admin-users.pug', {
       currentUser: user,
       ...result,
+      classes,
       formError,
     });
   }
@@ -47,7 +49,8 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
       page: parsePage(request.query),
       pageSize: paginationSettings.listPageSize,
     }, parseAdminUserListFilters(request.query));
-    return renderPage(request, reply, 'admin-users.pug', { currentUser: user, ...result });
+    const classes = await services.listClasses();
+    return renderPage(request, reply, 'admin-users.pug', { currentUser: user, ...result, classes });
   });
 
   app.post('/admin/users/:id/reset-password', async (request, reply) => {

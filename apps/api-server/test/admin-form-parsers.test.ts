@@ -39,12 +39,26 @@ describe('admin form parsers', () => {
     expect(adminUsersPath({ page: '2' })).toBe('/admin/users?page=2');
     expect(adminUsersPath({ page: '1' })).toBe('/admin/users');
     expect(adminUsersPath({ page: 'bad' })).toBe('/admin/users');
-    expect(parseAdminUserListFilters({ q: ' alice ' })).toEqual({ q: 'alice' });
-    expect(parseAdminUserListFilters({ q: ' ' })).toEqual({});
+    expect(parseAdminUserListFilters({
+      q: ' alice ',
+      approvalStatus: 'pending',
+      className: ' 1 班 ',
+    })).toEqual({
+      q: 'alice',
+      approvalStatus: 'pending',
+      className: '1 班',
+    });
+    expect(parseAdminUserListFilters({ q: ' ', approvalStatus: 'bad' })).toEqual({});
     expect(adminUsersPath({ page: '2', q: ' 张三 ' })).toBe(
       '/admin/users?page=2&q=%E5%BC%A0%E4%B8%89',
     );
     expect(adminUsersPath({ page: '1', q: 'alice' })).toBe('/admin/users?q=alice');
+    expect(adminUsersPath({
+      page: '2',
+      q: 'alice',
+      approvalStatus: 'pending',
+      className: '1 班',
+    })).toBe('/admin/users?page=2&q=alice&approvalStatus=pending&className=1%20%E7%8F%AD');
   });
 
   it('parses problem form input and preserves invalid form values', () => {

@@ -30,17 +30,38 @@ export function parseAdminUserListFilters(query: unknown) {
     return {};
   }
 
-  const raw = query as { q?: unknown };
+  const raw = query as { q?: unknown; approvalStatus?: unknown; className?: unknown };
   const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
+  const approvalStatus = Array.isArray(raw.approvalStatus)
+    ? raw.approvalStatus[0]
+    : raw.approvalStatus;
+  const className = Array.isArray(raw.className) ? raw.className[0] : raw.className;
+  const filters: {
+    q?: string;
+    approvalStatus?: 'pending' | 'approved' | 'rejected';
+    className?: string;
+  } = {};
 
-  return typeof q === 'string' && q.trim()
-    ? { q: q.trim() }
-    : {};
+  if (typeof q === 'string' && q.trim()) {
+    filters.q = q.trim();
+  }
+  if (
+    approvalStatus === 'pending'
+    || approvalStatus === 'approved'
+    || approvalStatus === 'rejected'
+  ) {
+    filters.approvalStatus = approvalStatus;
+  }
+  if (typeof className === 'string' && className.trim()) {
+    filters.className = className.trim();
+  }
+
+  return filters;
 }
 
 export function adminUsersPath(query: unknown) {
   const raw = typeof query === 'object' && query !== null
-    ? query as { page?: unknown; q?: unknown }
+    ? query as { page?: unknown; q?: unknown; approvalStatus?: unknown; className?: unknown }
     : {};
   const pageText = Array.isArray(raw.page) ? raw.page[0] : raw.page;
   const pageNumber = Number(pageText ?? 1);
@@ -53,6 +74,12 @@ export function adminUsersPath(query: unknown) {
   const filters = parseAdminUserListFilters(raw);
   if (filters.q) {
     queryParts.push(`q=${encodeURIComponent(filters.q)}`);
+  }
+  if (filters.approvalStatus) {
+    queryParts.push(`approvalStatus=${encodeURIComponent(filters.approvalStatus)}`);
+  }
+  if (filters.className) {
+    queryParts.push(`className=${encodeURIComponent(filters.className)}`);
   }
 
   return queryParts.length ? `/admin/users?${queryParts.join('&')}` : '/admin/users';

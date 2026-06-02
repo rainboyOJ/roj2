@@ -102,6 +102,8 @@ export interface SubmissionListFilters {
 
 export interface AdminUserListFilters {
   q?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  className?: string;
 }
 
 export interface PaginationViewModel {

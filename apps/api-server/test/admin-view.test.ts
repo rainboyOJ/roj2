@@ -122,42 +122,59 @@ describe('admin views', () => {
   });
 
   it('renders approval actions on the admin users page', async () => {
+    let receivedFilters: unknown = null;
     const app = buildApp(createServices({
       getCurrentUser: async () => adminUser(),
       listAdminUsersPaginated: async (
         pagination: { page: number; pageSize: number },
         filters = {},
-      ) => ({
-        users: [
-          {
-            id: 'user-2',
-            username: 'alice',
-            role: 'student' as const,
-            approvalStatus: 'pending' as const,
-            name: 'Alice',
+      ) => {
+        receivedFilters = filters;
+        return {
+          users: [
+            {
+              id: 'user-2',
+              username: 'alice',
+              role: 'student' as const,
+              approvalStatus: 'pending' as const,
+              name: 'Alice',
+            },
+          ],
+          pagination: {
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: 21,
+            totalPages: 2,
+            previousPage: null,
+            nextPage: 2,
           },
-        ],
-        pagination: {
-          page: pagination.page,
-          pageSize: pagination.pageSize,
-          total: 21,
-          totalPages: 2,
-          previousPage: null,
-          nextPage: 2,
+          filters,
+        };
+      },
+      listClasses: async () => [
+        {
+          id: 'class-1',
+          name: '1 班',
+          isActive: true,
+          order: 1,
         },
-        filters,
-      }),
+      ],
     }));
 
     const response = await app.inject({
       method: 'GET',
-      url: '/admin/users?q=alice',
+      url: '/admin/users?q=alice&approvalStatus=pending&className=1%20%E7%8F%AD',
       headers: {
         cookie: adminSessionCookie(),
       },
     });
 
     expect(response.statusCode).toBe(200);
+    expect(receivedFilters).toEqual({
+      q: 'alice',
+      approvalStatus: 'pending',
+      className: '1 班',
+    });
     expect(response.body).toContain('批量通过');
     expect(response.body).toContain('批量拒绝');
     expect(response.body).toContain('通过');
@@ -166,6 +183,10 @@ describe('admin views', () => {
     expect(response.body).toContain('id="bulk-user-review-form"');
     expect(response.body).toContain('id="admin-user-search-q"');
     expect(response.body).toContain('name="q" value="alice"');
+    expect(response.body).toContain('id="admin-user-filter-status"');
+    expect(response.body).toContain('<option value="pending" selected>待审核</option>');
+    expect(response.body).toContain('id="admin-user-filter-class"');
+    expect(response.body).toContain('<option value="1 班" selected>1 班</option>');
     expect(response.body).toContain('查询');
     expect(response.body).toContain('清空');
     expect(response.body).toContain('form="bulk-user-review-form"');
@@ -183,10 +204,10 @@ describe('admin views', () => {
     expect(response.body).toContain('确定要删除用户 alice 吗？删除后不可恢复。');
     expect(response.body).toContain('data-require-password="password"');
     expect(response.body).toContain('用户管理分页');
-    expect(response.body).toContain('/admin/users?page=2&amp;q=alice');
-    expect(response.body).toContain('/admin/users?q=alice');
+    expect(response.body).toContain('/admin/users?page=2&amp;q=alice&amp;approvalStatus=pending&amp;className=1%20%E7%8F%AD');
+    expect(response.body).toContain('/admin/users?q=alice&amp;approvalStatus=pending&amp;className=1%20%E7%8F%AD');
     expect(response.body).toContain('刷新');
-    expect(response.body).toContain('href="/admin/users?q=alice"');
+    expect(response.body).toContain('href="/admin/users?q=alice&amp;approvalStatus=pending&amp;className=1%20%E7%8F%AD"');
     expect(response.body).toContain('href="/admin/users"');
     expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/notyf.min.js"');

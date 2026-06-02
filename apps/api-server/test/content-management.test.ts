@@ -199,7 +199,7 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/api/admin/users?page=2&pageSize=500&q=alice',
+      url: '/api/admin/users?page=2&pageSize=500&q=alice&approvalStatus=pending&className=1%20%E7%8F%AD',
       headers: {
         cookie: adminSessionCookie(),
       },
@@ -210,7 +210,11 @@ describe('content management routes', () => {
       page: 2,
       pageSize: 100,
     });
-    expect(receivedFilters).toEqual({ q: 'alice' });
+    expect(receivedFilters).toEqual({
+      q: 'alice',
+      approvalStatus: 'pending',
+      className: '1 班',
+    });
     expect(response.json()).toMatchObject({
       users: [
         {
@@ -838,11 +842,19 @@ describe('content management routes', () => {
         },
         filters,
       }),
+      listClasses: async () => [
+        {
+          id: 'class-1',
+          name: '1 班',
+          isActive: true,
+          order: 1,
+        },
+      ],
     }));
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/users/bulk-approve?page=2&q=alice',
+      url: '/admin/users/bulk-approve?page=2&q=alice&approvalStatus=pending&className=1%20%E7%8F%AD',
       headers: {
         cookie: adminSessionCookie(),
       },
@@ -854,6 +866,8 @@ describe('content management routes', () => {
     expect(response.body).toContain('请先选择需要通过的用户。');
     expect(response.body).toContain('alice');
     expect(response.body).toContain('name="q" value="alice"');
-    expect(response.body).toContain('/admin/users?page=2&amp;q=alice');
+    expect(response.body).toContain('<option value="pending" selected>待审核</option>');
+    expect(response.body).toContain('<option value="1 班" selected>1 班</option>');
+    expect(response.body).toContain('/admin/users?page=2&amp;q=alice&amp;approvalStatus=pending&amp;className=1%20%E7%8F%AD');
   });
 });

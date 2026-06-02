@@ -36,6 +36,8 @@ export interface SessionUserRecord {
 
 export interface AdminUserListFilters {
   q?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  className?: string;
 }
 
 function escapeRegexText(value: string) {
@@ -47,6 +49,7 @@ export function buildAdminUserListFilter(
 ): Filter<UserDocument> {
   const query: Filter<UserDocument> = {};
   const text = filters.q?.trim();
+  const className = filters.className?.trim();
 
   if (text) {
     const searchPattern = new RegExp(escapeRegexText(text), 'i');
@@ -54,6 +57,14 @@ export function buildAdminUserListFilter(
       { username: searchPattern },
       { name: searchPattern },
     ];
+  }
+
+  if (filters.approvalStatus) {
+    query.approvalStatus = filters.approvalStatus;
+  }
+
+  if (className) {
+    query.className = className;
   }
 
   return query;
