@@ -4,6 +4,7 @@ import type { SubmissionDocument } from '@roj/shared';
 export interface SubmissionListFilters {
   pid?: string;
   user?: string;
+  language?: string;
 }
 
 function escapeRegexText(value: string) {
@@ -16,9 +17,14 @@ export function buildSubmissionListFilter(
   const query: Filter<SubmissionDocument> = {};
   const pid = filters.pid?.trim();
   const user = filters.user?.trim();
+  const language = filters.language?.trim();
 
   if (pid) {
     query.pid = pid;
+  }
+
+  if (language) {
+    query.language = language as SubmissionDocument['language'];
   }
 
   if (user) {

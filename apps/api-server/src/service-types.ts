@@ -97,6 +97,7 @@ export interface SubmissionViewModel {
 export interface SubmissionListFilters {
   pid?: string;
   user?: string;
+  language?: string;
 }
 
 export interface AdminUserListFilters {

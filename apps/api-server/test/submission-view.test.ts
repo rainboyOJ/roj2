@@ -108,7 +108,7 @@ describe('submission views', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/submissions?page=2&pid=1000&user=Demo',
+      url: '/submissions?page=2&pid=1000&user=Demo&language=python',
       headers: {
         cookie: sessionCookie(),
       },
@@ -122,14 +122,21 @@ describe('submission views', () => {
     expect(receivedFilters).toEqual({
       pid: '1000',
       user: 'Demo',
+      language: 'python',
     });
     expect(response.body).toContain('提交列表分页');
     expect(response.body).toContain('共有 3 页');
     expect(response.body).toContain('aria-current="page">2</span>');
-    expect(response.body).toContain('/submissions?page=1&amp;pid=1000&amp;user=Demo');
-    expect(response.body).toContain('/submissions?page=3&amp;pid=1000&amp;user=Demo');
+    expect(response.body).toContain(
+      '/submissions?page=1&amp;pid=1000&amp;user=Demo&amp;language=python',
+    );
+    expect(response.body).toContain(
+      '/submissions?page=3&amp;pid=1000&amp;user=Demo&amp;language=python',
+    );
     expect(response.body).toContain('value="1000"');
     expect(response.body).toContain('value="Demo"');
+    expect(response.body).toContain('id="submission-filter-language"');
+    expect(response.body).toContain('<option value="python" selected>Python</option>');
   });
 
   it('renders case results on the submission detail page', async () => {

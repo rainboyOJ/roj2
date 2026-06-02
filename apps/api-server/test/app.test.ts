@@ -160,7 +160,7 @@ describe('GET /api/submissions', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/api/submissions?page=2&pid=1000&user=Alice',
+      url: '/api/submissions?page=2&pid=1000&user=Alice&language=python',
       headers: {
         cookie: sessionCookie(),
       },
@@ -174,6 +174,7 @@ describe('GET /api/submissions', () => {
     expect(receivedFilters).toEqual({
       pid: '1000',
       user: 'Alice',
+      language: 'python',
     });
     expect(response.json()).toMatchObject({
       submissions: [
@@ -192,6 +193,7 @@ describe('GET /api/submissions', () => {
       filters: {
         pid: '1000',
         user: 'Alice',
+        language: 'python',
       },
     });
   });

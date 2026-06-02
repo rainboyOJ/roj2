@@ -8,6 +8,7 @@ block content
   - const filterParts = []
   - if (currentFilters.pid) filterParts.push(`pid=${encodeURIComponent(currentFilters.pid)}`)
   - if (currentFilters.user) filterParts.push(`user=${encodeURIComponent(currentFilters.user)}`)
+  - if (currentFilters.language) filterParts.push(`language=${encodeURIComponent(currentFilters.language)}`)
   - const paginationQuerySuffix = filterParts.join('&')
   section.list-panel
     header
@@ -25,6 +26,12 @@ block content
           label(for="submission-filter-user")
             span= "用户"
             input#submission-filter-user(type="text" name="user" value=currentFilters.user || '' placeholder="用户名或姓名")
+          label(for="submission-filter-language")
+            span= "语言"
+            select#submission-filter-language(name="language")
+              option(value="" selected=!currentFilters.language)= "全部"
+              option(value="cpp" selected=currentFilters.language === 'cpp')= "C++"
+              option(value="python" selected=currentFilters.language === 'python')= "Python"
         .form-actions
           button(type="submit")= "查询"
           a(href="/submissions" role="button" class="secondary")= "清空"

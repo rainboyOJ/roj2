@@ -9,6 +9,12 @@ describe('buildSubmissionListFilter', () => {
     });
   });
 
+  it('filters by submission language', () => {
+    expect(buildSubmissionListFilter({ language: ' python ' })).toEqual({
+      language: 'python',
+    });
+  });
+
   it('matches username or display name with escaped text', () => {
     const filter = buildSubmissionListFilter({ user: ' a+b ' });
 
@@ -18,6 +24,6 @@ describe('buildSubmissionListFilter', () => {
   });
 
   it('ignores blank filters', () => {
-    expect(buildSubmissionListFilter({ pid: ' ', user: ' ' })).toEqual({});
+    expect(buildSubmissionListFilter({ pid: ' ', user: ' ', language: ' ' })).toEqual({});
   });
 });

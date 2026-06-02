@@ -9,9 +9,10 @@ function parseSubmissionListFilters(query: unknown): SubmissionListFilters {
     return {};
   }
 
-  const raw = query as { pid?: unknown; user?: unknown };
+  const raw = query as { pid?: unknown; user?: unknown; language?: unknown };
   const pidText = Array.isArray(raw.pid) ? raw.pid[0] : raw.pid;
   const userText = Array.isArray(raw.user) ? raw.user[0] : raw.user;
+  const languageText = Array.isArray(raw.language) ? raw.language[0] : raw.language;
   const filters: SubmissionListFilters = {};
 
   if (typeof pidText === 'string' && pidText.trim()) {
@@ -19,6 +20,9 @@ function parseSubmissionListFilters(query: unknown): SubmissionListFilters {
   }
   if (typeof userText === 'string' && userText.trim()) {
     filters.user = userText.trim();
+  }
+  if (typeof languageText === 'string' && languageText.trim()) {
+    filters.language = languageText.trim();
   }
 
   return filters;
