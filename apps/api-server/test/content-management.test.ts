@@ -347,6 +347,50 @@ describe('content management routes', () => {
     });
   });
 
+  it('returns filtered admin problems through the admin API flow', async () => {
+    let receivedFilters: unknown = null;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      listAdminProblems: async (filters = {}) => {
+        receivedFilters = filters;
+        return [
+          {
+            id: 'problem-2',
+            pid: '1001',
+            title: 'Hidden Problem',
+            statementMarkdown: 'hidden',
+            statementHtml: '<p>hidden</p>',
+            allowLanguages: ['python'],
+            isVisible: false,
+          },
+        ];
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/admin/problems?q=Hidden&visibility=hidden',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedFilters).toEqual({
+      q: 'Hidden',
+      visibility: 'hidden',
+    });
+    expect(response.json()).toMatchObject({
+      problems: [
+        {
+          id: 'problem-2',
+          pid: '1001',
+          isVisible: false,
+        },
+      ],
+    });
+  });
+
   it('creates a problem for admin users', async () => {
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),

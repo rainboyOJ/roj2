@@ -169,6 +169,7 @@ describe('problem views', () => {
     expect(response.body).toContain('<h2>Statement</h2>');
     expect(response.body).toContain('id="submissionAlert"');
     expect(response.body).toContain('id="submissionForm"');
+    expect(response.body).toContain('id="submit"');
     expect(response.body).toContain('name="sourceCode"');
     expect(response.body).toContain('select name="language" id="language" required');
     expect(response.body).toContain('src="/assets/axios.min.js"');

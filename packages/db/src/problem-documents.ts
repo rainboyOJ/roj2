@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
 import type { Collection } from 'mongodb';
+import type { Filter } from 'mongodb';
 import type { AppLanguage, ProblemDocument } from '@roj/shared';
 import { renderMarkdown } from '@roj/markdown-renderer';
 
@@ -9,6 +10,38 @@ export interface ProblemInput {
   statementMarkdown: string;
   allowLanguages: AppLanguage[];
   isVisible: boolean;
+}
+
+export interface AdminProblemListFilters {
+  q?: string;
+  visibility?: 'visible' | 'hidden';
+}
+
+function escapeRegexText(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function buildAdminProblemListFilter(
+  filters: AdminProblemListFilters = {},
+): Filter<ProblemDocument> {
+  const query: Filter<ProblemDocument> = {};
+  const text = filters.q?.trim();
+
+  if (text) {
+    const searchPattern = new RegExp(escapeRegexText(text), 'i');
+    query.$or = [
+      { pid: searchPattern },
+      { title: searchPattern },
+    ];
+  }
+
+  if (filters.visibility === 'visible') {
+    query.isVisible = true;
+  } else if (filters.visibility === 'hidden') {
+    query.isVisible = false;
+  }
+
+  return query;
 }
 
 export function buildProblemDocument(input: ProblemInput, now: Date): ProblemDocument {
@@ -80,8 +113,11 @@ export async function listVisibleProblemsByPids(
     .toArray();
 }
 
-export async function listAdminProblems(problems: Collection<ProblemDocument>) {
-  return problems.find({}).sort({ pid: 1 }).toArray();
+export async function listAdminProblems(
+  problems: Collection<ProblemDocument>,
+  filters: AdminProblemListFilters = {},
+) {
+  return problems.find(buildAdminProblemListFilter(filters)).sort({ pid: 1 }).toArray();
 }
 
 export async function getAdminProblemById(problems: Collection<ProblemDocument>, id: string) {

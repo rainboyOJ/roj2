@@ -241,8 +241,8 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     updateListPageSize: async (listPageSize) => {
       await db.updateListPageSize(listPageSize);
     },
-    listAdminProblems: async () => {
-      const problems = await db.listAdminProblems();
+    listAdminProblems: async (filters) => {
+      const problems = await db.listAdminProblems(filters);
       return problems.map(mapAdminProblem);
     },
     getAdminProblemById: async (id) => {

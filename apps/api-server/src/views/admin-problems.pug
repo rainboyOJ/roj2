@@ -4,16 +4,36 @@ include mixins/assets.pug
 include mixins/status.pug
 
 block content
+  - const currentFilters = filters || {}
+  - const filterParts = []
+  - if (currentFilters.q) filterParts.push(`q=${encodeURIComponent(currentFilters.q)}`)
+  - if (currentFilters.visibility) filterParts.push(`visibility=${encodeURIComponent(currentFilters.visibility)}`)
+  - const currentQuerySuffix = filterParts.length ? `?${filterParts.join('&')}` : ''
   section.list-panel
     header
       hgroup
         h1= "题目管理"
-        p.page-lead= "按 OJ 管理员常见的方式浏览和维护题目目录。"
+        p.page-lead= "按 OJ 管理员常见的方式浏览、搜索和维护题目目录。"
       .page-actions
         a(href='/admin/problems/new' role="button")= "创建题目"
     if formError
       article
         p.form-alert(role="alert")= formError
+    article
+      form(method="get" action="/admin/problems")
+        .grid
+          label(for="admin-problem-filter-q")
+            span= "题号或标题"
+            input#admin-problem-filter-q(type="search" name="q" value=currentFilters.q || '' placeholder="例如 1000 或 A+B")
+          label(for="admin-problem-filter-visibility")
+            span= "可见性"
+            select#admin-problem-filter-visibility(name="visibility")
+              option(value="" selected=!currentFilters.visibility)= "全部"
+              option(value="visible" selected=currentFilters.visibility === 'visible')= "已发布"
+              option(value="hidden" selected=currentFilters.visibility === 'hidden')= "隐藏"
+        .form-actions
+          button(type="submit")= "查询"
+          a(href="/admin/problems" role="button" class="secondary")= "清空"
     if problems.length
       .table-shell
         table.data-table
@@ -36,11 +56,14 @@ block content
                   .table-actions
                     a(href=`/admin/problems/${problem.id}/edit`)= "编辑"
                     if !problem.isVisible
-                      form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish` data-problem-id=problem.id)
+                      form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish${currentQuerySuffix}` data-problem-id=problem.id)
                         button(type="submit" class="secondary")= "发布"
     else
       article
-        p= "当前还没有题目。"
+        if currentFilters.q || currentFilters.visibility
+          p= "没有找到符合条件的题目。"
+        else
+          p= "当前还没有题目。"
 
 block pageScripts
   +formScripts('admin-problems.js', true)

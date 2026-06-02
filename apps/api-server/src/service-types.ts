@@ -167,6 +167,11 @@ export interface AdminProblemViewModel extends ProblemViewModel {
   isVisible: boolean;
 }
 
+export interface AdminProblemListFilters {
+  q?: string;
+  visibility?: 'visible' | 'hidden';
+}
+
 export interface ProblemServices {
   listProblems(): Promise<ProblemViewModel[]>;
   listProblemsPaginated(pagination: {
@@ -179,7 +184,7 @@ export interface ProblemServices {
   listProblemsByPids(pids: string[]): Promise<ProblemViewModel[]>;
   listProblemProgressByUser(userId: string): Promise<Map<string, ProblemProgress>>;
   getProblemByPid(pid: string): Promise<ProblemViewModel | null>;
-  listAdminProblems(): Promise<AdminProblemViewModel[]>;
+  listAdminProblems(filters?: AdminProblemListFilters): Promise<AdminProblemViewModel[]>;
   getAdminProblemById(id: string): Promise<AdminProblemViewModel | null>;
   createProblem(input: {
     pid: string;

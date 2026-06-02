@@ -4,10 +4,31 @@ import type { RouteContext } from '../../http/context.ts';
 import { messageFromError } from '../../http/form-errors.ts';
 import { sendValidationError } from '../../http/validation.ts';
 import { createProblemSchema } from '../../http/schemas.ts';
+import type { AdminProblemListFilters } from '../../service-types.ts';
 import {
   problemFormValues,
   problemInputFromBody,
 } from './form-parsers.ts';
+
+function parseAdminProblemListFilters(query: unknown): AdminProblemListFilters {
+  if (typeof query !== 'object' || query === null) {
+    return {};
+  }
+
+  const raw = query as { q?: unknown; visibility?: unknown };
+  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
+  const visibility = Array.isArray(raw.visibility) ? raw.visibility[0] : raw.visibility;
+  const filters: AdminProblemListFilters = {};
+
+  if (typeof q === 'string' && q.trim()) {
+    filters.q = q.trim();
+  }
+  if (visibility === 'visible' || visibility === 'hidden') {
+    filters.visibility = visibility;
+  }
+
+  return filters;
+}
 
 export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -46,8 +67,9 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
       return;
     }
 
-    const problems = await services.listAdminProblems();
-    return renderPage(request, reply, 'admin-problems.pug', { problems });
+    const filters = parseAdminProblemListFilters(request.query);
+    const problems = await services.listAdminProblems(filters);
+    return renderPage(request, reply, 'admin-problems.pug', { problems, filters });
   });
 
   app.get('/admin/problems/new', async (request, reply) => {
@@ -94,7 +116,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
     }
 
     return {
-      problems: await services.listAdminProblems(),
+      problems: await services.listAdminProblems(parseAdminProblemListFilters(request.query)),
     };
   });
 
@@ -220,10 +242,12 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
     try {
       await services.publishProblem(params.id);
     } catch (error) {
-      const problems = await services.listAdminProblems();
+      const filters = parseAdminProblemListFilters(request.query);
+      const problems = await services.listAdminProblems(filters);
       reply.code(400);
       return renderPage(request, reply, 'admin-problems.pug', {
         problems,
+        filters,
         formError: messageFromError(error, '发布题目失败，请检查后重试。'),
       });
     }

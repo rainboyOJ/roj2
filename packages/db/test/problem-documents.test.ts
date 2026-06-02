@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildAdminProblemListFilter,
   buildProblemDocument,
   buildHideProblemSetUpdate,
   buildPublishProblemSetUpdate,
@@ -64,6 +65,29 @@ describe('problem document builders', () => {
       isVisible: true,
       updatedAt: now,
     });
+  });
+});
+
+describe('buildAdminProblemListFilter', () => {
+  it('matches pid or title with escaped search text', () => {
+    const filter = buildAdminProblemListFilter({ q: ' A+B ' });
+
+    expect(filter.$or).toHaveLength(2);
+    expect(filter.$or?.[0]).toEqual({ pid: /A\+B/i });
+    expect(filter.$or?.[1]).toEqual({ title: /A\+B/i });
+  });
+
+  it('filters by visibility', () => {
+    expect(buildAdminProblemListFilter({ visibility: 'visible' })).toEqual({
+      isVisible: true,
+    });
+    expect(buildAdminProblemListFilter({ visibility: 'hidden' })).toEqual({
+      isVisible: false,
+    });
+  });
+
+  it('ignores blank filters', () => {
+    expect(buildAdminProblemListFilter({ q: ' ' })).toEqual({});
   });
 });
 

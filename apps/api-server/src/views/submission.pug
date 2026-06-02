@@ -94,6 +94,8 @@ block content
             h3= "操作"
           .panel-body
             .form-actions
+              a(href=`/problem/${submission.pid}` role="button")= "返回题目"
+              a(href=`/problem/${submission.pid}#submit` role="button" class="secondary")= "再提交此题"
               a(href='/submissions' role="button" class="secondary")= "返回提交列表"
               a(href='/problems' role="button" class="contrast")= "打开题目列表"
     +pageScript('/assets/submission-detail.js')

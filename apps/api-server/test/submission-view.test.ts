@@ -158,6 +158,9 @@ describe('submission views', () => {
     expect(response.body).toContain('#1');
     expect(response.body).toContain('3 ms');
     expect(response.body).toContain('1024 KB');
+    expect(response.body).toContain('href="/problem/1000" role="button">返回题目</a>');
+    expect(response.body).toContain('href="/problem/1000#submit"');
+    expect(response.body).toContain('再提交此题');
   });
 
   it('renders submission detail without source code for other users', async () => {

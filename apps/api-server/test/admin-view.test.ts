@@ -80,6 +80,47 @@ describe('admin views', () => {
     expect(response.body).toContain('src="/assets/admin-problem-form.js"');
   });
 
+  it('renders admin problem filters and passes them to services', async () => {
+    let receivedFilters: unknown = null;
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+      listAdminProblems: async (filters = {}) => {
+        receivedFilters = filters;
+        return [
+          {
+            id: 'problem-2',
+            pid: '1001',
+            title: 'Hidden Problem',
+            statementMarkdown: 'hidden',
+            statementHtml: '<p>hidden</p>',
+            allowLanguages: ['python'],
+            isVisible: false,
+          },
+        ];
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/problems?q=Hidden&visibility=hidden',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedFilters).toEqual({
+      q: 'Hidden',
+      visibility: 'hidden',
+    });
+    expect(response.body).toContain('id="admin-problem-filter-q"');
+    expect(response.body).toContain('name="q" value="Hidden"');
+    expect(response.body).toContain('id="admin-problem-filter-visibility"');
+    expect(response.body).toContain('<option value="hidden" selected>隐藏</option>');
+    expect(response.body).toContain('Hidden Problem');
+    expect(response.body).toContain('/admin/problems/problem-2/publish?q=Hidden&amp;visibility=hidden');
+  });
+
   it('renders approval actions on the admin users page', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => adminUser(),

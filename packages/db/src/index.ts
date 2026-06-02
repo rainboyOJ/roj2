@@ -155,6 +155,7 @@ import {
   type RanklistFilters,
 } from './ranklist.ts';
 export {
+  buildAdminProblemListFilter,
   buildProblemDocument,
   buildPublishProblemUpdate,
   buildProblemUpdateFields,
@@ -167,6 +168,7 @@ export {
   listVisibleProblemsPaginated,
   publishProblem,
   updateProblem,
+  type AdminProblemListFilters,
   type ProblemInput,
 } from './problem-documents.ts';
 import {
@@ -179,6 +181,7 @@ import {
   listVisibleProblemsPaginated,
   publishProblem,
   updateProblem,
+  type AdminProblemListFilters,
   type ProblemInput,
 } from './problem-documents.ts';
 export {
@@ -607,8 +610,8 @@ export class RojDb {
     await updateClass(this.classes(), id, input);
   }
 
-  async listAdminProblems() {
-    return listAdminProblems(this.problems());
+  async listAdminProblems(filters?: AdminProblemListFilters) {
+    return listAdminProblems(this.problems(), filters);
   }
 
   async getEnabledLanguages(): Promise<readonly AppLanguage[]> {
