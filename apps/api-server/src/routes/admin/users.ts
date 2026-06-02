@@ -6,6 +6,7 @@ import { sendValidationError } from '../../http/validation.ts';
 import { resetPasswordSchema } from '../../http/schemas.ts';
 import {
   adminUsersPath,
+  parseAdminUserListFilters,
   parseUserIds,
 } from './form-parsers.ts';
 
@@ -25,7 +26,7 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
     const result = await services.listAdminUsersPaginated({
       page: parsePage(request.query),
       pageSize: paginationSettings.listPageSize,
-    });
+    }, parseAdminUserListFilters(request.query));
     reply.code(400);
     return renderPage(request, reply, 'admin-users.pug', {
       currentUser: user,
@@ -45,7 +46,7 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
     const result = await services.listAdminUsersPaginated({
       page: parsePage(request.query),
       pageSize: paginationSettings.listPageSize,
-    });
+    }, parseAdminUserListFilters(request.query));
     return renderPage(request, reply, 'admin-users.pug', { currentUser: user, ...result });
   });
 
@@ -160,7 +161,7 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
     return services.listAdminUsersPaginated({
       page: parsePage(request.query),
       pageSize: parsePageSize(request.query, paginationSettings.listPageSize),
-    });
+    }, parseAdminUserListFilters(request.query));
   });
 
   app.post('/api/admin/users/:id/approve', async (request, reply) => {

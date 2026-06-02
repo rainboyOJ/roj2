@@ -137,8 +137,11 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
       const users = await db.listUsersForAdmin();
       return users.map(mapAdminUser);
     },
-    listAdminUsersPaginated: async (pagination) => {
-      const result = await db.listUsersForAdminPaginated(pagination);
+    listAdminUsersPaginated: async (pagination, filters = {}) => {
+      const result = await db.listUsersForAdminPaginated({
+        ...pagination,
+        filters,
+      });
       return {
         users: result.items.map(mapAdminUser),
         pagination: buildPaginationViewModel({
@@ -146,6 +149,7 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
           pageSize: pagination.pageSize,
           total: result.total,
         }),
+        filters,
       };
     },
     approveUser: async (userId, adminUserId) => {

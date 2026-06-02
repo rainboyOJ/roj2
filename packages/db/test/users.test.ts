@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildApproveUserUpdate,
+  buildAdminUserListFilter,
   buildRejectUserUpdate,
   buildResetPasswordUpdate,
   buildSessionDocument,
@@ -122,5 +123,20 @@ describe('user document helpers', () => {
 
     expect(update.updatedAt).toBe(now);
     expect(verifyPassword('new-password', update.passwordHash)).toBe(true);
+  });
+});
+
+describe('buildAdminUserListFilter', () => {
+  it('matches username or name with escaped search text', () => {
+    const filter = buildAdminUserListFilter({ q: ' a+b ' });
+
+    expect(filter.$or).toHaveLength(2);
+    expect(filter.$or?.[0]).toEqual({ username: /a\+b/i });
+    expect(filter.$or?.[1]).toEqual({ name: /a\+b/i });
+  });
+
+  it('ignores blank search text', () => {
+    expect(buildAdminUserListFilter({ q: ' ' })).toEqual({});
+    expect(buildAdminUserListFilter()).toEqual({});
   });
 });

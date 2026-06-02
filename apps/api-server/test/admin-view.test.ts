@@ -83,7 +83,10 @@ describe('admin views', () => {
   it('renders approval actions on the admin users page', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => adminUser(),
-      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }) => ({
+      listAdminUsersPaginated: async (
+        pagination: { page: number; pageSize: number },
+        filters = {},
+      ) => ({
         users: [
           {
             id: 'user-2',
@@ -101,12 +104,13 @@ describe('admin views', () => {
           previousPage: null,
           nextPage: 2,
         },
+        filters,
       }),
     }));
 
     const response = await app.inject({
       method: 'GET',
-      url: '/admin/users',
+      url: '/admin/users?q=alice',
       headers: {
         cookie: adminSessionCookie(),
       },
@@ -119,6 +123,10 @@ describe('admin views', () => {
     expect(response.body).toContain('拒绝');
     expect(response.body).toContain('type="checkbox"');
     expect(response.body).toContain('id="bulk-user-review-form"');
+    expect(response.body).toContain('id="admin-user-search-q"');
+    expect(response.body).toContain('name="q" value="alice"');
+    expect(response.body).toContain('查询');
+    expect(response.body).toContain('清空');
     expect(response.body).toContain('form="bulk-user-review-form"');
     expect(response.body).toContain('data-require-checked="userIds"');
     expect(response.body).toContain('请先选择需要处理的用户');
@@ -134,8 +142,10 @@ describe('admin views', () => {
     expect(response.body).toContain('确定要删除用户 alice 吗？删除后不可恢复。');
     expect(response.body).toContain('data-require-password="password"');
     expect(response.body).toContain('用户管理分页');
-    expect(response.body).toContain('/admin/users?page=2');
+    expect(response.body).toContain('/admin/users?page=2&amp;q=alice');
+    expect(response.body).toContain('/admin/users?q=alice');
     expect(response.body).toContain('刷新');
+    expect(response.body).toContain('href="/admin/users?q=alice"');
     expect(response.body).toContain('href="/admin/users"');
     expect(response.body).toContain('src="/assets/axios.min.js"');
     expect(response.body).toContain('src="/assets/notyf.min.js"');

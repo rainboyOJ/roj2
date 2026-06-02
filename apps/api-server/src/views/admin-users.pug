@@ -7,15 +7,30 @@ include mixins/pagination.pug
 include mixins/status.pug
 
 block content
-  - const currentPageSuffix = pagination && pagination.page > 1 ? `?page=${pagination.page}` : ''
+  - const currentFilters = filters || {}
+  - const filterParts = []
+  - if (currentFilters.q) filterParts.push(`q=${encodeURIComponent(currentFilters.q)}`)
+  - const paginationQuerySuffix = filterParts.join('&')
+  - const currentPathParts = []
+  - if (pagination && pagination.page > 1) currentPathParts.push(`page=${pagination.page}`)
+  - if (currentFilters.q) currentPathParts.push(`q=${encodeURIComponent(currentFilters.q)}`)
+  - const currentPageSuffix = currentPathParts.length ? `?${currentPathParts.join('&')}` : ''
   section.list-panel
     header
       hgroup
         h1= "用户管理"
-        p.page-lead= "查看当前账号列表和审核状态。"
+        p.page-lead= "查看当前账号列表和审核状态，并按用户名或姓名搜索。"
     if formError
       article
         p.form-alert(role="alert")= formError
+    article
+      form(method="get" action="/admin/users")
+        label(for="admin-user-search-q")
+          span= "用户名或姓名"
+          input#admin-user-search-q(type="search" name="q" value=currentFilters.q || '' placeholder="例如 alice 或 张三")
+        .form-actions
+          button(type="submit")= "查询"
+          a(href="/admin/users" role="button" class="secondary")= "清空"
     if users.length
       .page-actions
         a(href=`/admin/users${currentPageSuffix}` role="button" class="secondary")= "刷新"
@@ -91,10 +106,13 @@ block content
                         data-confirm-message=`确定要删除用户 ${user.username} 吗？删除后不可恢复。`
                       )
                         button(type="submit" class="contrast" id=`delete-user-${user.id}`)= "删除用户"
-      +paginationBar('/admin/users', pagination, '用户管理分页')
+      +paginationBar('/admin/users', pagination, '用户管理分页', paginationQuerySuffix)
     else
       article
-        p= "没有需要查看的用户。"
+        if currentFilters.q
+          p= "没有找到符合条件的用户。"
+        else
+          p= "没有需要查看的用户。"
 
 block pageScripts
   +formScripts('admin-users.js', true)

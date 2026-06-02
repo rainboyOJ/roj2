@@ -165,14 +165,16 @@ describe('content management routes', () => {
 
   it('returns paginated admin users through the admin API flow', async () => {
     let receivedPagination: { page: number; pageSize: number } | null = null;
+    let receivedFilters: unknown = null;
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),
       getPaginationSettings: async () => ({
         listPageSize: 50,
         allowedPageSizes: [20, 50, 100],
       }),
-      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }) => {
+      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }, filters) => {
         receivedPagination = pagination;
+        receivedFilters = filters;
         return {
           users: [
             {
@@ -197,7 +199,7 @@ describe('content management routes', () => {
 
     const response = await app.inject({
       method: 'GET',
-      url: '/api/admin/users?page=2&pageSize=500',
+      url: '/api/admin/users?page=2&pageSize=500&q=alice',
       headers: {
         cookie: adminSessionCookie(),
       },
@@ -208,6 +210,7 @@ describe('content management routes', () => {
       page: 2,
       pageSize: 100,
     });
+    expect(receivedFilters).toEqual({ q: 'alice' });
     expect(response.json()).toMatchObject({
       users: [
         {
@@ -768,7 +771,10 @@ describe('content management routes', () => {
   it('renders user management errors when no user is selected for bulk approve', async () => {
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),
-      listAdminUsersPaginated: async (pagination: { page: number; pageSize: number }) => ({
+      listAdminUsersPaginated: async (
+        pagination: { page: number; pageSize: number },
+        filters = {},
+      ) => ({
         users: [
           {
             id: 'user-2',
@@ -786,12 +792,13 @@ describe('content management routes', () => {
           previousPage: null,
           nextPage: null,
         },
+        filters,
       }),
     }));
 
     const response = await app.inject({
       method: 'POST',
-      url: '/admin/users/bulk-approve?page=2',
+      url: '/admin/users/bulk-approve?page=2&q=alice',
       headers: {
         cookie: adminSessionCookie(),
       },
@@ -802,5 +809,7 @@ describe('content management routes', () => {
     expect(response.body).toContain('用户管理');
     expect(response.body).toContain('请先选择需要通过的用户。');
     expect(response.body).toContain('alice');
+    expect(response.body).toContain('name="q" value="alice"');
+    expect(response.body).toContain('/admin/users?page=2&amp;q=alice');
   });
 });

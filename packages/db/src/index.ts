@@ -211,6 +211,7 @@ import {
 } from './problem-set-documents.ts';
 export {
   buildApproveUserUpdate,
+  buildAdminUserListFilter,
   buildRejectUserUpdate,
   buildResetPasswordUpdate,
   buildSessionDocument,
@@ -234,6 +235,7 @@ export {
   updateUserClassName,
   verifyPassword,
   type RegisterUserInput,
+  type AdminUserListFilters,
   type SessionUserRecord,
   type UserCollections,
 } from './users.ts';
@@ -253,6 +255,7 @@ import {
   updateMyPassword,
   updateUserClassName,
   type RegisterUserInput,
+  type AdminUserListFilters,
   type SessionUserRecord,
   type UserCollections,
 } from './users.ts';
@@ -569,6 +572,7 @@ export class RojDb {
   async listUsersForAdminPaginated(input: {
     page: number;
     pageSize: number;
+    filters?: AdminUserListFilters;
   }) {
     return listUsersForAdminPaginated(this.userCollections(), input);
   }

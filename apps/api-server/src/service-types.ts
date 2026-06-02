@@ -99,6 +99,10 @@ export interface SubmissionListFilters {
   user?: string;
 }
 
+export interface AdminUserListFilters {
+  q?: string;
+}
+
 export interface PaginationViewModel {
   page: number;
   pageSize: number;
@@ -117,6 +121,7 @@ export interface PaginatedSubmissionsViewModel {
 export interface PaginatedAdminUsersViewModel {
   users: SessionUser[];
   pagination: PaginationViewModel;
+  filters?: AdminUserListFilters;
 }
 
 export interface GradeViewModel {
@@ -254,7 +259,7 @@ export interface UserServices {
   listAdminUsersPaginated(pagination: {
     page: number;
     pageSize: number;
-  }): Promise<PaginatedAdminUsersViewModel>;
+  }, filters?: AdminUserListFilters): Promise<PaginatedAdminUsersViewModel>;
   approveUser(userId: string, adminUserId: string): Promise<void>;
   rejectUser(userId: string, adminUserId: string, reason?: string): Promise<void>;
   updateProfileClassName(userId: string, className: string): Promise<void>;

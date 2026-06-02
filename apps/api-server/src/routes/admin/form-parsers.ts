@@ -25,16 +25,37 @@ export function parseUserIds(value: unknown): string[] {
     .filter(Boolean);
 }
 
+export function parseAdminUserListFilters(query: unknown) {
+  if (typeof query !== 'object' || query === null) {
+    return {};
+  }
+
+  const raw = query as { q?: unknown };
+  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
+
+  return typeof q === 'string' && q.trim()
+    ? { q: q.trim() }
+    : {};
+}
+
 export function adminUsersPath(query: unknown) {
-  const page =
-    typeof query === 'object' && query !== null && 'page' in query
-      ? (query as { page?: unknown }).page
-      : undefined;
-  const pageText = Array.isArray(page) ? page[0] : page;
+  const raw = typeof query === 'object' && query !== null
+    ? query as { page?: unknown; q?: unknown }
+    : {};
+  const pageText = Array.isArray(raw.page) ? raw.page[0] : raw.page;
   const pageNumber = Number(pageText ?? 1);
-  return Number.isInteger(pageNumber) && pageNumber > 1
-    ? `/admin/users?page=${pageNumber}`
-    : '/admin/users';
+  const queryParts = [];
+
+  if (Number.isInteger(pageNumber) && pageNumber > 1) {
+    queryParts.push(`page=${pageNumber}`);
+  }
+
+  const filters = parseAdminUserListFilters(raw);
+  if (filters.q) {
+    queryParts.push(`q=${encodeURIComponent(filters.q)}`);
+  }
+
+  return queryParts.length ? `/admin/users?${queryParts.join('&')}` : '/admin/users';
 }
 
 export function problemInputFromBody(raw: AdminFormBody) {

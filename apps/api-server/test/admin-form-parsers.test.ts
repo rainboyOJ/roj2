@@ -7,6 +7,7 @@ import {
   dictionaryInputFromBody,
   enabledLanguagesInputFromBody,
   paginationSettingsInputFromBody,
+  parseAdminUserListFilters,
   parseBooleanField,
   parseNumberField,
   parseUserIds,
@@ -38,6 +39,12 @@ describe('admin form parsers', () => {
     expect(adminUsersPath({ page: '2' })).toBe('/admin/users?page=2');
     expect(adminUsersPath({ page: '1' })).toBe('/admin/users');
     expect(adminUsersPath({ page: 'bad' })).toBe('/admin/users');
+    expect(parseAdminUserListFilters({ q: ' alice ' })).toEqual({ q: 'alice' });
+    expect(parseAdminUserListFilters({ q: ' ' })).toEqual({});
+    expect(adminUsersPath({ page: '2', q: ' 张三 ' })).toBe(
+      '/admin/users?page=2&q=%E5%BC%A0%E4%B8%89',
+    );
+    expect(adminUsersPath({ page: '1', q: 'alice' })).toBe('/admin/users?q=alice');
   });
 
   it('parses problem form input and preserves invalid form values', () => {

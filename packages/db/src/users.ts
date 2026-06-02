@@ -5,7 +5,7 @@ import {
 } from 'node:crypto';
 
 import { ObjectId } from 'mongodb';
-import type { Collection } from 'mongodb';
+import type { Collection, Filter } from 'mongodb';
 import type {
   ClassDocument,
   GradeDocument,
@@ -32,6 +32,31 @@ export interface SessionUserRecord {
   name: string;
   grade: string;
   className: string;
+}
+
+export interface AdminUserListFilters {
+  q?: string;
+}
+
+function escapeRegexText(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function buildAdminUserListFilter(
+  filters: AdminUserListFilters = {},
+): Filter<UserDocument> {
+  const query: Filter<UserDocument> = {};
+  const text = filters.q?.trim();
+
+  if (text) {
+    const searchPattern = new RegExp(escapeRegexText(text), 'i');
+    query.$or = [
+      { username: searchPattern },
+      { name: searchPattern },
+    ];
+  }
+
+  return query;
 }
 
 // 密码以 argon2id 形式存储。
@@ -249,17 +274,19 @@ export async function listUsersForAdminPaginated(
   input: {
     page: number;
     pageSize: number;
+    filters?: AdminUserListFilters;
   },
 ) {
   const skip = (input.page - 1) * input.pageSize;
+  const query = buildAdminUserListFilter(input.filters);
   const [items, total] = await Promise.all([
     collections.users
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(input.pageSize)
       .toArray(),
-    collections.users.countDocuments({}),
+    collections.users.countDocuments(query),
   ]);
 
   return { items, total };
