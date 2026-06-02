@@ -35,6 +35,44 @@
     (input) => input.value,
   );
 
+  const currentPageUserCheckboxes = () => Array.from(
+    document.querySelectorAll(
+      'input[type="checkbox"][name="userIds"][form="bulk-user-review-form"]',
+    ),
+  ).filter((input) => input instanceof HTMLInputElement && !input.disabled);
+
+  const updateCurrentPageSelector = () => {
+    const selector = document.querySelector('#select-current-page-users');
+    if (!(selector instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const checkboxes = currentPageUserCheckboxes();
+    const checkedCount = checkboxes.filter((input) => input.checked).length;
+    selector.disabled = checkboxes.length === 0;
+    selector.checked = checkboxes.length > 0 && checkedCount === checkboxes.length;
+    selector.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+  };
+
+  const initCurrentPageSelector = () => {
+    const selector = document.querySelector('#select-current-page-users');
+    if (!(selector instanceof HTMLInputElement)) {
+      return;
+    }
+
+    selector.addEventListener('change', () => {
+      currentPageUserCheckboxes().forEach((input) => {
+        input.checked = selector.checked;
+      });
+      updateCurrentPageSelector();
+    });
+
+    currentPageUserCheckboxes().forEach((input) => {
+      input.addEventListener('change', updateCurrentPageSelector);
+    });
+    updateCurrentPageSelector();
+  };
+
   const actionForForm = (form, submitter) => {
     const action = submitter?.getAttribute('formaction') || form.getAttribute('action') || '';
     const url = new URL(action, window.location.origin);
@@ -145,4 +183,6 @@
       }
     }
   });
+
+  initCurrentPageSelector();
 })();

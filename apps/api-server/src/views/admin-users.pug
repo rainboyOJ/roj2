@@ -75,7 +75,11 @@ block content
         table.data-table
           thead
             tr
-              th= "选择"
+              th
+                input#select-current-page-users(
+                  type="checkbox"
+                  aria-label="选择当前页用户"
+                )
               th= "用户名"
               th= "姓名"
               th= "角色"

@@ -180,6 +180,8 @@ describe('admin views', () => {
     expect(response.body).toContain('通过');
     expect(response.body).toContain('拒绝');
     expect(response.body).toContain('type="checkbox"');
+    expect(response.body).toContain('id="select-current-page-users"');
+    expect(response.body).toContain('aria-label="选择当前页用户"');
     expect(response.body).toContain('id="bulk-user-review-form"');
     expect(response.body).toContain('id="admin-user-search-q"');
     expect(response.body).toContain('name="q" value="alice"');

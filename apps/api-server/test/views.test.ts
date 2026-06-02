@@ -201,6 +201,9 @@ describe('shared rendered views and assets', () => {
     expect(adminUsers.body).toContain('/api/admin/users');
     expect(adminUsers.body).toContain('confirmMessage');
     expect(adminUsers.body).toContain('window.confirm');
+    expect(adminUsers.body).toContain('select-current-page-users');
+    expect(adminUsers.body).toContain('currentPageUserCheckboxes');
+    expect(adminUsers.body).toContain('indeterminate');
     expect(adminUsers.body).toContain('RojNotify');
     expect(adminUsers.body).not.toContain('window.alert');
     expect(adminProblems.body).toContain('RojNotify');
