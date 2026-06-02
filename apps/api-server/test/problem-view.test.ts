@@ -70,7 +70,10 @@ describe('problem views', () => {
       pageSize: 50,
     });
     expect(response.body).toContain('Second Problem');
-    expect(response.body).toContain('第 2 / 2 页，共 51 条');
+    expect(response.body).toContain('共有 2 页');
+    expect(response.body).toContain('aria-current="page">2</span>');
+    expect(response.body).toContain('href="/problems?page=1" aria-label="第一页"');
+    expect(response.body).toContain('aria-disabled="true">></span>');
   });
 
   it('does not show the login button on the problems page for logged-in users', async () => {

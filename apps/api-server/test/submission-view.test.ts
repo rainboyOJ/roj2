@@ -124,7 +124,8 @@ describe('submission views', () => {
       user: 'Demo',
     });
     expect(response.body).toContain('提交列表分页');
-    expect(response.body).toContain('第 2 / 3 页，共 41 条');
+    expect(response.body).toContain('共有 3 页');
+    expect(response.body).toContain('aria-current="page">2</span>');
     expect(response.body).toContain('/submissions?page=1&amp;pid=1000&amp;user=Demo');
     expect(response.body).toContain('/submissions?page=3&amp;pid=1000&amp;user=Demo');
     expect(response.body).toContain('value="1000"');

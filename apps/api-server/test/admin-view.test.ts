@@ -368,7 +368,8 @@ describe('admin views', () => {
       pageSize: 50,
     });
     expect(response.body).toContain('提交管理分页');
-    expect(response.body).toContain('第 2 / 3 页，共 41 条');
+    expect(response.body).toContain('共有 3 页');
+    expect(response.body).toContain('aria-current="page">2</span>');
     expect(response.body).toContain('/admin/submissions?page=1');
     expect(response.body).toContain('/admin/submissions?page=3');
     expect(response.body).toContain('刷新');
