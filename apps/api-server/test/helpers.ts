@@ -102,6 +102,8 @@ export function createTestServices(
     createProblemSet: async () => ({ id: 'problem-set-1' }),
     updateProblemSet: async () => undefined,
     publishProblemSet: async () => undefined,
+    hideProblemSet: async () => undefined,
+    deleteProblemSet: async () => undefined,
     getSubmissionById: async () => null,
     listSubmissions: async () => paginated(),
     registerUser: async () => ({

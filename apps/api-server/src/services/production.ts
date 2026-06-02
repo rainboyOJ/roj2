@@ -86,6 +86,12 @@ export async function buildProductionServices(db: RojDb): Promise<ApiServerServi
     publishProblemSet: async (id) => {
       await db.publishProblemSet(id);
     },
+    hideProblemSet: async (id) => {
+      await db.hideProblemSet(id);
+    },
+    deleteProblemSet: async (id) => {
+      await db.deleteProblemSet(id);
+    },
     getSubmissionById: async (id: string) => {
       const submission = await db.getSubmissionWithProblemByPublicId(id);
       return submission ? mapSubmission(submission) : null;

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildProblemDocument,
+  buildHideProblemSetUpdate,
   buildPublishProblemSetUpdate,
   buildPublishProblemUpdate,
   buildProblemSetDocument,
@@ -111,6 +112,16 @@ describe('problem set document builders', () => {
     expect(buildPublishProblemSetUpdate(now)).toEqual({
       isPublished: true,
       publishedAt: now,
+      updatedAt: now,
+    });
+  });
+
+  it('builds hide update fields', () => {
+    const now = new Date('2026-05-29T00:01:00.000Z');
+
+    expect(buildHideProblemSetUpdate(now)).toEqual({
+      isPublished: false,
+      publishedAt: null,
       updatedAt: now,
     });
   });

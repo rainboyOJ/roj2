@@ -37,6 +37,21 @@ block content
                     if !problemSet.isPublished
                       form(method="post" action=`/admin/problem-sets/${problemSet.id}/publish`)
                         button(type="submit" class="secondary")= "发布"
+                    else
+                      form(
+                        method="post"
+                        action=`/admin/problem-sets/${problemSet.id}/hide`
+                        data-confirm-message=`确定要隐藏题目单 ${problemSet.title} 吗？隐藏后学生将无法看到。`
+                        onsubmit="return window.confirm(this.dataset.confirmMessage)"
+                      )
+                        button(type="submit" class="secondary")= "隐藏"
+                    form(
+                      method="post"
+                      action=`/admin/problem-sets/${problemSet.id}/delete`
+                      data-confirm-message=`确定要删除题目单 ${problemSet.title} 吗？删除后不可恢复。`
+                      onsubmit="return window.confirm(this.dataset.confirmMessage)"
+                    )
+                      button(type="submit" class="contrast")= "删除"
     else
       article
         p= "当前还没有题目单。"

@@ -203,6 +203,28 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
     return reply.send({ ok: true });
   });
 
+  app.post('/api/admin/problem-sets/:id/hide', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = request.params as { id: string };
+    await services.hideProblemSet(params.id);
+    return reply.send({ ok: true });
+  });
+
+  app.delete('/api/admin/problem-sets/:id', async (request, reply) => {
+    const user = await requireApiAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = request.params as { id: string };
+    await services.deleteProblemSet(params.id);
+    return reply.send({ ok: true });
+  });
+
   app.post('/admin/problem-sets/:id/publish', async (request, reply) => {
     const user = await requireHtmlAdmin(request, reply);
     if (!user) {
@@ -218,6 +240,46 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
       return renderPage(request, reply, 'admin-problem-sets.pug', {
         problemSets,
         formError: messageFromError(error, '发布题目单失败，请检查后重试。'),
+      });
+    }
+    return redirectTo(reply, '/admin/problem-sets');
+  });
+
+  app.post('/admin/problem-sets/:id/hide', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = request.params as { id: string };
+    try {
+      await services.hideProblemSet(params.id);
+    } catch (error) {
+      const problemSets = await services.listAdminProblemSets();
+      reply.code(400);
+      return renderPage(request, reply, 'admin-problem-sets.pug', {
+        problemSets,
+        formError: messageFromError(error, '隐藏题目单失败，请检查后重试。'),
+      });
+    }
+    return redirectTo(reply, '/admin/problem-sets');
+  });
+
+  app.post('/admin/problem-sets/:id/delete', async (request, reply) => {
+    const user = await requireHtmlAdmin(request, reply);
+    if (!user) {
+      return;
+    }
+
+    const params = request.params as { id: string };
+    try {
+      await services.deleteProblemSet(params.id);
+    } catch (error) {
+      const problemSets = await services.listAdminProblemSets();
+      reply.code(400);
+      return renderPage(request, reply, 'admin-problem-sets.pug', {
+        problemSets,
+        formError: messageFromError(error, '删除题目单失败，请检查后重试。'),
       });
     }
     return redirectTo(reply, '/admin/problem-sets');

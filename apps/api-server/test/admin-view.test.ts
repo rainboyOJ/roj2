@@ -144,6 +144,51 @@ describe('admin views', () => {
     expect(response.body).toContain('src="/assets/admin-users.js"');
   });
 
+  it('renders hide and delete actions on the admin problem sets page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+      listAdminProblemSets: async () => [
+        {
+          id: 'set-1',
+          title: '已发布训练',
+          problemRefs: ['1000', '1001'],
+          isPublished: true,
+          publishedAtText: '2026-05-29 10:00',
+          updatedAtText: '2026-05-29 11:00',
+          contentMarkdown: '- [[pid:1000]]',
+        },
+        {
+          id: 'set-2',
+          title: '草稿训练',
+          problemRefs: ['1002'],
+          isPublished: false,
+          publishedAtText: null,
+          updatedAtText: '2026-05-29 12:00',
+          contentMarkdown: '- [[pid:1002]]',
+        },
+      ],
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/problem-sets',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('已发布训练');
+    expect(response.body).toContain('草稿训练');
+    expect(response.body).toContain('action="/admin/problem-sets/set-1/hide"');
+    expect(response.body).toContain('action="/admin/problem-sets/set-1/delete"');
+    expect(response.body).toContain('action="/admin/problem-sets/set-2/publish"');
+    expect(response.body).toContain('action="/admin/problem-sets/set-2/delete"');
+    expect(response.body).toContain('确定要隐藏题目单 已发布训练 吗？隐藏后学生将无法看到。');
+    expect(response.body).toContain('确定要删除题目单 已发布训练 吗？删除后不可恢复。');
+    expect(response.body).toContain('确定要删除题目单 草稿训练 吗？删除后不可恢复。');
+  });
+
   it('renders admin grade management page', async () => {
     const app = buildApp(createServices({
       getCurrentUser: async () => adminUser(),

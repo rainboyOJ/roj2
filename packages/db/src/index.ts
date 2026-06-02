@@ -183,11 +183,14 @@ import {
 } from './problem-documents.ts';
 export {
   buildProblemSetDocument,
+  buildHideProblemSetUpdate,
   buildPublishProblemSetUpdate,
   buildProblemSetUpdateFields,
   createProblemSet,
+  deleteProblemSet,
   getAdminProblemSetById,
   getPublishedProblemSetById,
+  hideProblemSet,
   listAdminProblemSets,
   listPublishedProblemSets,
   publishProblemSet,
@@ -196,8 +199,10 @@ export {
 } from './problem-set-documents.ts';
 import {
   createProblemSet,
+  deleteProblemSet,
   getAdminProblemSetById,
   getPublishedProblemSetById,
+  hideProblemSet,
   listAdminProblemSets,
   listPublishedProblemSets,
   publishProblemSet,
@@ -662,6 +667,14 @@ export class RojDb {
 
   async publishProblemSet(id: string) {
     await publishProblemSet(this.problemSets(), id);
+  }
+
+  async hideProblemSet(id: string) {
+    await hideProblemSet(this.problemSets(), id);
+  }
+
+  async deleteProblemSet(id: string) {
+    await deleteProblemSet(this.problemSets(), id);
   }
 
   // 审核通过时记录审核人和审核时间。

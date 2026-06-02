@@ -206,6 +206,8 @@ export interface ProblemSetServices {
     contentMarkdown: string;
   }): Promise<void>;
   publishProblemSet(id: string): Promise<void>;
+  hideProblemSet(id: string): Promise<void>;
+  deleteProblemSet(id: string): Promise<void>;
 }
 
 export interface SubmissionServices {

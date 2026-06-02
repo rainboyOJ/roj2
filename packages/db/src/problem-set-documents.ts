@@ -36,6 +36,14 @@ export function buildPublishProblemSetUpdate(now: Date) {
   };
 }
 
+export function buildHideProblemSetUpdate(now: Date) {
+  return {
+    isPublished: false,
+    publishedAt: null,
+    updatedAt: now,
+  };
+}
+
 export async function listPublishedProblemSets(problemSets: Collection<ProblemSetDocument>) {
   return problemSets
     .find({ isPublished: true })
@@ -91,4 +99,17 @@ export async function publishProblemSet(problemSets: Collection<ProblemSetDocume
       $set: buildPublishProblemSetUpdate(new Date()),
     },
   );
+}
+
+export async function hideProblemSet(problemSets: Collection<ProblemSetDocument>, id: string) {
+  await problemSets.updateOne(
+    { _id: id },
+    {
+      $set: buildHideProblemSetUpdate(new Date()),
+    },
+  );
+}
+
+export async function deleteProblemSet(problemSets: Collection<ProblemSetDocument>, id: string) {
+  await problemSets.deleteOne({ _id: id });
 }

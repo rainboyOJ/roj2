@@ -482,6 +482,94 @@ describe('content management routes', () => {
     expect(publishedId).toBe('set-1');
   });
 
+  it('hides a problem set through the admin API flow', async () => {
+    let hiddenId = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      hideProblemSet: async (id: string) => {
+        hiddenId = id;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/problem-sets/set-1/hide',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ ok: true });
+    expect(hiddenId).toBe('set-1');
+  });
+
+  it('deletes a problem set through the admin API flow', async () => {
+    let deletedId = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      deleteProblemSet: async (id: string) => {
+        deletedId = id;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/admin/problem-sets/set-1',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ ok: true });
+    expect(deletedId).toBe('set-1');
+  });
+
+  it('hides a problem set from the admin HTML page flow', async () => {
+    let hiddenId = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      hideProblemSet: async (id: string) => {
+        hiddenId = id;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/problem-sets/set-1/hide',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/problem-sets');
+    expect(hiddenId).toBe('set-1');
+  });
+
+  it('deletes a problem set from the admin HTML page flow', async () => {
+    let deletedId = '';
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      deleteProblemSet: async (id: string) => {
+        deletedId = id;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/problem-sets/set-1/delete',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/problem-sets');
+    expect(deletedId).toBe('set-1');
+  });
+
   it('updates enabled languages for admin users', async () => {
     let receivedLanguages: string[] = [];
     const app = buildApp(createTestServices({
