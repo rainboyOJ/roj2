@@ -314,6 +314,7 @@ npm run import:roj
 - `docs/source-reading-guide.md`：源码阅读顺序
 - `packages/judge-driver/README.md`：judge TCP 客户端说明
 - `docs/docker_one_key_build_and_run.md`：Docker 一键构建部署说明
+- `docs/windows_docker_desktop_install.md`：Windows + Docker Desktop 安装教程
 - `docs/quick_start_for_test.md`：本地快速调试 Docker 部署服务
 
 ## License
