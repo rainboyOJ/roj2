@@ -7,12 +7,11 @@ block content
     header
       hgroup
         h1= "题目列表"
-        p.page-lead= "浏览公开题目，打开题面，并在详情页提交代码。"
       .page-actions
         a(href='/submissions' role="button" class="secondary")= "提交列表"
         if !currentUser
           a(href='/login' role="button" class="contrast")= "登录"
-    form.filter-form(method="get" action="/problems" aria-label="题目筛选")
+    form.filter-form.filter-toolbar(method="get" action="/problems" aria-label="题目筛选")
       label
         span= "搜索"
         input(

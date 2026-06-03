@@ -13,23 +13,22 @@ block content
         p.page-lead= "查看全站评测记录，并按题目或用户快速筛选。"
       .page-actions
         a(href='/problems' role="button" class="secondary")= "题目列表"
-    article
-      form(method="get" action="/submissions")
-        .grid
-          label(for="submission-filter-pid")
-            span= "题目编号"
-            input#submission-filter-pid(type="text" name="pid" value=currentFilters.pid || '' placeholder="例如 1000")
-          label(for="submission-filter-user")
-            span= "用户"
-            input#submission-filter-user(type="text" name="user" value=currentFilters.user || '' placeholder="用户名或姓名")
-          label(for="submission-filter-language")
-            span= "语言"
-            select#submission-filter-language(name="language")
-              option(value="" selected=!currentFilters.language)= "全部"
-              option(value="cpp" selected=currentFilters.language === 'cpp')= "C++"
-              option(value="python" selected=currentFilters.language === 'python')= "Python"
-        .form-actions
-          button(type="submit")= "查询"
+    form.filter-toolbar(method="get" action="/submissions")
+      label(for="submission-filter-pid")
+        span= "题目编号"
+        input#submission-filter-pid(type="text" name="pid" value=currentFilters.pid || '' placeholder="例如 1000")
+      label(for="submission-filter-user")
+        span= "用户"
+        input#submission-filter-user(type="text" name="user" value=currentFilters.user || '' placeholder="用户名或姓名")
+      label(for="submission-filter-language")
+        span= "语言"
+        select#submission-filter-language(name="language")
+          option(value="" selected=!currentFilters.language)= "全部"
+          option(value="cpp" selected=currentFilters.language === 'cpp')= "C++"
+          option(value="python" selected=currentFilters.language === 'python')= "Python"
+      .form-actions
+        button(type="submit")= "查询"
+        if currentFilters.pid || currentFilters.user || currentFilters.language
           a(href="/submissions" role="button" class="secondary")= "清空"
     if submissions.length
       .table-shell

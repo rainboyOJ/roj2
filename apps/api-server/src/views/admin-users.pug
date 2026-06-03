@@ -18,27 +18,26 @@ block content
     if formError
       article
         p.form-alert(role="alert")= formError
-    article
-      form(method="get" action="/admin/users")
-        .grid
-          label(for="admin-user-search-q")
-            span= "用户名或姓名"
-            input#admin-user-search-q(type="search" name="q" value=currentFilters.q || '' placeholder="例如 alice 或 张三")
-          label(for="admin-user-filter-status")
-            span= "审核状态"
-            select#admin-user-filter-status(name="approvalStatus")
-              option(value="" selected=!currentFilters.approvalStatus)= "全部"
-              option(value="pending" selected=currentFilters.approvalStatus === 'pending')= "待审核"
-              option(value="approved" selected=currentFilters.approvalStatus === 'approved')= "已通过"
-              option(value="rejected" selected=currentFilters.approvalStatus === 'rejected')= "已拒绝"
-          label(for="admin-user-filter-class")
-            span= "班级"
-            select#admin-user-filter-class(name="className")
-              option(value="" selected=!currentFilters.className)= "全部"
-              each classRecord in classes || []
-                option(value=classRecord.name selected=currentFilters.className === classRecord.name)= classRecord.name
-        .form-actions
-          button(type="submit")= "查询"
+    form.filter-toolbar(method="get" action="/admin/users")
+      label(for="admin-user-search-q")
+        span= "用户名或姓名"
+        input#admin-user-search-q(type="search" name="q" value=currentFilters.q || '' placeholder="例如 alice 或 张三")
+      label(for="admin-user-filter-status")
+        span= "审核状态"
+        select#admin-user-filter-status(name="approvalStatus")
+          option(value="" selected=!currentFilters.approvalStatus)= "全部"
+          option(value="pending" selected=currentFilters.approvalStatus === 'pending')= "待审核"
+          option(value="approved" selected=currentFilters.approvalStatus === 'approved')= "已通过"
+          option(value="rejected" selected=currentFilters.approvalStatus === 'rejected')= "已拒绝"
+      label(for="admin-user-filter-class")
+        span= "班级"
+        select#admin-user-filter-class(name="className")
+          option(value="" selected=!currentFilters.className)= "全部"
+          each classRecord in classes || []
+            option(value=classRecord.name selected=currentFilters.className === classRecord.name)= classRecord.name
+      .form-actions
+        button(type="submit")= "查询"
+        if currentFilters.q || currentFilters.approvalStatus || currentFilters.className
           a(href="/admin/users" role="button" class="secondary")= "清空"
     if users.length
       .page-actions

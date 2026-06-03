@@ -16,20 +16,19 @@ block content
     if formError
       article
         p.form-alert(role="alert")= formError
-    article
-      form(method="get" action="/admin/problems")
-        .grid
-          label(for="admin-problem-filter-q")
-            span= "题号或标题"
-            input#admin-problem-filter-q(type="search" name="q" value=currentFilters.q || '' placeholder="例如 1000 或 A+B")
-          label(for="admin-problem-filter-visibility")
-            span= "可见性"
-            select#admin-problem-filter-visibility(name="visibility")
-              option(value="" selected=!currentFilters.visibility)= "全部"
-              option(value="visible" selected=currentFilters.visibility === 'visible')= "已发布"
-              option(value="hidden" selected=currentFilters.visibility === 'hidden')= "隐藏"
-        .form-actions
-          button(type="submit")= "查询"
+    form.filter-toolbar(method="get" action="/admin/problems")
+      label(for="admin-problem-filter-q")
+        span= "题号或标题"
+        input#admin-problem-filter-q(type="search" name="q" value=currentFilters.q || '' placeholder="例如 1000 或 A+B")
+      label(for="admin-problem-filter-visibility")
+        span= "可见性"
+        select#admin-problem-filter-visibility(name="visibility")
+          option(value="" selected=!currentFilters.visibility)= "全部"
+          option(value="visible" selected=currentFilters.visibility === 'visible')= "已发布"
+          option(value="hidden" selected=currentFilters.visibility === 'hidden')= "隐藏"
+      .form-actions
+        button(type="submit")= "查询"
+        if currentFilters.q || currentFilters.visibility
           a(href="/admin/problems" role="button" class="secondary")= "清空"
     if problems.length
       .table-shell

@@ -11,6 +11,8 @@
   --soft-text: #607086;
   --strong-text: #223042;
   --hero-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 253, 0.98) 100%);
+  --field-border: #cbd6e2;
+  --field-focus: #1d6fa5;
   --table-head: #edf3f9;
   --table-row: rgba(255, 255, 255, 0.86);
 }
@@ -94,6 +96,8 @@ main.container {
 
 .page-lead {
   max-width: 68ch;
+  color: var(--soft-text);
+  font-size: 0.95rem;
 }
 
 .page-actions {
@@ -140,6 +144,33 @@ main.container {
   margin-bottom: 0;
 }
 
+input[type="text"],
+input[type="search"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+select,
+textarea {
+  width: 100%;
+  border-color: var(--field-border);
+  border-radius: 0;
+  background-color: #fff;
+  color: var(--strong-text);
+  box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.03);
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid rgba(29, 111, 165, 0.18);
+  outline-offset: 1px;
+  border-color: var(--field-focus);
+}
+
 .hero-panel article,
 .list-panel article,
 .detail-panel article,
@@ -152,10 +183,7 @@ main.container {
 }
 
 .grid > section > hgroup,
-.grid > section > p,
-.list-panel > header,
-.detail-panel > header,
-.auth-panel > header {
+.grid > section > p {
   background: var(--hero-surface);
   border: 1px solid rgba(217, 225, 234, 0.7);
   border-radius: 0;
@@ -249,6 +277,25 @@ main.container {
 .detail-panel header,
 .auth-panel header {
   margin-bottom: 1rem;
+}
+
+.list-panel > header,
+.detail-panel > header,
+.auth-panel > header {
+  padding: 0 0 0.85rem;
+  border-bottom: 1px solid rgba(217, 225, 234, 0.9);
+}
+
+.list-panel > header h1,
+.detail-panel > header h1,
+.auth-panel > header h1 {
+  margin-bottom: 0.35rem;
+}
+
+.list-panel > header .page-lead,
+.detail-panel > header .page-lead,
+.auth-panel > header .page-lead {
+  margin-bottom: 0;
 }
 
 .detail-panel,
@@ -370,6 +417,14 @@ main.container {
 
 .form-card {
   max-width: 46rem;
+}
+
+.auth-panel .form-card {
+  width: min(46rem, 100%);
+}
+
+.auth-panel > .form-card {
+  justify-self: start;
 }
 
 .form-card form {
@@ -522,12 +577,72 @@ main.container {
 
 .list-panel {
   display: grid;
-  gap: 0.9rem;
+  gap: 1rem;
 }
 
 .list-panel > header .page-actions {
   margin: 0;
   justify-content: flex-end;
+}
+
+.filter-form,
+.filter-toolbar {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.85rem;
+  border: 1px solid rgba(217, 225, 234, 0.95);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.filter-form label,
+.filter-toolbar label,
+.filter-form input,
+.filter-form select,
+.filter-toolbar input,
+.filter-toolbar select,
+.filter-form .form-actions,
+.filter-toolbar .form-actions {
+  margin-bottom: 0;
+}
+
+.filter-form label,
+.filter-toolbar label {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 26rem;
+}
+
+.filter-toolbar .form-actions,
+.filter-actions {
+  flex: 0 0 auto;
+}
+
+.filter-form label > span,
+.filter-toolbar label > span {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--soft-text);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.filter-actions button,
+.filter-actions [role="button"],
+.filter-toolbar .form-actions button,
+.filter-toolbar .form-actions [role="button"] {
+  margin-bottom: 0;
 }
 
 .soft-note {
@@ -805,6 +920,11 @@ aside article ol {
 }
 
 @media (max-width: 768px) {
+  main.container {
+    width: min(100% - 2rem, 1100px);
+    padding-top: 1rem;
+  }
+
   .metric-grid {
     grid-template-columns: 1fr;
   }
@@ -830,16 +950,50 @@ aside article ol {
   }
 
   .grid > section > hgroup,
-  .grid > section > p,
+  .grid > section > p {
+    padding: 1rem;
+  }
+
   .list-panel > header,
   .detail-panel > header,
   .auth-panel > header {
-    padding: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .filter-form,
+  .filter-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    padding: 0.75rem;
+  }
+
+  .filter-form label,
+  .filter-toolbar label {
+    max-width: none;
+  }
+
+  .filter-actions,
+  .filter-toolbar .form-actions {
+    align-items: stretch;
   }
 
   .data-table td,
   .data-table th {
     min-width: 7rem;
+  }
+
+  .problem-progress-cell {
+    min-width: 4rem;
+  }
+
+  .table-shell,
+  .panel-card,
+  .hero-panel article,
+  .list-panel article,
+  .detail-panel article,
+  .auth-panel article {
+    max-width: 100%;
   }
 
   .hero-panel > article,
@@ -869,5 +1023,9 @@ aside article ol {
   .nav-links {
     justify-content: flex-start;
     gap: 0.45rem 0.7rem;
+  }
+
+  .quick-problem-jump {
+    grid-template-columns: 1fr;
   }
 }

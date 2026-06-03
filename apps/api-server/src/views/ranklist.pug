@@ -8,17 +8,16 @@ block content
       hgroup
         h1= "排行榜"
         p.page-lead= "一个简化的学校 OJ 排行榜，按通过题数和最近通过时间展示。"
-    article
-      form(method="get" action="/ranklist")
-        .grid
-          label(for="ranklist-filter-class")
-            span= "班级"
-            select#ranklist-filter-class(name="className")
-              option(value="")= "全部班级"
-              each classRecord in classes
-                option(value=classRecord.name selected=currentFilters.className === classRecord.name)= classRecord.name
-        .form-actions
-          button(type="submit")= "查询"
+    form.filter-toolbar(method="get" action="/ranklist")
+      label(for="ranklist-filter-class")
+        span= "班级"
+        select#ranklist-filter-class(name="className")
+          option(value="")= "全部班级"
+          each classRecord in classes
+            option(value=classRecord.name selected=currentFilters.className === classRecord.name)= classRecord.name
+      .form-actions
+        button(type="submit")= "查询"
+        if currentFilters.className
           a(href="/ranklist" role="button" class="secondary")= "清空"
     if entries.length
       .table-shell
