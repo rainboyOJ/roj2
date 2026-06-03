@@ -519,3 +519,54 @@
 4. 修改后运行相关测试。
 5. 如涉及页面样式，使用 Playwright 做视觉检查。
 6. 提交时保持单一关注点。
+
+## 8. 2026-06-03 新一轮可读性优化计划
+
+经过多轮 AI 编程后，项目的新复杂度主要集中在后台 CRUD、筛选分页上下文、前端小脚本和服务类型文件。后续继续按“小步、可测试、不改变业务语义”的方式优化。
+
+### 8.1 统一列表 query / return URL 构造
+
+- [ ] 新增统一 query/path helper。
+- [ ] 把 Pug 模板中的 `filterParts`、`currentPageSuffix`、`actionQuery` 尽量移到 route 层生成。
+- [ ] 优先覆盖 `/problems`、`/submissions`、`/admin/users`、`/admin/problems`、`/admin/problem-sets`。
+- [ ] 保持分页、筛选、刷新、编辑、发布、隐藏、删除后的 URL 行为不变。
+
+### 8.2 抽取后台 HTML 表单动作模板逻辑
+
+- [ ] 抽取后台 HTML 表单常见流程：权限检查、body 转换、zod 校验、错误渲染、service 调用、成功跳转。
+- [ ] 优先处理重复度最高的题目和题目单 create/edit 流程。
+- [ ] 不一次性套到所有后台路由，避免过度抽象。
+
+### 8.3 统一后台确认弹窗与危险操作脚本
+
+- [ ] 新增或整理统一 admin action 脚本。
+- [ ] 统一处理 `data-confirm-message`、Notyf 错误提示、成功 reload/redirect。
+- [ ] 去掉题目单页面中的内联 `onsubmit="return window.confirm(...)"`。
+- [ ] 后续再评估是否迁移用户管理脚本中的确认逻辑。
+
+### 8.4 拆小 `service-types.ts`
+
+- [ ] 按领域拆分 Problem、Submission、User、Dictionary、Settings、Ranklist、Contest 类型。
+- [ ] 保留 `service-types.ts` 作为 re-export 入口，先不强制所有调用方一次性改 import。
+- [ ] 通过 `npm run typecheck` 保证拆分不改变接口。
+
+### 8.5 拆分 production service adapter
+
+- [ ] 将 `apps/api-server/src/services/production.ts` 按领域拆成 problems、submissions、users、settings 等 adapter。
+- [ ] `buildProductionServices()` 只负责组合领域 service。
+- [ ] 不改 DB 层，不改 `ApiServerServices` 对外行为。
+
+### 8.6 推荐执行顺序
+
+1. 统一 query/path helper。
+2. 抽取题目和题目单后台表单流程。
+3. 统一后台危险操作确认脚本。
+4. 拆分 `service-types.ts`。
+5. 拆分 `production.ts`。
+
+每一阶段完成后运行：
+
+- `npm run typecheck`
+- `npm test`
+
+每一阶段单独提交，避免大范围混合重构。
