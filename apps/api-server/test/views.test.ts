@@ -138,6 +138,7 @@ describe('shared rendered views and assets', () => {
     const profileClass = await app.inject({ method: 'GET', url: '/assets/profile-class.js' });
     const adminProblem = await app.inject({ method: 'GET', url: '/assets/admin-problem-form.js' });
     const adminProblems = await app.inject({ method: 'GET', url: '/assets/admin-problems.js' });
+    const adminActions = await app.inject({ method: 'GET', url: '/assets/admin-actions.js' });
     const adminGrades = await app.inject({ method: 'GET', url: '/assets/admin-grades.js' });
     const adminLanguages = await app.inject({ method: 'GET', url: '/assets/admin-language-settings.js' });
     const adminUsers = await app.inject({ method: 'GET', url: '/assets/admin-users.js' });
@@ -190,6 +191,9 @@ describe('shared rendered views and assets', () => {
     expect(adminProblem.body).toContain('/api/admin/problems');
     expect(adminProblems.statusCode).toBe(200);
     expect(adminProblems.body).toContain('/api/admin/problems');
+    expect(adminActions.statusCode).toBe(200);
+    expect(adminActions.body).toContain('dataset.confirmMessage');
+    expect(adminActions.body).toContain('window.confirm');
     expect(adminGrades.statusCode).toBe(200);
     expect(adminGrades.body).toContain('/api/admin/grades');
     expect(adminLanguages.statusCode).toBe(200);

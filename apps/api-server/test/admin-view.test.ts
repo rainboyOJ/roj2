@@ -282,6 +282,8 @@ describe('admin views', () => {
     expect(response.body).toContain('确定要隐藏题目单 已发布训练 吗？隐藏后学生将无法看到。');
     expect(response.body).toContain('确定要删除题目单 已发布训练 吗？删除后不可恢复。');
     expect(response.body).toContain('确定要删除题目单 草稿训练 吗？删除后不可恢复。');
+    expect(response.body).toContain('src="/assets/admin-actions.js"');
+    expect(response.body).not.toContain('onsubmit="return window.confirm');
   });
 
   it('renders admin grade management page', async () => {
