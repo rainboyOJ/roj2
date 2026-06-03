@@ -1,31 +1,35 @@
 import type { FastifyInstance } from 'fastify';
 
 import type { RouteContext } from '../http/context.ts';
+import { buildQueryString, readTrimmedQuery, type QueryValueInput } from '../http/query.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
 import type { SessionUser, SubmissionListFilters, SubmissionViewModel } from '../service-types.ts';
 
 function parseSubmissionListFilters(query: unknown): SubmissionListFilters {
-  if (typeof query !== 'object' || query === null) {
-    return {};
-  }
-
-  const raw = query as { pid?: unknown; user?: unknown; language?: unknown };
-  const pidText = Array.isArray(raw.pid) ? raw.pid[0] : raw.pid;
-  const userText = Array.isArray(raw.user) ? raw.user[0] : raw.user;
-  const languageText = Array.isArray(raw.language) ? raw.language[0] : raw.language;
   const filters: SubmissionListFilters = {};
+  const pid = readTrimmedQuery(query, 'pid');
+  const user = readTrimmedQuery(query, 'user');
+  const language = readTrimmedQuery(query, 'language');
 
-  if (typeof pidText === 'string' && pidText.trim()) {
-    filters.pid = pidText.trim();
+  if (pid) {
+    filters.pid = pid;
   }
-  if (typeof userText === 'string' && userText.trim()) {
-    filters.user = userText.trim();
+  if (user) {
+    filters.user = user;
   }
-  if (typeof languageText === 'string' && languageText.trim()) {
-    filters.language = languageText.trim();
+  if (language) {
+    filters.language = language;
   }
 
   return filters;
+}
+
+function submissionListQueryParts(filters: SubmissionListFilters): QueryValueInput[] {
+  return [
+    { key: 'pid', value: filters.pid },
+    { key: 'user', value: filters.user },
+    { key: 'language', value: filters.language },
+  ];
 }
 
 function withSubmissionSourcePermission(
@@ -79,7 +83,10 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
       page: parsePage(request.query),
       pageSize: paginationSettings.listPageSize,
     }, filters);
-    return renderPage(request, reply, 'submissions.pug', { ...result });
+    return renderPage(request, reply, 'submissions.pug', {
+      ...result,
+      paginationQuerySuffix: buildQueryString(submissionListQueryParts(filters)),
+    });
   });
 
   app.get('/api/submissions/:id', async (request, reply) => {

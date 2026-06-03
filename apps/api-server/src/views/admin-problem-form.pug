@@ -4,9 +4,9 @@ include mixins/assets.pug
 
 block content
   - const isCreate = mode === 'create';
-  - const listReturnPath = returnPath || '/admin/problems';
-  - const actionQuery = listReturnPath.includes('?') ? `?${listReturnPath.split('?')[1]}` : '';
-  - const actionPath = isCreate ? `/admin/problems${actionQuery}` : `/admin/problems/${problem.id}${actionQuery}`;
+  - const listReturnPath = listPath || '/admin/problems';
+  - const formActionQuery = actionQuery || '';
+  - const actionPath = isCreate ? `/admin/problems${formActionQuery}` : `/admin/problems/${problem.id}${formActionQuery}`;
   section.auth-panel
     header
       if isCreate
@@ -52,7 +52,7 @@ block content
             a(href=listReturnPath role="button" class="secondary")= "返回"
         if !isCreate
           hr
-          form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish${actionQuery}` data-problem-id=problem.id)
+          form.admin-publish-problem-form(method="post" action=`/admin/problems/${problem.id}/publish${formActionQuery}` data-problem-id=problem.id)
             button(type="submit" class="contrast")= "发布题目"
 
 block pageScripts

@@ -4,31 +4,40 @@ import type { RouteContext } from '../../http/context.ts';
 import { messageFromError } from '../../http/form-errors.ts';
 import { sendValidationError } from '../../http/validation.ts';
 import { createProblemSchema } from '../../http/schemas.ts';
+import { querySuffixWithoutPage, readEnumQuery, readTrimmedQuery } from '../../http/query.ts';
 import type { AdminProblemListFilters } from '../../service-types.ts';
 import {
   adminProblemsPath,
+  adminProblemsQueryParts,
   problemFormValues,
   problemInputFromBody,
 } from './form-parsers.ts';
 
 function parseAdminProblemListFilters(query: unknown): AdminProblemListFilters {
-  if (typeof query !== 'object' || query === null) {
-    return {};
-  }
-
-  const raw = query as { q?: unknown; visibility?: unknown };
-  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
-  const visibility = Array.isArray(raw.visibility) ? raw.visibility[0] : raw.visibility;
   const filters: AdminProblemListFilters = {};
+  const q = readTrimmedQuery(query, 'q');
+  const visibility = readEnumQuery(query, 'visibility', ['visible', 'hidden'] as const);
 
-  if (typeof q === 'string' && q.trim()) {
-    filters.q = q.trim();
+  if (q) {
+    filters.q = q;
   }
-  if (visibility === 'visible' || visibility === 'hidden') {
+  if (visibility) {
     filters.visibility = visibility;
   }
 
   return filters;
+}
+
+function adminProblemListContext(query: unknown) {
+  const queryParts = adminProblemsQueryParts(query);
+  const currentQuerySuffix = querySuffixWithoutPage(queryParts);
+  const actionQuery = currentQuerySuffix ? `?${currentQuerySuffix}` : '';
+
+  return {
+    listPath: adminProblemsPath(query),
+    currentQuerySuffix: actionQuery,
+    actionQuery,
+  };
 }
 
 export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteContext) {
@@ -59,7 +68,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
       mode,
       problem,
       formError,
-      returnPath: adminProblemsPath(request.query),
+      ...adminProblemListContext(request.query),
     });
   }
 
@@ -71,7 +80,11 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
 
     const filters = parseAdminProblemListFilters(request.query);
     const problems = await services.listAdminProblems(filters);
-    return renderPage(request, reply, 'admin-problems.pug', { problems, filters });
+    return renderPage(request, reply, 'admin-problems.pug', {
+      problems,
+      filters,
+      ...adminProblemListContext(request.query),
+    });
   });
 
   app.get('/admin/problems/new', async (request, reply) => {
@@ -90,7 +103,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
         allowLanguages: ['cpp', 'python'],
         isVisible: false,
       },
-      returnPath: adminProblemsPath(request.query),
+      ...adminProblemListContext(request.query),
     });
   });
 
@@ -109,7 +122,7 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
     return renderPage(request, reply, 'admin-problem-form.pug', {
       mode: 'edit',
       problem,
-      returnPath: adminProblemsPath(request.query),
+      ...adminProblemListContext(request.query),
     });
   });
 

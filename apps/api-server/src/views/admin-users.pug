@@ -8,17 +8,8 @@ include mixins/status.pug
 
 block content
   - const currentFilters = filters || {}
-  - const filterParts = []
-  - if (currentFilters.q) filterParts.push(`q=${encodeURIComponent(currentFilters.q)}`)
-  - if (currentFilters.approvalStatus) filterParts.push(`approvalStatus=${encodeURIComponent(currentFilters.approvalStatus)}`)
-  - if (currentFilters.className) filterParts.push(`className=${encodeURIComponent(currentFilters.className)}`)
-  - const paginationQuerySuffix = filterParts.join('&')
-  - const currentPathParts = []
-  - if (pagination && pagination.page > 1) currentPathParts.push(`page=${pagination.page}`)
-  - if (currentFilters.q) currentPathParts.push(`q=${encodeURIComponent(currentFilters.q)}`)
-  - if (currentFilters.approvalStatus) currentPathParts.push(`approvalStatus=${encodeURIComponent(currentFilters.approvalStatus)}`)
-  - if (currentFilters.className) currentPathParts.push(`className=${encodeURIComponent(currentFilters.className)}`)
-  - const currentPageSuffix = currentPathParts.length ? `?${currentPathParts.join('&')}` : ''
+  - const listPageSuffix = currentPageSuffix || ''
+  - const listPaginationQuerySuffix = paginationQuerySuffix || ''
   section.list-panel
     header
       hgroup
@@ -51,23 +42,23 @@ block content
           a(href="/admin/users" role="button" class="secondary")= "清空"
     if users.length
       .page-actions
-        a(href=`/admin/users${currentPageSuffix}` role="button" class="secondary")= "刷新"
+        a(href=`/admin/users${listPageSuffix}` role="button" class="secondary")= "刷新"
         button(
           type="submit"
           form="bulk-user-review-form"
-          formaction=`/admin/users/bulk-approve${currentPageSuffix}`
+          formaction=`/admin/users/bulk-approve${listPageSuffix}`
           data-confirm-message="确定要通过选中的用户吗？"
         )= "批量通过"
         button(
           type="submit"
           class="secondary"
           form="bulk-user-review-form"
-          formaction=`/admin/users/bulk-reject${currentPageSuffix}`
+          formaction=`/admin/users/bulk-reject${listPageSuffix}`
           data-confirm-message="确定要拒绝选中的用户吗？"
         )= "批量拒绝"
       form#bulk-user-review-form(
         method="post"
-        action=`/admin/users/bulk-approve${currentPageSuffix}`
+        action=`/admin/users/bulk-approve${listPageSuffix}`
         data-require-checked="userIds"
         data-empty-message="请先选择需要处理的用户"
       )
@@ -101,21 +92,21 @@ block content
                     .table-actions
                       form(
                         method="post"
-                        action=`/admin/users/bulk-approve${currentPageSuffix}`
+                        action=`/admin/users/bulk-approve${listPageSuffix}`
                         data-confirm-message=`确定要通过用户 ${user.username} 吗？`
                       )
                         input(type="hidden" name="userIds" value=user.id)
                         button(type="submit" id=`approve-user-${user.id}`)= "通过"
                       form(
                         method="post"
-                        action=`/admin/users/bulk-reject${currentPageSuffix}`
+                        action=`/admin/users/bulk-reject${listPageSuffix}`
                         data-confirm-message=`确定要拒绝用户 ${user.username} 吗？`
                       )
                         input(type="hidden" name="userIds" value=user.id)
                         button(type="submit" class="secondary" id=`reject-user-${user.id}`)= "拒绝"
                       form(
                         method="post"
-                        action=`/admin/users/${user.id}/reset-password${currentPageSuffix}`
+                        action=`/admin/users/${user.id}/reset-password${listPageSuffix}`
                         data-confirm-message=`确定要重置用户 ${user.username} 的密码吗？`
                         data-require-password="password"
                         data-password-empty-message="请先输入新密码"
@@ -124,11 +115,11 @@ block content
                         button(type="submit" class="secondary" id=`reset-password-user-${user.id}`)= "重置密码"
                       form(
                         method="post"
-                        action=`/admin/users/${user.id}/delete${currentPageSuffix}`
+                        action=`/admin/users/${user.id}/delete${listPageSuffix}`
                         data-confirm-message=`确定要删除用户 ${user.username} 吗？删除后不可恢复。`
                       )
                         button(type="submit" class="contrast" id=`delete-user-${user.id}`)= "删除用户"
-      +paginationBar('/admin/users', pagination, '用户管理分页', paginationQuerySuffix)
+      +paginationBar('/admin/users', pagination, '用户管理分页', listPaginationQuerySuffix)
     else
       article
         if currentFilters.q || currentFilters.approvalStatus || currentFilters.className

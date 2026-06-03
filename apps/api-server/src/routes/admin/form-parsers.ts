@@ -1,3 +1,11 @@
+import {
+  buildPathWithQuery,
+  readEnumQuery,
+  readPageQuery,
+  readTrimmedQuery,
+  type QueryValueInput,
+} from '../../http/query.ts';
+
 export type AdminFormBody = Record<string, string | string[] | undefined>;
 
 export function asStringArray(value: string | string[] | undefined) {
@@ -26,107 +34,62 @@ export function parseUserIds(value: unknown): string[] {
 }
 
 export function parseAdminUserListFilters(query: unknown) {
-  if (typeof query !== 'object' || query === null) {
-    return {};
-  }
-
-  const raw = query as { q?: unknown; approvalStatus?: unknown; className?: unknown };
-  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
-  const approvalStatus = Array.isArray(raw.approvalStatus)
-    ? raw.approvalStatus[0]
-    : raw.approvalStatus;
-  const className = Array.isArray(raw.className) ? raw.className[0] : raw.className;
   const filters: {
     q?: string;
     approvalStatus?: 'pending' | 'approved' | 'rejected';
     className?: string;
   } = {};
+  const q = readTrimmedQuery(query, 'q');
+  const approvalStatus = readEnumQuery(query, 'approvalStatus', [
+    'pending',
+    'approved',
+    'rejected',
+  ] as const);
+  const className = readTrimmedQuery(query, 'className');
 
-  if (typeof q === 'string' && q.trim()) {
-    filters.q = q.trim();
+  if (q) {
+    filters.q = q;
   }
-  if (
-    approvalStatus === 'pending'
-    || approvalStatus === 'approved'
-    || approvalStatus === 'rejected'
-  ) {
+  if (approvalStatus) {
     filters.approvalStatus = approvalStatus;
   }
-  if (typeof className === 'string' && className.trim()) {
-    filters.className = className.trim();
+  if (className) {
+    filters.className = className;
   }
 
   return filters;
 }
 
-export function adminUsersPath(query: unknown) {
-  const raw = typeof query === 'object' && query !== null
-    ? query as { page?: unknown; q?: unknown; approvalStatus?: unknown; className?: unknown }
-    : {};
-  const pageText = Array.isArray(raw.page) ? raw.page[0] : raw.page;
-  const pageNumber = Number(pageText ?? 1);
-  const queryParts = [];
-
-  if (Number.isInteger(pageNumber) && pageNumber > 1) {
-    queryParts.push(`page=${pageNumber}`);
-  }
-
-  const filters = parseAdminUserListFilters(raw);
-  if (filters.q) {
-    queryParts.push(`q=${encodeURIComponent(filters.q)}`);
-  }
-  if (filters.approvalStatus) {
-    queryParts.push(`approvalStatus=${encodeURIComponent(filters.approvalStatus)}`);
-  }
-  if (filters.className) {
-    queryParts.push(`className=${encodeURIComponent(filters.className)}`);
-  }
-
-  return queryParts.length ? `/admin/users?${queryParts.join('&')}` : '/admin/users';
+export function adminUsersQueryParts(query: unknown): QueryValueInput[] {
+  const filters = parseAdminUserListFilters(query);
+  return [
+    { key: 'page', value: readPageQuery(query) },
+    { key: 'q', value: filters.q },
+    { key: 'approvalStatus', value: filters.approvalStatus },
+    { key: 'className', value: filters.className },
+  ];
 }
 
-function pageQueryPart(query: unknown) {
-  const raw = typeof query === 'object' && query !== null
-    ? query as { page?: unknown }
-    : {};
-  const pageText = Array.isArray(raw.page) ? raw.page[0] : raw.page;
-  const pageNumber = Number(pageText ?? 1);
-  return Number.isInteger(pageNumber) && pageNumber > 1 ? `page=${pageNumber}` : null;
+export function adminUsersPath(query: unknown) {
+  return buildPathWithQuery('/admin/users', adminUsersQueryParts(query));
+}
+
+export function adminProblemsQueryParts(query: unknown): QueryValueInput[] {
+  return [
+    { key: 'page', value: readPageQuery(query) },
+    { key: 'q', value: readTrimmedQuery(query, 'q') },
+    { key: 'visibility', value: readEnumQuery(query, 'visibility', ['visible', 'hidden'] as const) },
+  ];
 }
 
 export function adminProblemsPath(query: unknown) {
-  const raw = typeof query === 'object' && query !== null
-    ? query as { q?: unknown; visibility?: unknown }
-    : {};
-  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
-  const visibility = Array.isArray(raw.visibility) ? raw.visibility[0] : raw.visibility;
-  const queryParts = [];
-  const pagePart = pageQueryPart(query);
-
-  if (pagePart) {
-    queryParts.push(pagePart);
-  }
-  if (typeof q === 'string' && q.trim()) {
-    queryParts.push(`q=${encodeURIComponent(q.trim())}`);
-  }
-  if (visibility === 'visible' || visibility === 'hidden') {
-    queryParts.push(`visibility=${encodeURIComponent(visibility)}`);
-  }
-
-  return queryParts.length ? `/admin/problems?${queryParts.join('&')}` : '/admin/problems';
+  return buildPathWithQuery('/admin/problems', adminProblemsQueryParts(query));
 }
 
 export function adminProblemSetsPath(query: unknown) {
-  const queryParts = [];
-  const pagePart = pageQueryPart(query);
-
-  if (pagePart) {
-    queryParts.push(pagePart);
-  }
-
-  return queryParts.length
-    ? `/admin/problem-sets?${queryParts.join('&')}`
-    : '/admin/problem-sets';
+  return buildPathWithQuery('/admin/problem-sets', [
+    { key: 'page', value: readPageQuery(query) },
+  ]);
 }
 
 export function problemInputFromBody(raw: AdminFormBody) {

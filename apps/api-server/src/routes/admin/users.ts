@@ -4,11 +4,21 @@ import type { RouteContext } from '../../http/context.ts';
 import { messageFromError } from '../../http/form-errors.ts';
 import { sendValidationError } from '../../http/validation.ts';
 import { resetPasswordSchema } from '../../http/schemas.ts';
+import { buildQuerySuffix, querySuffixWithoutPage } from '../../http/query.ts';
 import {
+  adminUsersQueryParts,
   adminUsersPath,
   parseAdminUserListFilters,
   parseUserIds,
 } from './form-parsers.ts';
+
+function adminUserListContext(query: unknown) {
+  const queryParts = adminUsersQueryParts(query);
+  return {
+    paginationQuerySuffix: querySuffixWithoutPage(queryParts),
+    currentPageSuffix: buildQuerySuffix(queryParts),
+  };
+}
 
 export function registerAdminUserRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -33,6 +43,7 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
       currentUser: user,
       ...result,
       classes,
+      ...adminUserListContext(request.query),
       formError,
     });
   }
@@ -50,7 +61,12 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
       pageSize: paginationSettings.listPageSize,
     }, parseAdminUserListFilters(request.query));
     const classes = await services.listClasses();
-    return renderPage(request, reply, 'admin-users.pug', { currentUser: user, ...result, classes });
+    return renderPage(request, reply, 'admin-users.pug', {
+      currentUser: user,
+      ...result,
+      classes,
+      ...adminUserListContext(request.query),
+    });
   });
 
   app.post('/admin/users/:id/reset-password', async (request, reply) => {

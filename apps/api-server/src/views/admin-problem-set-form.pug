@@ -2,8 +2,8 @@
 extends layout.pug
 
 block content
-  - const listReturnPath = returnPath || '/admin/problem-sets'
-  - const actionQuery = listReturnPath.includes('?') ? `?${listReturnPath.split('?')[1]}` : ''
+  - const listReturnPath = listPath || '/admin/problem-sets'
+  - const formActionQuery = actionQuery || ''
   section.detail-panel
     header
       hgroup
@@ -15,7 +15,7 @@ block content
       .panel-body
         if formError
           p.form-alert(role="alert")= formError
-        form(method="post" action=mode === 'create' ? `/admin/problem-sets${actionQuery}` : `/admin/problem-sets/${problemSet.id}${actionQuery}`)
+        form(method="post" action=mode === 'create' ? `/admin/problem-sets${formActionQuery}` : `/admin/problem-sets/${problemSet.id}${formActionQuery}`)
           label(for="title")= "标题"
           input#title(type="text" name="title" required value=problemSet.title placeholder="例如：第一周基础训练")
           label(for="contentMarkdown")= "内容"

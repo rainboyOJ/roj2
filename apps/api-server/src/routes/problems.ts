@@ -1,6 +1,12 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import type { RouteContext } from '../http/context.ts';
+import {
+  buildQueryString,
+  readEnumQuery,
+  readTrimmedQuery,
+  type QueryValueInput,
+} from '../http/query.ts';
 import { createSubmissionSchema } from '../http/schemas.ts';
 import type {
   ProblemListFilters,
@@ -10,23 +16,25 @@ import type {
 } from '../service-types.ts';
 
 function parseProblemListFilters(query: unknown): ProblemListFilters {
-  if (typeof query !== 'object' || query === null) {
-    return {};
-  }
-
-  const raw = query as { q?: unknown; progress?: unknown };
-  const q = Array.isArray(raw.q) ? raw.q[0] : raw.q;
-  const progress = Array.isArray(raw.progress) ? raw.progress[0] : raw.progress;
   const filters: ProblemListFilters = {};
+  const q = readTrimmedQuery(query, 'q');
+  const progress = readEnumQuery(query, 'progress', ['accepted', 'attempted', 'empty'] as const);
 
-  if (typeof q === 'string' && q.trim()) {
-    filters.q = q.trim();
+  if (q) {
+    filters.q = q;
   }
-  if (progress === 'accepted' || progress === 'attempted' || progress === 'empty') {
+  if (progress) {
     filters.progress = progress;
   }
 
   return filters;
+}
+
+function problemListQueryParts(filters: ProblemListFilters): QueryValueInput[] {
+  return [
+    { key: 'q', value: filters.q },
+    { key: 'progress', value: filters.progress },
+  ];
 }
 
 function buildProblemListQueryFilters(
@@ -55,14 +63,7 @@ function buildProblemListQueryFilters(
 }
 
 function buildProblemListQuerySuffix(filters: ProblemListFilters) {
-  const params = new URLSearchParams();
-  if (filters.q) {
-    params.set('q', filters.q);
-  }
-  if (filters.progress) {
-    params.set('progress', filters.progress);
-  }
-  return params.toString();
+  return buildQueryString(problemListQueryParts(filters));
 }
 
 function searchOnlyProblemListFilters(filters: ProblemListFilters): ProblemListFilters {

@@ -5,11 +5,7 @@ include mixins/status.pug
 
 block content
   - const currentFilters = filters || {}
-  - const filterParts = []
-  - if (currentFilters.pid) filterParts.push(`pid=${encodeURIComponent(currentFilters.pid)}`)
-  - if (currentFilters.user) filterParts.push(`user=${encodeURIComponent(currentFilters.user)}`)
-  - if (currentFilters.language) filterParts.push(`language=${encodeURIComponent(currentFilters.language)}`)
-  - const paginationQuerySuffix = filterParts.join('&')
+  - const listPaginationQuerySuffix = paginationQuerySuffix || ''
   section.list-panel
     header
       hgroup
@@ -65,7 +61,7 @@ block content
                   +verdictChip(submission.verdict)
                 td
                   a(href=`/submissions/${submission.publicId}`)= "查看详情"
-      +paginationBar('/submissions', pagination, '提交列表分页', paginationQuerySuffix)
+      +paginationBar('/submissions', pagination, '提交列表分页', listPaginationQuerySuffix)
     else
       article
         p= "没有找到符合条件的提交记录。"

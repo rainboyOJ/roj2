@@ -4,11 +4,22 @@ import type { RouteContext } from '../../http/context.ts';
 import { messageFromError } from '../../http/form-errors.ts';
 import { sendValidationError } from '../../http/validation.ts';
 import { createProblemSetSchema } from '../../http/schemas.ts';
+import { buildQuerySuffix, readPageQuery } from '../../http/query.ts';
 import {
   adminProblemSetsPath,
   problemSetFormValues,
   problemSetInputFromBody,
 } from './form-parsers.ts';
+
+function adminProblemSetListContext(query: unknown) {
+  const actionQuery = buildQuerySuffix([
+    { key: 'page', value: readPageQuery(query) },
+  ]);
+  return {
+    listPath: adminProblemSetsPath(query),
+    actionQuery,
+  };
+}
 
 export function registerAdminProblemSetRoutes(app: FastifyInstance, context: RouteContext) {
   const {
@@ -35,7 +46,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
       mode,
       problemSet,
       formError,
-      returnPath: adminProblemSetsPath(request.query),
+      ...adminProblemSetListContext(request.query),
     });
   }
 
@@ -46,7 +57,10 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
     }
 
     const problemSets = await services.listAdminProblemSets();
-    return renderPage(request, reply, 'admin-problem-sets.pug', { problemSets });
+    return renderPage(request, reply, 'admin-problem-sets.pug', {
+      problemSets,
+      currentPageSuffix: adminProblemSetListContext(request.query).actionQuery,
+    });
   });
 
   app.get('/admin/problem-sets/new', async (request, reply) => {
@@ -62,7 +76,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
         title: '',
         contentMarkdown: '',
       },
-      returnPath: adminProblemSetsPath(request.query),
+      ...adminProblemSetListContext(request.query),
     });
   });
 
@@ -81,7 +95,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
     return renderPage(request, reply, 'admin-problem-set-form.pug', {
       mode: 'edit',
       problemSet,
-      returnPath: adminProblemSetsPath(request.query),
+      ...adminProblemSetListContext(request.query),
     });
   });
 
@@ -243,6 +257,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
       reply.code(400);
       return renderPage(request, reply, 'admin-problem-sets.pug', {
         problemSets,
+        currentPageSuffix: adminProblemSetListContext(request.query).actionQuery,
         formError: messageFromError(error, '发布题目单失败，请检查后重试。'),
       });
     }
@@ -263,6 +278,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
       reply.code(400);
       return renderPage(request, reply, 'admin-problem-sets.pug', {
         problemSets,
+        currentPageSuffix: adminProblemSetListContext(request.query).actionQuery,
         formError: messageFromError(error, '隐藏题目单失败，请检查后重试。'),
       });
     }
@@ -283,6 +299,7 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
       reply.code(400);
       return renderPage(request, reply, 'admin-problem-sets.pug', {
         problemSets,
+        currentPageSuffix: adminProblemSetListContext(request.query).actionQuery,
         formError: messageFromError(error, '删除题目单失败，请检查后重试。'),
       });
     }
