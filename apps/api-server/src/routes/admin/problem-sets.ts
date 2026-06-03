@@ -10,6 +10,7 @@ import {
   problemSetFormValues,
   problemSetInputFromBody,
 } from './form-parsers.ts';
+import { handleAdminHtmlFormAction } from './html-form-action.ts';
 
 function adminProblemSetListContext(query: unknown) {
   const actionQuery = buildQuerySuffix([
@@ -134,30 +135,25 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
     }
 
     const raw = request.body as Record<string, string | undefined>;
-    const parsed = createProblemSetSchema.safeParse(problemSetInputFromBody(raw));
-    const formProblemSet = problemSetFormValues(raw);
-    if (!parsed.success) {
-      return renderProblemSetFormError(
+    return handleAdminHtmlFormAction({
+      schema: createProblemSetSchema,
+      rawBody: raw,
+      inputFromBody: problemSetInputFromBody,
+      formValues: problemSetFormValues,
+      validationMessage: '题目单信息填写不正确，请填写标题和内容。',
+      failureMessage: '创建题目单失败，请检查后重试。',
+      action: async (input) => {
+        await services.createProblemSet(input);
+      },
+      renderError: (formProblemSet, formError) => renderProblemSetFormError(
         request,
         reply,
         'create',
         formProblemSet,
-        '题目单信息填写不正确，请填写标题和内容。',
-      );
-    }
-
-    try {
-      await services.createProblemSet(parsed.data);
-    } catch (error) {
-      return renderProblemSetFormError(
-        request,
-        reply,
-        'create',
-        formProblemSet,
-        messageFromError(error, '创建题目单失败，请检查后重试。'),
-      );
-    }
-    return redirectTo(reply, adminProblemSetsPath(request.query));
+        formError,
+      ),
+      redirect: () => redirectTo(reply, adminProblemSetsPath(request.query)),
+    });
   });
 
   app.put('/api/admin/problem-sets/:id', async (request, reply) => {
@@ -184,30 +180,25 @@ export function registerAdminProblemSetRoutes(app: FastifyInstance, context: Rou
 
     const params = request.params as { id: string };
     const raw = request.body as Record<string, string | undefined>;
-    const parsed = createProblemSetSchema.safeParse(problemSetInputFromBody(raw));
-    const formProblemSet = problemSetFormValues(raw, params.id);
-    if (!parsed.success) {
-      return renderProblemSetFormError(
+    return handleAdminHtmlFormAction({
+      schema: createProblemSetSchema,
+      rawBody: raw,
+      inputFromBody: problemSetInputFromBody,
+      formValues: (body) => problemSetFormValues(body, params.id),
+      validationMessage: '题目单信息填写不正确，请填写标题和内容。',
+      failureMessage: '保存题目单失败，请检查后重试。',
+      action: async (input) => {
+        await services.updateProblemSet(params.id, input);
+      },
+      renderError: (formProblemSet, formError) => renderProblemSetFormError(
         request,
         reply,
         'edit',
         formProblemSet,
-        '题目单信息填写不正确，请填写标题和内容。',
-      );
-    }
-
-    try {
-      await services.updateProblemSet(params.id, parsed.data);
-    } catch (error) {
-      return renderProblemSetFormError(
-        request,
-        reply,
-        'edit',
-        formProblemSet,
-        messageFromError(error, '保存题目单失败，请检查后重试。'),
-      );
-    }
-    return redirectTo(reply, adminProblemSetsPath(request.query));
+        formError,
+      ),
+      redirect: () => redirectTo(reply, adminProblemSetsPath(request.query)),
+    });
   });
 
   app.post('/api/admin/problem-sets/:id/publish', async (request, reply) => {

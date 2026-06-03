@@ -12,6 +12,7 @@ import {
   problemFormValues,
   problemInputFromBody,
 } from './form-parsers.ts';
+import { handleAdminHtmlFormAction } from './html-form-action.ts';
 
 function parseAdminProblemListFilters(query: unknown): AdminProblemListFilters {
   const filters: AdminProblemListFilters = {};
@@ -162,30 +163,25 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
     }
 
     const raw = request.body as Record<string, string | string[] | undefined>;
-    const parsed = createProblemSchema.safeParse(problemInputFromBody(raw));
-    const formProblem = problemFormValues(raw);
-    if (!parsed.success) {
-      return renderProblemFormError(
+    return handleAdminHtmlFormAction({
+      schema: createProblemSchema,
+      rawBody: raw,
+      inputFromBody: problemInputFromBody,
+      formValues: problemFormValues,
+      validationMessage: '题目信息填写不正确，请至少填写题号、标题、题面并选择一种语言。',
+      failureMessage: '创建题目失败，请检查后重试。',
+      action: async (input) => {
+        await services.createProblem(input);
+      },
+      renderError: (formProblem, formError) => renderProblemFormError(
         request,
         reply,
         'create',
         formProblem,
-        '题目信息填写不正确，请至少填写题号、标题、题面并选择一种语言。',
-      );
-    }
-
-    try {
-      await services.createProblem(parsed.data);
-    } catch (error) {
-      return renderProblemFormError(
-        request,
-        reply,
-        'create',
-        formProblem,
-        messageFromError(error, '创建题目失败，请检查后重试。'),
-      );
-    }
-    return redirectTo(reply, adminProblemsPath(request.query));
+        formError,
+      ),
+      redirect: () => redirectTo(reply, adminProblemsPath(request.query)),
+    });
   });
 
   app.put('/api/admin/problems/:id', async (request, reply) => {
@@ -212,30 +208,25 @@ export function registerAdminProblemRoutes(app: FastifyInstance, context: RouteC
 
     const params = request.params as { id: string };
     const raw = request.body as Record<string, string | string[] | undefined>;
-    const parsed = createProblemSchema.safeParse(problemInputFromBody(raw));
-    const formProblem = problemFormValues(raw, params.id);
-    if (!parsed.success) {
-      return renderProblemFormError(
+    return handleAdminHtmlFormAction({
+      schema: createProblemSchema,
+      rawBody: raw,
+      inputFromBody: problemInputFromBody,
+      formValues: (body) => problemFormValues(body, params.id),
+      validationMessage: '题目信息填写不正确，请至少填写题号、标题、题面并选择一种语言。',
+      failureMessage: '保存题目失败，请检查后重试。',
+      action: async (input) => {
+        await services.updateProblem(params.id, input);
+      },
+      renderError: (formProblem, formError) => renderProblemFormError(
         request,
         reply,
         'edit',
         formProblem,
-        '题目信息填写不正确，请至少填写题号、标题、题面并选择一种语言。',
-      );
-    }
-
-    try {
-      await services.updateProblem(params.id, parsed.data);
-    } catch (error) {
-      return renderProblemFormError(
-        request,
-        reply,
-        'edit',
-        formProblem,
-        messageFromError(error, '保存题目失败，请检查后重试。'),
-      );
-    }
-    return redirectTo(reply, adminProblemsPath(request.query));
+        formError,
+      ),
+      redirect: () => redirectTo(reply, adminProblemsPath(request.query)),
+    });
   });
 
   app.post('/api/admin/problems/:id/publish', async (request, reply) => {
