@@ -136,6 +136,7 @@ describe('shared rendered views and assets', () => {
     const formUtils = await app.inject({ method: 'GET', url: '/assets/form-utils.js' });
     const profilePassword = await app.inject({ method: 'GET', url: '/assets/profile-password.js' });
     const profileClass = await app.inject({ method: 'GET', url: '/assets/profile-class.js' });
+    const problemStatement = await app.inject({ method: 'GET', url: '/assets/problem-statement.js' });
     const adminProblem = await app.inject({ method: 'GET', url: '/assets/admin-problem-form.js' });
     const adminProblems = await app.inject({ method: 'GET', url: '/assets/admin-problems.js' });
     const adminActions = await app.inject({ method: 'GET', url: '/assets/admin-actions.js' });
@@ -185,6 +186,11 @@ describe('shared rendered views and assets', () => {
     expect(profileClass.statusCode).toBe(200);
     expect(profileClass.body).toContain('/api/me/class-name');
     expect(profileClass.body).toContain('请选择可用的班级');
+    expect(problemStatement.statusCode).toBe(200);
+    expect(problemStatement.headers['content-type']).toContain('application/javascript');
+    expect(problemStatement.body).toContain('copyStatementButton');
+    expect(problemStatement.body).toContain('navigator.clipboard');
+    expect(problemStatement.body).toContain('题面已复制');
     expect(adminProblem.statusCode).toBe(200);
     expect(adminProblem.body).toContain('至少选择一种允许提交的语言');
     expect(adminProblem.body).toContain('requireChecked');

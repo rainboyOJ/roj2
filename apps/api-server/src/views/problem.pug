@@ -17,8 +17,11 @@ block content
       article.panel-card
         header
           h2= "题面"
+          .panel-header-actions
+            button#copyStatementButton(type="button" class="secondary")= "复制题面"
         .panel-body.statement-block.markdown-body
           != problem.statementHtml
+        script#problemStatementMarkdown(type="application/json")!= scriptJson(problem.statementMarkdown)
       article#submit.panel-card.problem-submit-card
         header
           h2= "提交代码"
@@ -43,4 +46,5 @@ block pageScripts
   +pageScript('/assets/notyf.min.js')
   +pageScript('/assets/notify.js')
   +pageScript('/assets/form-utils.js')
+  +pageScript('/assets/problem-statement.js')
   +pageScript('/assets/editor/problem-editor.js', 'module')

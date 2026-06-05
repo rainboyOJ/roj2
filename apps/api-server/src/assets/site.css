@@ -337,10 +337,32 @@ textarea:focus {
   background: rgba(248, 251, 255, 0.92);
 }
 
+.panel-card > header:has(.panel-header-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .panel-card > header h2,
 .panel-card > header h3,
 .panel-card > header p {
   margin-bottom: 0;
+}
+
+.panel-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.panel-header-actions button,
+.panel-header-actions [role="button"] {
+  margin-bottom: 0;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
 }
 
 .panel-card > header p {
@@ -1000,6 +1022,15 @@ aside article ol {
   .panel-body {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .panel-card > header:has(.panel-header-actions) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel-header-actions {
+    justify-content: flex-start;
   }
 
   .compact-list li {

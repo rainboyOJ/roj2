@@ -54,8 +54,18 @@ function formatLabel(labels: Record<string, string>, value: string | null | unde
   return labels[value] ?? value;
 }
 
+function scriptJson(value: unknown) {
+  return JSON.stringify(value)
+    .replaceAll('<', '\\u003C')
+    .replaceAll('>', '\\u003E')
+    .replaceAll('&', '\\u0026')
+    .replaceAll('\u2028', '\\u2028')
+    .replaceAll('\u2029', '\\u2029');
+}
+
 export function createViewHelpers() {
   return {
+    scriptJson,
     formatStatusLabel(status: string | null | undefined) {
       return formatLabel(submissionStatusLabels, status);
     },

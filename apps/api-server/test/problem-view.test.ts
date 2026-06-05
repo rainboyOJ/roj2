@@ -291,6 +291,10 @@ describe('problem views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('<h2>Statement</h2>');
+    expect(response.body).toContain('id="copyStatementButton"');
+    expect(response.body).toContain('复制题面');
+    expect(response.body).toContain('id="problemStatementMarkdown"');
+    expect(response.body).toContain('Input two integers and print their sum.');
     expect(response.body).toContain('id="submissionAlert"');
     expect(response.body).toContain('id="submissionForm"');
     expect(response.body).toContain('id="submit"');
@@ -300,8 +304,30 @@ describe('problem views', () => {
     expect(response.body).toContain('src="/assets/notyf.min.js"');
     expect(response.body).toContain('src="/assets/notify.js"');
     expect(response.body).toContain('src="/assets/form-utils.js"');
+    expect(response.body).toContain('src="/assets/problem-statement.js"');
     expect(response.body).toContain('src="/assets/editor/problem-editor.js"');
     expect(response.body).not.toContain('<pre class="mono-block">');
+  });
+
+  it('safely embeds problem markdown for client-side copy', async () => {
+    const app = buildApp(createServices({
+      getProblemByPid: async () => ({
+        pid: '1000',
+        title: 'A + B Problem',
+        statementMarkdown: 'before </script><script>alert(1)</script> after',
+        statementHtml: '<p>safe html</p>',
+        allowLanguages: ['cpp', 'python'],
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/problem/1000',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('before \\u003C/script\\u003E\\u003Cscript\\u003Ealert(1)\\u003C/script\\u003E after');
+    expect(response.body).not.toContain('before </script><script>alert(1)</script> after');
   });
 
   it('renders only globally enabled languages on the problem page', async () => {

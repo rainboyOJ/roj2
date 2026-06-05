@@ -74,6 +74,7 @@ const assetManifest = new Map<string, AssetManifestEntry>([
   ['/assets/login.js', textAsset(['assets', 'login.js'], 'application/javascript; charset=utf-8')],
   ['/assets/profile-password.js', textAsset(['assets', 'profile-password.js'], 'application/javascript; charset=utf-8')],
   ['/assets/profile-class.js', textAsset(['assets', 'profile-class.js'], 'application/javascript; charset=utf-8')],
+  ['/assets/problem-statement.js', textAsset(['assets', 'problem-statement.js'], 'application/javascript; charset=utf-8')],
   ['/assets/admin-problem-form.js', textAsset(['assets', 'admin-problem-form.js'], 'application/javascript; charset=utf-8')],
   ['/assets/admin-problems.js', textAsset(['assets', 'admin-problems.js'], 'application/javascript; charset=utf-8')],
   ['/assets/admin-actions.js', textAsset(['assets', 'admin-actions.js'], 'application/javascript; charset=utf-8')],
