@@ -434,7 +434,7 @@ main.container {
 }
 
 .auth-panel > .form-card {
-  justify-self: start;
+  justify-self: center;
 }
 
 .form-card form {
