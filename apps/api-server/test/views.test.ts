@@ -15,7 +15,7 @@ describe('shared rendered views and assets', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toContain('href="/assets/pico.classless.min.css"');
+    expect(response.body).toContain('href="/assets/pico.min.css"');
     expect(response.body).toContain('href="/assets/katex.min.css"');
     expect(response.body).toContain('href="/assets/notyf.min.css"');
     expect(response.body).toContain('href="/assets/site.css"');
@@ -99,7 +99,7 @@ describe('shared rendered views and assets', () => {
 
     const pico = await app.inject({
       method: 'GET',
-      url: '/assets/pico.classless.min.css',
+      url: '/assets/pico.min.css',
     });
     const katex = await app.inject({
       method: 'GET',

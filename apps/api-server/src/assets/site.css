@@ -1,8 +1,5 @@
 :root {
   --pico-font-family-sans-serif: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --pico-font-size: 95%;
-  --pico-line-height: 1.65;
-  --pico-border-radius: 0.85rem;
   --pico-nav-element-spacing-horizontal: 0.75rem;
   --pico-nav-element-spacing-vertical: 0.4rem;
   --page-background: #f4f7fb;
@@ -11,11 +8,6 @@
   --soft-text: #607086;
   --strong-text: #223042;
   --hero-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 253, 0.98) 100%);
-  --field-border: #cbd6e2;
-  --field-focus: #1d6fa5;
-  --field-background: #f8fbff;
-  --field-background-focus: #ffffff;
-  --field-placeholder: #7b8798;
   --table-head: #edf3f9;
   --table-row: rgba(255, 255, 255, 0.86);
 }
@@ -147,110 +139,6 @@ main.container {
   margin-bottom: 0;
 }
 
-input[type="text"],
-input[type="search"],
-input[type="password"],
-input[type="email"],
-input[type="number"],
-select,
-textarea {
-  width: 100%;
-  min-height: 2.75rem;
-  border: 1px solid var(--field-border);
-  border-radius: 0;
-  background-color: var(--field-background);
-  color: var(--strong-text);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.78),
-    0 1px 0 rgba(15, 23, 42, 0.03);
-  font-size: 0.96rem;
-  line-height: 1.45;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-input[type="text"],
-input[type="search"],
-input[type="password"],
-input[type="email"],
-input[type="number"],
-textarea {
-  padding: 0.65rem 0.8rem;
-}
-
-input[type="search"] {
-  appearance: none;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--field-placeholder);
-  opacity: 1;
-}
-
-select {
-  appearance: none;
-  padding: 0.65rem 2.35rem 0.65rem 0.8rem;
-  background-image:
-    linear-gradient(45deg, transparent 50%, #607086 50%),
-    linear-gradient(135deg, #607086 50%, transparent 50%);
-  background-position:
-    calc(100% - 1rem) 50%,
-    calc(100% - 0.7rem) 50%;
-  background-size:
-    0.32rem 0.32rem,
-    0.32rem 0.32rem;
-  background-repeat: no-repeat;
-}
-
-textarea {
-  min-height: 8rem;
-  resize: vertical;
-}
-
-input[type="text"]:hover,
-input[type="search"]:hover,
-input[type="password"]:hover,
-input[type="email"]:hover,
-input[type="number"]:hover,
-select:hover,
-textarea:hover {
-  border-color: #aebdcd;
-  background-color: #ffffff;
-}
-
-input[type="text"]:focus,
-input[type="search"]:focus,
-input[type="password"]:focus,
-input[type="email"]:focus,
-input[type="number"]:focus,
-select:focus,
-textarea:focus {
-  outline: 2px solid rgba(29, 111, 165, 0.18);
-  outline-offset: 1px;
-  border-color: var(--field-focus);
-  background-color: var(--field-background-focus);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 0 0 1px rgba(29, 111, 165, 0.08);
-}
-
-input:disabled,
-select:disabled,
-textarea:disabled {
-  cursor: not-allowed;
-  background-color: #eef3f8;
-  color: #8491a3;
-}
-
-label > input,
-label > select,
-label > textarea {
-  margin-top: 0.35rem;
-}
-
 .hero-panel article,
 .list-panel article,
 .detail-panel article,
@@ -258,7 +146,7 @@ label > textarea {
   height: 100%;
   background: var(--panel-background);
   border: 1px solid var(--panel-border);
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   box-shadow: 0 18px 40px rgba(116, 138, 168, 0.12);
 }
 
@@ -266,7 +154,7 @@ label > textarea {
 .grid > section > p {
   background: var(--hero-surface);
   border: 1px solid rgba(217, 225, 234, 0.7);
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   padding: 1.1rem 1.2rem;
 }
 
@@ -327,7 +215,7 @@ label > textarea {
 
 .feature-card {
   padding: 1.2rem;
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
 }
 
 .feature-card h3,
@@ -343,7 +231,7 @@ label > textarea {
 .metric-card {
   padding: 1rem;
   border: 1px solid var(--panel-border);
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   background: var(--panel-background);
   box-shadow: 0 14px 32px rgba(116, 138, 168, 0.1);
 }
@@ -427,7 +315,7 @@ label > textarea {
 
 .panel-card {
   overflow: hidden;
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
 }
 
 .panel-card > header {
@@ -586,9 +474,9 @@ label > textarea {
   margin: 0;
   min-height: 2.75rem;
   padding: 0.62rem 0.95rem;
-  border: 1px solid var(--field-border);
-  border-radius: 0;
-  background: var(--field-background);
+  border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+  border-radius: var(--pico-border-radius);
+  background: var(--pico-form-element-background-color);
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -597,15 +485,15 @@ label > textarea {
 }
 
 .choice-chip:hover {
-  border-color: #aebdcd;
-  background: #ffffff;
+  border-color: var(--pico-form-element-active-border-color);
+  background: var(--pico-form-element-active-background-color);
 }
 
 .choice-chip:has(input:focus-visible) {
-  outline: 2px solid rgba(29, 111, 165, 0.18);
+  outline: var(--pico-outline-width) solid var(--pico-form-element-focus-color);
   outline-offset: 1px;
-  border-color: var(--field-focus);
-  background: #ffffff;
+  border-color: var(--pico-form-element-active-border-color);
+  background: var(--pico-form-element-active-background-color);
 }
 
 .choice-chip input {
@@ -625,7 +513,7 @@ label > textarea {
 
 .editor-shell {
   border: 1px solid rgba(217, 225, 234, 0.9);
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   background: #fbfdff;
   overflow: hidden;
 }
@@ -696,13 +584,13 @@ label > textarea {
   overflow-x: auto;
   padding: 0.75rem 0.9rem;
   border: 1px solid #cbd6e2;
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   background: #f1f5f9;
 }
 
 .markdown-body :not(pre) > code {
   padding: 0.1rem 0.3rem;
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   background: #edf3f9;
   color: #26384d;
 }
@@ -820,7 +708,7 @@ label > textarea {
 .form-alert {
   padding: 0.75rem 0.9rem;
   border: 1px solid #efcbd1;
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   background: #fdeef0;
   color: #9a2332;
 }
@@ -875,7 +763,7 @@ label > textarea {
 .table-shell {
   overflow-x: auto;
   border: 1px solid var(--panel-border);
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 18px 40px rgba(116, 138, 168, 0.12);
 }
@@ -980,7 +868,7 @@ label > textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0;
+  border-radius: var(--pico-border-radius);
   border: 1px solid #9fb0c3;
   background: #ffffff;
   color: #607086;

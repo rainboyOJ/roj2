@@ -62,7 +62,7 @@ const fontContentTypes = {
 
 const assetManifest = new Map<string, AssetManifestEntry>([
   ['/favicon.svg', textAsset(['assets', 'favicon.svg'], 'image/svg+xml')],
-  ['/assets/pico.classless.min.css', textAsset(['assets', 'pico.classless.min.css'], 'text/css')],
+  ['/assets/pico.min.css', textAsset(['assets', 'pico.min.css'], 'text/css')],
   ['/assets/katex.min.css', textAsset(['assets', 'katex.min.css'], 'text/css')],
   ['/assets/notyf.min.css', textAsset(['assets', 'notyf.min.css'], 'text/css')],
   ['/assets/site.css', textAsset(['assets', 'site.css'], 'text/css')],
