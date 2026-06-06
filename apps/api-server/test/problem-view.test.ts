@@ -291,6 +291,9 @@ describe('problem views', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('<h2>Statement</h2>');
+    expect(response.body).toContain('class="problem-meta-row"');
+    expect(response.body).toContain('支持语言');
+    expect(response.body).toContain('href="#submit"');
     expect(response.body).toContain('id="copyStatementButton"');
     expect(response.body).toContain('复制题面');
     expect(response.body).toContain('id="problemStatementMarkdown"');
