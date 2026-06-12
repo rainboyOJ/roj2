@@ -159,3 +159,9 @@ export function paginationSettingsInputFromBody(raw: AdminFormBody) {
     listPageSize: parseNumberField(raw.listPageSize),
   };
 }
+
+export function submissionSettingsInputFromBody(raw: AdminFormBody) {
+  return {
+    submissionIntervalSeconds: parseNumberField(raw.submissionIntervalSeconds),
+  };
+}

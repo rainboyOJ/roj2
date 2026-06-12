@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { isSubmissionRateLimitError, SUBMISSION_RATE_LIMIT_MESSAGE } from '@roj/db';
 
 import type { RouteContext } from '../http/context.ts';
 import { buildQueryString, readTrimmedQuery, type QueryValueInput } from '../http/query.ts';
@@ -141,10 +142,18 @@ export function registerSubmissionRoutes(app: FastifyInstance, context: RouteCon
       });
     }
 
-    const created = await services.createSubmission({
-      userId: user.id,
-      ...parsed.data,
-    });
+    let created;
+    try {
+      created = await services.createSubmission({
+        userId: user.id,
+        ...parsed.data,
+      });
+    } catch (error) {
+      if (isSubmissionRateLimitError(error)) {
+        return reply.code(429).send({ message: SUBMISSION_RATE_LIMIT_MESSAGE });
+      }
+      throw error;
+    }
     return reply.code(201).send({
       submissionId: created.publicId,
       submissionNo: created.submissionNo,

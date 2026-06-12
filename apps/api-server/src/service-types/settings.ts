@@ -9,9 +9,15 @@ export interface PaginationSettingsViewModel {
   allowedPageSizes: number[];
 }
 
+export interface SubmissionSettingsViewModel {
+  submissionIntervalSeconds: number;
+}
+
 export interface SettingsServices {
   getEnabledLanguages(): Promise<readonly AppLanguage[]>;
   updateEnabledLanguages(enabledLanguages: AppLanguage[]): Promise<void>;
   getPaginationSettings(): Promise<PaginationSettingsViewModel>;
   updateListPageSize(listPageSize: number): Promise<void>;
+  getSubmissionSettings(): Promise<SubmissionSettingsViewModel>;
+  updateSubmissionIntervalSeconds(submissionIntervalSeconds: number): Promise<void>;
 }

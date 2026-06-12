@@ -1,5 +1,6 @@
 // 这组测试主要覆盖“最小 JSON API 行为”。
 import { describe, expect, it } from 'vitest';
+import { SubmissionRateLimitError, SUBMISSION_RATE_LIMIT_MESSAGE } from '@roj/db';
 
 import { buildApp, type SessionUser, type SubmissionListFilters } from '../src/app.ts';
 import { buildProductionServices } from '../src/index.ts';
@@ -65,6 +66,29 @@ describe('POST /api/submissions', () => {
     });
 
     expect(response.statusCode).toBe(400);
+  });
+
+  it('returns 429 when a user submits too frequently', async () => {
+    const app = buildApp(createTestServices({
+      createSubmission: async () => {
+        throw new SubmissionRateLimitError();
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/submissions',
+      payload: {
+        pid: '1000',
+        language: 'python',
+        sourceCode: 'print(1)',
+      },
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.json()).toEqual({
+      message: SUBMISSION_RATE_LIMIT_MESSAGE,
+    });
   });
 });
 

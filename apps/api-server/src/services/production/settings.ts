@@ -16,5 +16,11 @@ export function buildSettingsServices(db: RojDb): SettingsServices {
     updateListPageSize: async (listPageSize) => {
       await db.updateListPageSize(listPageSize);
     },
+    getSubmissionSettings: async () => ({
+      submissionIntervalSeconds: await db.getSubmissionIntervalSeconds(),
+    }),
+    updateSubmissionIntervalSeconds: async (submissionIntervalSeconds) => {
+      await db.updateSubmissionIntervalSeconds(submissionIntervalSeconds);
+    },
   };
 }

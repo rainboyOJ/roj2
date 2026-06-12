@@ -41,6 +41,10 @@ export const paginationSettingsSchema = z.object({
   listPageSize: z.union([z.literal(20), z.literal(50), z.literal(100)]),
 });
 
+export const submissionSettingsSchema = z.object({
+  submissionIntervalSeconds: z.number().int().min(0),
+});
+
 export const createProblemSchema = z.object({
   pid: z.string().min(1),
   title: z.string().min(1),

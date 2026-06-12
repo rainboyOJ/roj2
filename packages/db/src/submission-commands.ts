@@ -14,7 +14,7 @@ import {
 } from '@roj/shared';
 
 import { nextCounterValue } from './counters.ts';
-import { getEnabledLanguages } from './settings.ts';
+import { getEnabledLanguages, getSubmissionIntervalSeconds } from './settings.ts';
 import { buildLeaseUpdate } from './submission-lease.ts';
 import {
   buildClearSubmissionLeaseUpdate,
@@ -35,6 +35,49 @@ export interface SubmissionCommandCollections {
 }
 
 export type DebugJudge = (message: string, details?: Record<string, unknown>) => void;
+export const SUBMISSION_RATE_LIMIT_MESSAGE = '禁止频繁提交，请等待一会后再提交。';
+
+export class SubmissionRateLimitError extends Error {
+  constructor() {
+    super(SUBMISSION_RATE_LIMIT_MESSAGE);
+    this.name = 'SubmissionRateLimitError';
+  }
+}
+
+export function isSubmissionRateLimitError(error: unknown): error is SubmissionRateLimitError {
+  return error instanceof SubmissionRateLimitError;
+}
+
+async function ensureSubmissionInterval(
+  collections: Pick<SubmissionCommandCollections, 'settings' | 'submissions'>,
+  user: UserDocument,
+  now: Date,
+) {
+  if (user.role === 'admin') {
+    return;
+  }
+
+  const submissionIntervalSeconds = await getSubmissionIntervalSeconds(collections.settings);
+  if (submissionIntervalSeconds === 0) {
+    return;
+  }
+
+  const latestSubmission = await collections.submissions.findOne(
+    { userId: user._id },
+    {
+      projection: { createdAt: 1 },
+      sort: { createdAt: -1 },
+    },
+  );
+  if (!latestSubmission) {
+    return;
+  }
+
+  const elapsedMs = now.getTime() - latestSubmission.createdAt.getTime();
+  if (elapsedMs < submissionIntervalSeconds * 1000) {
+    throw new SubmissionRateLimitError();
+  }
+}
 
 export async function createSubmission(
   collections: SubmissionCommandCollections,
@@ -59,6 +102,7 @@ export async function createSubmission(
   }
 
   const now = new Date();
+  await ensureSubmissionInterval(collections, user, now);
   const submissionNo = await nextCounterValue(collections.counters, 'submissionNo');
   const submission: SubmissionDocument = {
     _id: new ObjectId().toHexString(),

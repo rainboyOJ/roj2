@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
+import { isSubmissionRateLimitError } from '@roj/db';
 
 import type { RouteContext } from '../http/context.ts';
 import {
@@ -250,6 +251,9 @@ export function registerProblemRoutes(app: FastifyInstance, context: RouteContex
         ...parsed.data,
       });
     } catch (error) {
+      if (isSubmissionRateLimitError(error)) {
+        return renderProblemSubmissionError(request, reply, parsed.data.pid, error.message, formValues);
+      }
       const message = error instanceof Error ? error.message : '提交失败，请检查后重试。';
       return renderProblemSubmissionError(request, reply, parsed.data.pid, message, formValues);
     }

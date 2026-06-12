@@ -159,6 +159,10 @@ export function createTestServices(
       allowedPageSizes: [20, 50, 100],
     }),
     updateListPageSize: async () => undefined,
+    getSubmissionSettings: async () => ({
+      submissionIntervalSeconds: 30,
+    }),
+    updateSubmissionIntervalSeconds: async () => undefined,
     listAdminProblems: async () => [],
     getAdminProblemById: async () => null,
     createProblem: async () => ({

@@ -712,6 +712,49 @@ describe('content management routes', () => {
     expect(receivedPageSize).toBe(50);
   });
 
+  it('updates submission settings for admin users', async () => {
+    let receivedIntervalSeconds = -1;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      updateSubmissionIntervalSeconds: async (submissionIntervalSeconds: number) => {
+        receivedIntervalSeconds = submissionIntervalSeconds;
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/settings/submissions',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        submissionIntervalSeconds: 45,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedIntervalSeconds).toBe(45);
+  });
+
+  it('rejects invalid submission settings for admin users', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/settings/submissions',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        submissionIntervalSeconds: -1,
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('rejects invalid pagination settings for admin users', async () => {
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),
@@ -857,6 +900,30 @@ describe('content management routes', () => {
     expect(response.statusCode).toBe(400);
     expect(response.body).toContain('语言设置');
     expect(response.body).toContain('至少选择一种可用语言。');
+  });
+
+  it('renders submission setting errors on the admin submission settings page', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      getSubmissionSettings: async () => ({
+        submissionIntervalSeconds: 30,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/settings/submissions',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        submissionIntervalSeconds: '-1',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toContain('提交设置');
+    expect(response.body).toContain('请输入大于等于 0 的整数秒数。');
   });
 
   it('renders user management errors when no user is selected for bulk approve', async () => {

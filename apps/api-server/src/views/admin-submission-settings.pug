@@ -1,0 +1,26 @@
+extends layout.pug
+
+block content
+  section.auth-panel
+    header
+      hgroup
+        h1= "提交设置"
+        p.page-lead= "限制普通用户连续提交的最短间隔，管理员提交不受限制。"
+    article.panel-card.form-card
+      .panel-body
+        p.form-alert(role="alert" hidden=!formError)= formError || ''
+        form(method="post" action="/admin/settings/submissions")
+          label(for="submissionIntervalSeconds")= "提交间隔（秒）"
+          input(
+            id="submissionIntervalSeconds"
+            name="submissionIntervalSeconds"
+            type="number"
+            min="0"
+            step="1"
+            value=settings.submissionIntervalSeconds
+            required
+          )
+          small= "设置为 0 表示关闭提交频率限制。"
+          .form-actions
+            button(type="submit")= "保存设置"
+            a(href="/admin" role="button" class="secondary")= "返回管理后台"

@@ -4,5 +4,6 @@ export interface SiteSettingsDocument {
   _id: 'site_settings';
   enabledLanguages: AppLanguage[];
   listPageSize: number;
+  submissionIntervalSeconds: number;
   updatedAt: Date;
 }

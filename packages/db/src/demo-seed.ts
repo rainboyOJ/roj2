@@ -9,7 +9,11 @@ import type {
 } from '@roj/shared';
 
 import { readDefaultProblemSeeds } from './default-problems.ts';
-import { DEFAULT_LIST_PAGE_SIZE, parseEnabledLanguagesEnv } from './settings.ts';
+import {
+  DEFAULT_LIST_PAGE_SIZE,
+  DEFAULT_SUBMISSION_INTERVAL_SECONDS,
+  parseEnabledLanguagesEnv,
+} from './settings.ts';
 import { hashPassword } from './users.ts';
 
 export interface DemoSeedCollections {
@@ -179,6 +183,7 @@ export async function seedDemoData(collections: DemoSeedCollections) {
       $setOnInsert: {
         enabledLanguages: parseEnabledLanguagesEnv(process.env.ROJ_ENABLED_LANGUAGES),
         listPageSize: DEFAULT_LIST_PAGE_SIZE,
+        submissionIntervalSeconds: DEFAULT_SUBMISSION_INTERVAL_SECONDS,
         updatedAt: now,
       },
     },

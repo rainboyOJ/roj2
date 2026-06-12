@@ -55,6 +55,7 @@ describe('admin views', () => {
     expect(response.body).toContain('打开题目管理');
     expect(response.body).toContain('打开用户管理');
     expect(response.body).toContain('打开提交管理');
+    expect(response.body).toContain('打开提交设置');
   });
 
   it('renders the admin problem edit page for admins', async () => {
@@ -394,6 +395,29 @@ describe('admin views', () => {
     expect(response.body).toContain('name="listPageSize"');
     expect(response.body).toContain('value="50" checked');
     expect(response.body).toContain('100 条');
+  });
+
+  it('renders admin submission settings page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+      getSubmissionSettings: async () => ({
+        submissionIntervalSeconds: 45,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/settings/submissions',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('提交设置');
+    expect(response.body).toContain('name="submissionIntervalSeconds"');
+    expect(response.body).toContain('value="45"');
+    expect(response.body).toContain('设置为 0 表示关闭提交频率限制。');
   });
 
   it('renders pagination on the admin submissions page and requests the selected page', async () => {

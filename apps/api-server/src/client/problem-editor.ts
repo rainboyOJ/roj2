@@ -38,6 +38,8 @@ type CreateSubmissionResponse = {
   verdict?: string;
 };
 
+const SUBMISSION_RATE_LIMIT_MESSAGE = '禁止频繁提交，请等待一会后再提交。';
+
 function getLanguageExtension(language: string) {
   const factory = languageFactories[language as keyof typeof languageFactories];
   return factory ? factory() : [];
@@ -152,17 +154,19 @@ function initProblemEditor() {
       }, 300);
     } catch (error) {
       if (alertBox) {
-        window.RojFormUtils?.showAlert(
-          alertBox,
-          window.RojFormUtils.serverMessage(
-            error,
-            {
-              'Approval required': '账号审核通过后才能提交代码。',
-              'Invalid submission payload': '提交信息不完整，请检查语言和代码。',
-            },
-            '提交失败，请检查后重试。',
-          ),
-        );
+        const message = window.RojFormUtils?.serverMessage(
+          error,
+          {
+            'Approval required': '账号审核通过后才能提交代码。',
+            'Invalid submission payload': '提交信息不完整，请检查语言和代码。',
+            [SUBMISSION_RATE_LIMIT_MESSAGE]: SUBMISSION_RATE_LIMIT_MESSAGE,
+          },
+          '提交失败，请检查后重试。',
+        ) || '提交失败，请检查后重试。';
+        window.RojFormUtils?.showAlert(alertBox, message);
+        if (message === SUBMISSION_RATE_LIMIT_MESSAGE) {
+          window.alert(message);
+        }
       }
       editor.focus();
     } finally {

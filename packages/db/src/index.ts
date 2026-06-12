@@ -52,30 +52,40 @@ import { nextCounterValue } from './counters.ts';
 export {
   ALLOWED_LIST_PAGE_SIZES,
   DEFAULT_LIST_PAGE_SIZE,
+  DEFAULT_SUBMISSION_INTERVAL_SECONDS,
   buildEnabledLanguagesUpdate,
   buildListPageSizeUpdate,
+  buildSubmissionIntervalSecondsUpdate,
   getEnabledLanguages,
   getListPageSize,
+  getSubmissionIntervalSeconds,
   normalizeListPageSize,
+  normalizeSubmissionIntervalSeconds,
   parseEnabledLanguagesEnv,
   updateEnabledLanguages,
   updateListPageSize,
+  updateSubmissionIntervalSeconds,
   type ListPageSize,
 } from './settings.ts';
 import {
   getEnabledLanguages,
   getListPageSize,
+  getSubmissionIntervalSeconds,
   updateEnabledLanguages,
   updateListPageSize,
+  updateSubmissionIntervalSeconds,
   type ListPageSize,
 } from './settings.ts';
 export { buildLeaseUpdate } from './submission-lease.ts';
 export {
   claimPendingSubmission,
   createSubmission,
+  isSubmissionRateLimitError,
   markSubmissionFailed,
   saveJudgeAck,
   saveJudgeSnapshot,
+  SUBMISSION_RATE_LIMIT_MESSAGE,
+  SubmissionRateLimitError,
   type DebugJudge,
   type SubmissionCommandCollections,
 } from './submission-commands.ts';
@@ -626,12 +636,20 @@ export class RojDb {
     return getListPageSize(this.settings());
   }
 
+  async getSubmissionIntervalSeconds(): Promise<number> {
+    return getSubmissionIntervalSeconds(this.settings());
+  }
+
   async updateEnabledLanguages(enabledLanguages: AppLanguage[]) {
     await updateEnabledLanguages(this.settings(), enabledLanguages);
   }
 
   async updateListPageSize(listPageSize: number) {
     await updateListPageSize(this.settings(), listPageSize);
+  }
+
+  async updateSubmissionIntervalSeconds(submissionIntervalSeconds: number) {
+    await updateSubmissionIntervalSeconds(this.settings(), submissionIntervalSeconds);
   }
 
   async getAdminProblemById(id: string) {
