@@ -76,3 +76,18 @@ export async function cleanupDeletedUserSubmissions(
     progressCount: progress.deletedCount,
   };
 }
+
+export async function cleanupSubmissionsByUser(
+  collections: Pick<DeletedUserSubmissionCleanupCollections, 'submissions' | 'userProblemProgress'>,
+  userId: string,
+): Promise<DeletedUserSubmissionCleanupStats> {
+  const userFilter = { userId };
+  const [submissions, progress] = await Promise.all([
+    collections.submissions.deleteMany(userFilter),
+    collections.userProblemProgress.deleteMany(userFilter),
+  ]);
+  return {
+    submissionCount: submissions.deletedCount,
+    progressCount: progress.deletedCount,
+  };
+}

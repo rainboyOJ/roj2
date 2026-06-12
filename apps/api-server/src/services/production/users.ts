@@ -67,9 +67,7 @@ export function buildUserServices(db: RojDb): UserServices {
     resetUserPassword: async (userId, password) => {
       await db.resetUserPassword(userId, password);
     },
-    deleteUser: async (userId) => {
-      await db.deleteUser(userId);
-    },
+    deleteUser: async (userId, options) => db.deleteUser(userId, options),
     updateMyPassword: async (userId, currentPassword, newPassword) => {
       await db.updateMyPassword(userId, currentPassword, newPassword);
     },

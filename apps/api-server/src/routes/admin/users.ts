@@ -20,6 +20,16 @@ function adminUserListContext(query: unknown) {
   };
 }
 
+function readDeleteSubmissions(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'string') {
+    return value === 'true' || value === '1' || value === 'on';
+  }
+  return false;
+}
+
 export function registerAdminUserRoutes(app: FastifyInstance, context: RouteContext) {
   const {
     parsePage,
@@ -101,8 +111,11 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
     }
 
     const params = request.params as { id: string };
+    const raw = request.body as { deleteSubmissions?: unknown };
     try {
-      await services.deleteUser(params.id);
+      await services.deleteUser(params.id, {
+        deleteSubmissions: readDeleteSubmissions(raw.deleteSubmissions),
+      });
     } catch (error) {
       return renderAdminUsersError(
         request,
@@ -264,7 +277,10 @@ export function registerAdminUserRoutes(app: FastifyInstance, context: RouteCont
     }
 
     const params = request.params as { id: string };
-    await services.deleteUser(params.id);
-    return reply.send({ ok: true });
+    const raw = request.body as { deleteSubmissions?: unknown } | undefined;
+    const result = await services.deleteUser(params.id, {
+      deleteSubmissions: readDeleteSubmissions(raw?.deleteSubmissions),
+    });
+    return reply.send({ ok: true, ...result });
   });
 }

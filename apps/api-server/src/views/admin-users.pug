@@ -116,7 +116,9 @@ block content
                         method="post"
                         action=`/admin/users/${user.id}/delete${listPageSuffix}`
                         data-confirm-message=`确定要删除用户 ${user.username} 吗？删除后不可恢复。`
+                        data-delete-submissions-message=`是否同时清空用户 ${user.username} 的提交记录和做题进度？`
                       )
+                        input(type="hidden" name="deleteSubmissions" value="false")
                         button(type="submit" class="contrast" id=`delete-user-${user.id}`)= "删除用户"
       +paginationBar('/admin/users', pagination, '用户管理分页', listPaginationQuerySuffix)
     else

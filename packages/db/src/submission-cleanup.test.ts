@@ -7,6 +7,7 @@ import type {
 
 import {
   cleanupDeletedUserSubmissions,
+  cleanupSubmissionsByUser,
   countDeletedUserSubmissionCleanup,
   type DeletedUserSubmissionCleanupCollections,
 } from './submission-cleanup.ts';
@@ -159,6 +160,20 @@ describe('deleted user submission cleanup', () => {
     expect(await countDeletedUserSubmissionCleanup(store)).toEqual({
       submissionCount: 0,
       progressCount: 0,
+    });
+  });
+
+  it('deletes submissions and progress rows for one user', async () => {
+    const store = collections();
+
+    await expect(cleanupSubmissionsByUser(store, 'user-deleted')).resolves.toEqual({
+      submissionCount: 2,
+      progressCount: 1,
+    });
+
+    await expect(countDeletedUserSubmissionCleanup(store)).resolves.toEqual({
+      submissionCount: 0,
+      progressCount: 1,
     });
   });
 });

@@ -181,7 +181,10 @@ export function createTestServices(
     publishProblem: async () => undefined,
     updateProfileClassName: async () => undefined,
     resetUserPassword: async () => undefined,
-    deleteUser: async () => undefined,
+    deleteUser: async () => ({
+      submissionCount: 0,
+      progressCount: 0,
+    }),
     updateMyPassword: async () => undefined,
   };
   return Object.assign(services, overrides);

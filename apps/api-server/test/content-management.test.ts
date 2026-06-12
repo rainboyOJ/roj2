@@ -821,10 +821,16 @@ describe('content management routes', () => {
 
   it('deletes a user for admin users', async () => {
     let deletedUserId = '';
+    let receivedOptions: unknown = null;
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),
-      deleteUser: async (userId: string) => {
+      deleteUser: async (userId: string, options?: { deleteSubmissions?: boolean }) => {
         deletedUserId = userId;
+        receivedOptions = options;
+        return {
+          submissionCount: 0,
+          progressCount: 0,
+        };
       },
     }));
 
@@ -838,6 +844,49 @@ describe('content management routes', () => {
 
     expect(response.statusCode).toBe(200);
     expect(deletedUserId).toBe('user-2');
+    expect(receivedOptions).toEqual({
+      deleteSubmissions: false,
+    });
+    expect(response.json()).toEqual({
+      ok: true,
+      submissionCount: 0,
+      progressCount: 0,
+    });
+  });
+
+  it('deletes a user and submissions for admin users', async () => {
+    let receivedOptions: unknown = null;
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      deleteUser: async (_userId: string, options?: { deleteSubmissions?: boolean }) => {
+        receivedOptions = options;
+        return {
+          submissionCount: 3,
+          progressCount: 2,
+        };
+      },
+    }));
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/admin/users/user-2',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+      payload: {
+        deleteSubmissions: true,
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(receivedOptions).toEqual({
+      deleteSubmissions: true,
+    });
+    expect(response.json()).toEqual({
+      ok: true,
+      submissionCount: 3,
+      progressCount: 2,
+    });
   });
 
   it('updates grades from the admin HTML page flow', async () => {

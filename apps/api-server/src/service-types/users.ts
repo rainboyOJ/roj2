@@ -22,6 +22,11 @@ export interface PaginatedAdminUsersViewModel {
   filters?: AdminUserListFilters;
 }
 
+export interface DeleteUserResult {
+  submissionCount: number;
+  progressCount: number;
+}
+
 export interface UserServices {
   registerUser(input: {
     username: string;
@@ -53,6 +58,6 @@ export interface UserServices {
   rejectUser(userId: string, adminUserId: string, reason?: string): Promise<void>;
   updateProfileClassName(userId: string, className: string): Promise<void>;
   resetUserPassword(userId: string, password: string): Promise<void>;
-  deleteUser(userId: string): Promise<void>;
+  deleteUser(userId: string, options?: { deleteSubmissions?: boolean }): Promise<DeleteUserResult>;
   updateMyPassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
 }

@@ -226,6 +226,8 @@ describe('admin views', () => {
     expect(response.body).toContain('确定要拒绝用户 alice 吗？');
     expect(response.body).toContain('确定要重置用户 alice 的密码吗？');
     expect(response.body).toContain('确定要删除用户 alice 吗？删除后不可恢复。');
+    expect(response.body).toContain('是否同时清空用户 alice 的提交记录和做题进度？');
+    expect(response.body).toContain('name="deleteSubmissions" value="false"');
     expect(response.body).toContain('data-require-password="password"');
     expect(response.body).toContain('用户管理分页');
     expect(response.body).toContain('/admin/users?page=2&amp;q=alice&amp;approvalStatus=pending&amp;className=1%20%E7%8F%AD');

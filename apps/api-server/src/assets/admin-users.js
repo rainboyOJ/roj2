@@ -4,6 +4,9 @@
   }
   const formUtils = window.RojFormUtils;
   const notify = window.RojNotify || {
+    success(message) {
+      window.console.log(message);
+    },
     error(message) {
       window.console.error(message);
     },
@@ -114,15 +117,35 @@
       return { password: input ? input.value : '' };
     }
 
+    if (action.method === 'delete') {
+      return {
+        deleteSubmissions: form.dataset.deleteSubmissions === 'true',
+      };
+    }
+
     return undefined;
   };
 
   const submitApiAction = async (action, payload) => {
     if (action.method === 'delete') {
-      await window.axios.delete(action.url);
-      return;
+      const response = await window.axios.delete(action.url, {
+        data: payload,
+      });
+      return response.data;
     }
-    await window.axios.post(action.url, payload);
+    const response = await window.axios.post(action.url, payload);
+    return response.data;
+  };
+
+  const notifyDeleteResult = (result) => {
+    if (!result || typeof result.submissionCount !== 'number' || typeof result.progressCount !== 'number') {
+      return false;
+    }
+    if (result.submissionCount === 0 && result.progressCount === 0) {
+      return false;
+    }
+    notify.success(`已删除用户，并清理 ${result.submissionCount} 条提交记录，${result.progressCount} 条做题进度。`);
+    return true;
   };
 
   document.addEventListener('submit', async (event) => {
@@ -159,13 +182,24 @@
     if (message && !window.confirm(message)) {
       return;
     }
+    if (action.method === 'delete' && form.dataset.deleteSubmissionsMessage) {
+      form.dataset.deleteSubmissions = window.confirm(form.dataset.deleteSubmissionsMessage)
+        ? 'true'
+        : 'false';
+    }
 
     try {
       formUtils.setSubmitting(form, true);
       if (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) {
         submitter.disabled = true;
       }
-      await submitApiAction(action, payloadForForm(form, action));
+      const result = await submitApiAction(action, payloadForForm(form, action));
+      if (action.method === 'delete' && notifyDeleteResult(result)) {
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 700);
+        return;
+      }
       window.location.reload();
     } catch (error) {
       notify.error(formUtils.serverMessage(

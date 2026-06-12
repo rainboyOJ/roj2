@@ -132,11 +132,13 @@ import {
 } from './submission-queries.ts';
 export {
   cleanupDeletedUserSubmissions,
+  cleanupSubmissionsByUser,
   countDeletedUserSubmissionCleanup,
   type DeletedUserSubmissionCleanupStats,
 } from './submission-cleanup.ts';
 import {
   cleanupDeletedUserSubmissions,
+  cleanupSubmissionsByUser,
   countDeletedUserSubmissionCleanup,
 } from './submission-cleanup.ts';
 export { calculateSubmissionScore } from './submission-scoring.ts';
@@ -533,6 +535,13 @@ export class RojDb {
     });
   }
 
+  async cleanupSubmissionsByUser(userId: string) {
+    return cleanupSubmissionsByUser({
+      submissions: this.submissions(),
+      userProblemProgress: this.userProblemProgress(),
+    }, userId);
+  }
+
   async buildSimpleRanklist(filters: RanklistFilters = {}) {
     return this.submissions().aggregate<{
       username: string;
@@ -753,8 +762,15 @@ export class RojDb {
     await updateMyPassword(this.userCollections(), userId, currentPassword, newPassword);
   }
 
-  async deleteUser(userId: string) {
+  async deleteUser(userId: string, options: { deleteSubmissions?: boolean } = {}) {
     await deleteUser(this.userCollections(), userId);
+    if (options.deleteSubmissions) {
+      return this.cleanupSubmissionsByUser(userId);
+    }
+    return {
+      submissionCount: 0,
+      progressCount: 0,
+    };
   }
 }
 
