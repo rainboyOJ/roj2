@@ -125,6 +125,14 @@ export function createTestServices(
     }),
     logoutUser: async () => undefined,
     getCurrentUser: async () => studentUser(),
+    getPublicUserProfile: async () => ({
+      user: studentUser(),
+      acceptedProblems: [],
+      attemptedProblems: [],
+      acceptedCount: 0,
+      attemptedCount: 0,
+      acceptanceRateText: '0%',
+    }),
     listAdminUsers: async () => [],
     listAdminUsersPaginated: async (pagination) => ({
       users: [],

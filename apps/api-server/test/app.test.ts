@@ -297,6 +297,30 @@ describe('production services', () => {
         items: [],
         total: 0,
       }),
+      listVisibleProblemsByPids: async () => [
+        {
+          _id: 'problem-1000',
+          pid: '1000',
+          title: 'A + B Problem',
+          statementMarkdown: 'content',
+          statementHtml: '<p>content</p>',
+          allowLanguages: ['cpp', 'python'],
+          isVisible: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          _id: 'problem-1001',
+          pid: '1001',
+          title: 'Sort',
+          statementMarkdown: 'content',
+          statementHtml: '<p>content</p>',
+          allowLanguages: ['cpp', 'python'],
+          isVisible: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
       getProblemByPid: async () => null,
       createSubmission: async () => ({
         _id: 'sub-1',
@@ -352,6 +376,20 @@ describe('production services', () => {
       createSession: async () => ({ token: 'token-1' }),
       destroySession: async () => undefined,
       getUserBySessionToken: async () => null,
+      getUserByUsername: async () => ({
+        _id: 'user-1',
+        username: 'alice',
+        name: 'Alice',
+        role: 'student',
+        approvalStatus: 'approved',
+        grade: '2025',
+        className: '1 班',
+      }),
+      listProblemProgressByUser: async () => new Map([
+        ['1000', 'accepted'],
+        ['1001', 'attempted'],
+        ['hidden-1', 'accepted'],
+      ]),
       listUsersForAdmin: async () => [],
       approveUser: async () => undefined,
       rejectUser: async () => undefined,
@@ -372,8 +410,14 @@ describe('production services', () => {
       updateEnabledLanguages: async () => undefined,
       getListPageSize: async () => 20,
       updateListPageSize: async () => undefined,
+      getSubmissionIntervalSeconds: async () => 30,
+      updateSubmissionIntervalSeconds: async () => undefined,
       updateProfileClassName: async () => undefined,
       resetUserPassword: async () => undefined,
+      deleteUser: async () => ({
+        submissionCount: 0,
+        progressCount: 0,
+      }),
     } as never);
 
     await expect(services.listSubmissions(
@@ -404,6 +448,29 @@ describe('production services', () => {
         pageSize: 20,
         total: 1,
       },
+    });
+
+    await expect(services.getPublicUserProfile('alice')).resolves.toMatchObject({
+      user: {
+        username: 'alice',
+        name: 'Alice',
+        className: '1 班',
+      },
+      acceptedCount: 1,
+      attemptedCount: 2,
+      acceptanceRateText: '50%',
+      acceptedProblems: [
+        {
+          pid: '1000',
+          label: '1000 A + B Problem',
+        },
+      ],
+      attemptedProblems: [
+        {
+          pid: '1001',
+          label: '1001 Sort',
+        },
+      ],
     });
   });
 });

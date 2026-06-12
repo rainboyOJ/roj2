@@ -25,6 +25,23 @@ export function registerProfileRoutes(app: FastifyInstance, context: RouteContex
     });
   });
 
+  app.get('/users/:username', async (request, reply) => {
+    const currentUser = await requireHtmlUser(request, reply);
+    if (!currentUser) {
+      return;
+    }
+
+    const params = request.params as { username: string };
+    const profile = await services.getPublicUserProfile(params.username);
+    if (!profile) {
+      return reply.code(404).send('User not found');
+    }
+
+    return renderPage(request, reply, 'user-profile.pug', {
+      profile,
+    });
+  });
+
   app.post('/profile/password', async (request, reply) => {
     const user = await requireHtmlUser(request, reply);
     if (!user) {

@@ -193,6 +193,13 @@ export async function getDemoUser(collections: Pick<UserCollections, 'users'>) {
   return collections.users.findOne({ username: 'demo' });
 }
 
+export async function getUserByUsername(
+  collections: Pick<UserCollections, 'users'>,
+  username: string,
+) {
+  return collections.users.findOne({ username });
+}
+
 export async function registerUser(collections: UserCollections, input: RegisterUserInput) {
   const grade = await collections.grades.findOne({ name: input.grade, isActive: true });
   if (!grade) {

@@ -1,11 +1,41 @@
 import type { RojDb } from '@roj/db';
 
-import type { UserServices } from '../../service-types.ts';
+import type {
+  ProblemProgress,
+  UserProfileProblemViewModel,
+  UserServices,
+} from '../../service-types.ts';
 import {
   mapAdminUser,
   mapSessionUser,
 } from '../mappers.ts';
 import { buildPaginationViewModel } from '../pagination.ts';
+
+function problemLabel(problem: { pid: string; title: string }) {
+  return problem.title.startsWith(problem.pid)
+    ? problem.title
+    : `${problem.pid} ${problem.title}`;
+}
+
+function mapProfileProblem(problem: { pid: string; title: string }): UserProfileProblemViewModel {
+  return {
+    pid: problem.pid,
+    title: problem.title,
+    label: problemLabel(problem),
+  };
+}
+
+function sortProfileProblems(problems: UserProfileProblemViewModel[]) {
+  return problems.sort((left, right) =>
+    left.pid.localeCompare(right.pid, 'zh-CN', { numeric: true }));
+}
+
+function acceptanceRateText(acceptedCount: number, attemptedCount: number) {
+  if (attemptedCount === 0) {
+    return '0%';
+  }
+  return `${Math.round((acceptedCount / attemptedCount) * 100)}%`;
+}
 
 export function buildUserServices(db: RojDb): UserServices {
   return {
@@ -35,6 +65,40 @@ export function buildUserServices(db: RojDb): UserServices {
     getCurrentUser: async (token) => {
       const user = await db.getUserBySessionToken(token);
       return user ? mapSessionUser(user) : null;
+    },
+    getPublicUserProfile: async (username) => {
+      const user = await db.getUserByUsername(username);
+      if (!user) {
+        return null;
+      }
+
+      const progressByPid = await db.listProblemProgressByUser(user._id) as Map<
+        string,
+        ProblemProgress
+      >;
+      const visibleProblems = await db.listVisibleProblemsByPids([...progressByPid.keys()]);
+      const acceptedProblems: UserProfileProblemViewModel[] = [];
+      const attemptedProblems: UserProfileProblemViewModel[] = [];
+
+      for (const problem of visibleProblems) {
+        const progress = progressByPid.get(problem.pid);
+        if (progress === 'accepted') {
+          acceptedProblems.push(mapProfileProblem(problem));
+        } else if (progress === 'attempted') {
+          attemptedProblems.push(mapProfileProblem(problem));
+        }
+      }
+
+      const acceptedCount = acceptedProblems.length;
+      const attemptedCount = acceptedCount + attemptedProblems.length;
+      return {
+        user: mapAdminUser(user),
+        acceptedProblems: sortProfileProblems(acceptedProblems),
+        attemptedProblems: sortProfileProblems(attemptedProblems),
+        acceptedCount,
+        attemptedCount,
+        acceptanceRateText: acceptanceRateText(acceptedCount, attemptedCount),
+      };
     },
     listAdminUsers: async () => {
       const users = await db.listUsersForAdmin();

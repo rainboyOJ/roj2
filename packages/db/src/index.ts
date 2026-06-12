@@ -249,6 +249,7 @@ export {
   deleteUser,
   destroySession,
   getDemoUser,
+  getUserByUsername,
   getUserBySessionToken,
   hashPassword,
   listUsersForAdmin,
@@ -272,6 +273,7 @@ import {
   deleteUser,
   destroySession,
   getDemoUser,
+  getUserByUsername,
   getUserBySessionToken,
   listUsersForAdmin,
   listUsersForAdminPaginated,
@@ -614,6 +616,10 @@ export class RojDb {
   // 用 session token 反查当前登录用户，并顺便过滤过期 session。
   async getUserBySessionToken(token: string | null): Promise<SessionUserRecord | null> {
     return getUserBySessionToken(this.userCollections(), token);
+  }
+
+  async getUserByUsername(username: string) {
+    return getUserByUsername(this.userCollections(), username);
   }
 
   async listUsersForAdmin() {

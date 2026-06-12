@@ -131,4 +131,80 @@ describe('auth and profile views', () => {
     expect(response.body).toContain('src="/assets/profile-password.js"');
     expect(response.body).toContain('src="/assets/profile-class.js"');
   });
+
+  it('renders public user profile for logged-in users', async () => {
+    const app = buildApp(createServices({
+      getPublicUserProfile: async (username: string) => ({
+        user: {
+          id: 'user-2',
+          username,
+          role: 'student',
+          approvalStatus: 'approved',
+          name: 'Bob',
+          grade: '2025',
+          className: '2 班',
+        },
+        acceptedProblems: [
+          { pid: '1000', title: 'A + B Problem', label: '1000 A + B Problem' },
+        ],
+        attemptedProblems: [
+          { pid: '1001', title: 'Sort', label: '1001 Sort' },
+        ],
+        acceptedCount: 1,
+        attemptedCount: 2,
+        acceptanceRateText: '50%',
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/users/bob',
+      headers: {
+        cookie: sessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('@bob 的个人资料与做题进度。');
+    expect(response.body).toContain('通过题目');
+    expect(response.body).toContain('尝试题目');
+    expect(response.body).toContain('50%');
+    expect(response.body).toContain('2 班');
+    expect(response.body).toContain('href="/problem/1000"');
+    expect(response.body).toContain('1000 A + B Problem');
+    expect(response.body).toContain('href="/problem/1001"');
+    expect(response.body).toContain('1001 Sort');
+    expect(response.body).not.toContain('profilePasswordForm');
+    expect(response.body).not.toContain('profileClassForm');
+  });
+
+  it('requires login before viewing public user profiles', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => null,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/users/bob',
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/login');
+  });
+
+  it('returns 404 for missing public user profiles', async () => {
+    const app = buildApp(createServices({
+      getPublicUserProfile: async () => null,
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/users/missing',
+      headers: {
+        cookie: sessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
 });

@@ -49,7 +49,9 @@ export type {
 export type {
   AdminUserListFilters,
   PaginatedAdminUsersViewModel,
+  PublicUserProfileViewModel,
   SessionUser,
+  UserProfileProblemViewModel,
   UserServices,
 } from './service-types/users.ts';
 

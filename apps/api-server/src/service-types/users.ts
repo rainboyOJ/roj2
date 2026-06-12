@@ -27,6 +27,21 @@ export interface DeleteUserResult {
   progressCount: number;
 }
 
+export interface UserProfileProblemViewModel {
+  pid: string;
+  title: string;
+  label: string;
+}
+
+export interface PublicUserProfileViewModel {
+  user: SessionUser;
+  acceptedProblems: UserProfileProblemViewModel[];
+  attemptedProblems: UserProfileProblemViewModel[];
+  acceptedCount: number;
+  attemptedCount: number;
+  acceptanceRateText: string;
+}
+
 export interface UserServices {
   registerUser(input: {
     username: string;
@@ -49,6 +64,7 @@ export interface UserServices {
   }>;
   logoutUser(token: string | null): Promise<void>;
   getCurrentUser(token: string | null): Promise<SessionUser | null>;
+  getPublicUserProfile(username: string): Promise<PublicUserProfileViewModel | null>;
   listAdminUsers(): Promise<SessionUser[]>;
   listAdminUsersPaginated(pagination: {
     page: number;
