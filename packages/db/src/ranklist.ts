@@ -10,11 +10,14 @@ export function buildRanklistAggregationPipeline(filters: RanklistFilters = {}) 
   const pipeline: object[] = [
     {
       $group: {
-        _id: '$userId',
+        _id: {
+          userId: '$userId',
+          pid: '$pid',
+        },
         username: { $first: '$username' },
         displayNameSnapshot: { $first: '$displayName' },
-        acceptedCount: {
-          $sum: {
+        acceptedProblem: {
+          $max: {
             $cond: [{ $eq: ['$verdict', SubmissionVerdicts.AC] }, 1, 0],
           },
         },
@@ -42,6 +45,17 @@ export function buildRanklistAggregationPipeline(filters: RanklistFilters = {}) 
             ],
           },
         },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.userId',
+        username: { $first: '$username' },
+        displayNameSnapshot: { $first: '$displayName' },
+        acceptedCount: { $sum: '$acceptedProblem' },
+        submissionCount: { $sum: '$submissionCount' },
+        wrongAttempts: { $sum: '$wrongAttempts' },
+        lastAcceptedAt: { $min: '$lastAcceptedAt' },
       },
     },
     {
