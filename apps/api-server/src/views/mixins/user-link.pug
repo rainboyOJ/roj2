@@ -1,0 +1,2 @@
+mixin userProfileLink(username, displayName)
+  a(href=`/users/${username}` target="_blank" rel="noopener noreferrer")= displayName ? `${displayName} (${username})` : username

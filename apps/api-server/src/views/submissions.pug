@@ -2,6 +2,7 @@
 extends layout.pug
 include mixins/pagination.pug
 include mixins/status.pug
+include mixins/user-link.pug
 
 block content
   - const currentFilters = filters || {}
@@ -49,7 +50,8 @@ block content
               tr
                 td.table-code
                   a(href=`/submissions/${submission.publicId}`)= submission.publicId
-                td= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
+                td
+                  +userProfileLink(submission.username, submission.displayName)
                 td
                   a(href=`/problem/${submission.pid}`)= submission.problemLabel
                 td.table-code= submission.language

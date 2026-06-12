@@ -485,6 +485,7 @@ describe('admin views', () => {
     expect(response.body).toContain('aria-current="page">2</span>');
     expect(response.body).toContain('/admin/submissions?page=1');
     expect(response.body).toContain('/admin/submissions?page=3');
+    expect(response.body).toContain('href="/users/demo" target="_blank" rel="noopener noreferrer"');
     expect(response.body).toContain('刷新');
     expect(response.body).toContain('href="/admin/submissions?page=2"');
     expect(response.body).toContain('清理已删除用户提交');

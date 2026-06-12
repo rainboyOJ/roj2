@@ -19,6 +19,7 @@ describe('ranklist and contest views', () => {
     expect(response.body).toContain('班级');
     expect(response.body).toContain('通过题数');
     expect(response.body).toContain('Demo User (demo)');
+    expect(response.body).toContain('href="/users/demo" target="_blank" rel="noopener noreferrer"');
     expect(response.body).toContain('1 班');
     expect(response.body).toContain('<select id="ranklist-filter-class" name="className">');
     expect(response.body).toContain('<option value="1 班">1 班</option>');
@@ -53,6 +54,7 @@ describe('ranklist and contest views', () => {
     expect(receivedFilters).toEqual({ className: '2 班' });
     expect(response.body).toContain('<option value="2 班" selected>2 班</option>');
     expect(response.body).toContain('Alice (alice)');
+    expect(response.body).toContain('href="/users/alice" target="_blank" rel="noopener noreferrer"');
   });
 
   it('renders the contests page', async () => {

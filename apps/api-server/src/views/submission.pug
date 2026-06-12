@@ -2,6 +2,7 @@
 extends layout.pug
 include mixins/assets.pug
 include mixins/status.pug
+include mixins/user-link.pug
 
 block content
   section.detail-panel#submissionDetail(
@@ -21,7 +22,8 @@ block content
             ul.compact-list
               li
                 strong= "提交用户"
-                span= submission.displayName ? `${submission.displayName} (${submission.username})` : submission.username
+                span
+                  +userProfileLink(submission.username, submission.displayName)
               li
                 strong= "题目"
                 span

@@ -48,6 +48,7 @@ describe('submission views', () => {
     expect(response.body).toContain('42');
     expect(response.body).not.toContain('sub-1');
     expect(response.body).toContain('Demo User (demo)');
+    expect(response.body).toContain('href="/users/demo" target="_blank" rel="noopener noreferrer"');
     expect(response.body).toContain('1000 A + B Problem');
     expect(response.body).not.toContain('1000 1000 A + B Problem');
     expect(response.body).toContain('python');
@@ -125,6 +126,7 @@ describe('submission views', () => {
       language: 'python',
     });
     expect(response.body).toContain('提交列表分页');
+    expect(response.body).toContain('href="/users/demo" target="_blank" rel="noopener noreferrer"');
     expect(response.body).toContain('共有 3 页');
     expect(response.body).toContain('aria-current="page">2</span>');
     expect(response.body).toContain(
@@ -153,6 +155,7 @@ describe('submission views', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('测试点结果');
     expect(response.body).toContain('提交代码');
+    expect(response.body).toContain('href="/users/demo" target="_blank" rel="noopener noreferrer"');
     expect(response.body).toContain('print(1)');
     expect(response.body).toContain('100');
     expect(response.body).toContain('#1');
