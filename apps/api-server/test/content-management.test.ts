@@ -290,6 +290,51 @@ describe('content management routes', () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it('cleans deleted user submissions from the admin HTML page flow', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      cleanupDeletedUserSubmissions: async () => ({
+        submissionCount: 3,
+        progressCount: 2,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/admin/submissions/cleanup-deleted-users',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(response.headers.location).toBe('/admin/submissions?cleanupSubmissions=3&cleanupProgress=2');
+  });
+
+  it('cleans deleted user submissions through the admin API flow', async () => {
+    const app = buildApp(createTestServices({
+      getCurrentUser: async () => adminUser(),
+      cleanupDeletedUserSubmissions: async () => ({
+        submissionCount: 3,
+        progressCount: 2,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/admin/submissions/cleanup-deleted-users',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      submissionCount: 3,
+      progressCount: 2,
+    });
+  });
+
   it('creates a grade for admin users', async () => {
     const app = buildApp(createTestServices({
       getCurrentUser: async () => adminUser(),

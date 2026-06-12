@@ -44,6 +44,11 @@ export interface PaginatedSubmissionsViewModel {
   filters?: SubmissionListFilters;
 }
 
+export interface DeletedUserSubmissionCleanupViewModel {
+  submissionCount: number;
+  progressCount: number;
+}
+
 export interface SubmissionServices {
   createSubmission(input: {
     userId: string;
@@ -60,4 +65,6 @@ export interface SubmissionServices {
     page: number;
     pageSize: number;
   }): Promise<PaginatedSubmissionsViewModel>;
+  countDeletedUserSubmissionCleanup(): Promise<DeletedUserSubmissionCleanupViewModel>;
+  cleanupDeletedUserSubmissions(): Promise<DeletedUserSubmissionCleanupViewModel>;
 }

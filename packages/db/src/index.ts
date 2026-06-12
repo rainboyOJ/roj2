@@ -130,6 +130,15 @@ import {
   listSubmissionsWithProblemsPaginated,
   type SubmissionQueryCollections,
 } from './submission-queries.ts';
+export {
+  cleanupDeletedUserSubmissions,
+  countDeletedUserSubmissionCleanup,
+  type DeletedUserSubmissionCleanupStats,
+} from './submission-cleanup.ts';
+import {
+  cleanupDeletedUserSubmissions,
+  countDeletedUserSubmissionCleanup,
+} from './submission-cleanup.ts';
 export { calculateSubmissionScore } from './submission-scoring.ts';
 export {
   buildClearSubmissionLeaseUpdate,
@@ -506,6 +515,22 @@ export class RojDb {
     pageSize: number;
   }) {
     return listSubmissionsWithProblemsPaginated(this.submissionQueryCollections(), input);
+  }
+
+  async countDeletedUserSubmissionCleanup() {
+    return countDeletedUserSubmissionCleanup({
+      users: this.users(),
+      submissions: this.submissions(),
+      userProblemProgress: this.userProblemProgress(),
+    });
+  }
+
+  async cleanupDeletedUserSubmissions() {
+    return cleanupDeletedUserSubmissions({
+      users: this.users(),
+      submissions: this.submissions(),
+      userProblemProgress: this.userProblemProgress(),
+    });
   }
 
   async buildSimpleRanklist(filters: RanklistFilters = {}) {

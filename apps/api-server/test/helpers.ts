@@ -106,6 +106,14 @@ export function createTestServices(
     deleteProblemSet: async () => undefined,
     getSubmissionById: async () => null,
     listSubmissions: async () => paginated(),
+    countDeletedUserSubmissionCleanup: async () => ({
+      submissionCount: 0,
+      progressCount: 0,
+    }),
+    cleanupDeletedUserSubmissions: async () => ({
+      submissionCount: 0,
+      progressCount: 0,
+    }),
     registerUser: async () => ({
       id: 'user-1',
       username: 'alice',

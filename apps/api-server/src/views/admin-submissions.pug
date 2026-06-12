@@ -11,7 +11,10 @@ block content
         h1= "提交管理"
         p.page-lead= "用标准列表视图查看所有提交的评测活动。"
       .page-actions
+        a(href="/admin/submissions/cleanup-deleted-users" role="button" class="secondary")= "清理已删除用户提交"
         a(href=`/admin/submissions${currentPageSuffix}` role="button" class="secondary")= "刷新"
+    if cleanupResult
+      p.form-alert(role="status")= `已清理 ${cleanupResult.submissionCount} 条提交记录，${cleanupResult.progressCount} 条做题进度。`
     if submissions.length
       .table-shell
         table.data-table

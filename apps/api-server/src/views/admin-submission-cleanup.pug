@@ -1,0 +1,28 @@
+//- 清理已删除用户留下的提交和进度数据。
+extends layout.pug
+
+block content
+  section.auth-panel
+    header
+      hgroup
+        h1= "清理已删除用户提交"
+        p.page-lead= "删除 users 表中已经不存在的用户留下的提交记录和做题进度。"
+    article.panel-card.form-card
+      .panel-body
+        dl.cleanup-summary
+          div
+            dt= "将删除提交记录"
+            dd= `${cleanup.submissionCount} 条`
+          div
+            dt= "将删除做题进度"
+            dd= `${cleanup.progressCount} 条`
+        if cleanup.submissionCount || cleanup.progressCount
+          p.form-alert(role="alert")= "该操作不可撤销，提交号不会重新排序。"
+          form(method="post" action="/admin/submissions/cleanup-deleted-users")
+            .form-actions
+              button(type="submit" class="danger")= "确认清理"
+              a(href="/admin/submissions" role="button" class="secondary")= "取消"
+        else
+          p= "当前没有需要清理的已删除用户数据。"
+          .form-actions
+            a(href="/admin/submissions" role="button")= "返回提交管理"

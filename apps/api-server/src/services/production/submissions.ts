@@ -38,5 +38,7 @@ export function buildSubmissionServices(db: RojDb): SubmissionServices {
       const result = await db.listAllSubmissionsWithProblemsPaginated(pagination);
       return mapPaginatedSubmissions(result, pagination.page, pagination.pageSize);
     },
+    countDeletedUserSubmissionCleanup: async () => db.countDeletedUserSubmissionCleanup(),
+    cleanupDeletedUserSubmissions: async () => db.cleanupDeletedUserSubmissions(),
   };
 }

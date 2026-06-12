@@ -485,5 +485,48 @@ describe('admin views', () => {
     expect(response.body).toContain('/admin/submissions?page=3');
     expect(response.body).toContain('刷新');
     expect(response.body).toContain('href="/admin/submissions?page=2"');
+    expect(response.body).toContain('清理已删除用户提交');
+  });
+
+  it('renders deleted user submission cleanup result on the admin submissions page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/submissions?cleanupSubmissions=3&cleanupProgress=2',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('已清理 3 条提交记录，2 条做题进度。');
+  });
+
+  it('renders deleted user submission cleanup confirmation page', async () => {
+    const app = buildApp(createServices({
+      getCurrentUser: async () => adminUser(),
+      countDeletedUserSubmissionCleanup: async () => ({
+        submissionCount: 3,
+        progressCount: 2,
+      }),
+    }));
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/submissions/cleanup-deleted-users',
+      headers: {
+        cookie: adminSessionCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toContain('清理已删除用户提交');
+    expect(response.body).toContain('将删除提交记录');
+    expect(response.body).toContain('3 条');
+    expect(response.body).toContain('2 条');
+    expect(response.body).toContain('确认清理');
   });
 });
